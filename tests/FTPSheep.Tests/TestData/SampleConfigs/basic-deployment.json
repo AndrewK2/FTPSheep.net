@@ -1,0 +1,11 @@
+{
+  "$schema": "https://ftpsheep.net/schemas/profile.json",
+  "name": "Basic Deployment",
+  "server": "ftp.example.com",
+  "port": 21,
+  "protocol": "FTP",
+  "username": "ftpuser",
+  "remotePath": "/www",
+  "projectPath": "C:\\Projects\\MyWebApp\\MyWebApp.csproj",
+  "buildConfiguration": "Release"
+}

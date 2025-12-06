@@ -1,0 +1,35 @@
+{
+  "$schema": "https://ftpsheep.net/schemas/profile.json",
+  "name": "Advanced Production Deployment",
+  "server": "ftp.production.example.com",
+  "port": 21,
+  "protocol": "FTP",
+  "username": "deploy_user",
+  "encryptedPassword": null,
+  "remotePath": "/var/www/myapp",
+  "projectPath": "C:\\Projects\\MyWebApp\\MyWebApp.csproj",
+  "buildConfiguration": "Release",
+  "concurrency": 8,
+  "timeout": 300,
+  "retryCount": 3,
+  "exclusionPatterns": [
+    "*.log",
+    "*.tmp",
+    "App_Data/**",
+    "uploads/**",
+    "logs/**",
+    "*.config.local"
+  ],
+  "cleanupMode": true,
+  "appOfflineEnabled": true,
+  "appOfflineTemplate": null,
+  "verbosity": "Normal",
+  "skipConnectionTest": false,
+  "publishFolder": null,
+  "metadata": {
+    "description": "Production deployment profile with enhanced settings",
+    "lastModified": "2025-12-06T00:00:00Z",
+    "createdFrom": "Visual Studio",
+    "tags": ["production", "web-api"]
+  }
+}
