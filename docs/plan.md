@@ -33,27 +33,10 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 - [ ] Create .editorconfig for consistent coding standards
   - Indentation, line endings, naming conventions
   - C# specific formatting rules
-- [ ] Set up development tooling configuration
-  - Configure Visual Studio / Rider settings
-  - Set up ReSharper or analyzer rules
 - [ ] Create local development setup documentation
   - Prerequisites (SDK versions, tools required)
   - Build and run instructions
   - Testing setup
-
-### 1.3 CI/CD Pipeline Setup
-- [ ] Configure GitHub Actions or Azure DevOps pipeline
-  - Build workflow on push and pull request
-  - Run unit and integration tests
-  - Code coverage reporting
-- [ ] Set up automated versioning
-  - Semantic versioning strategy
-  - Version tagging on releases
-- [ ] Configure release pipeline
-  - Build release artifacts
-  - Create NuGet package
-  - Package as self-contained executable
-  - Create installer/distribution package
 
 ### 1.4 Third-Party Dependencies
 - [ ] Research and select FTP library
@@ -72,7 +55,7 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - Evaluate Spectre.Console for rich console output
   - Verify progress bar, color support, formatting capabilities
 - [ ] Add logging framework
-  - Serilog or Microsoft.Extensions.Logging
+  - NLog via Microsoft.Extensions.Logging
   - Configure console and file sinks
 - [ ] Add JSON/XML serialization libraries
   - System.Text.Json for profile storage
@@ -99,13 +82,12 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 
 ### 1.6 Testing Infrastructure
 - [ ] Set up unit testing framework
-  - xUnit, NUnit, or MSTest
+  - xUnit
   - Configure test project structure
 - [ ] Set up mocking framework
-  - Moq or NSubstitute for dependency mocking
+  - Moq for dependency mocking
 - [ ] Set up integration testing environment
-  - Test FTP server setup (local or containerized)
-  - Test SFTP server setup
+  - Test FTP server setup (local or containerized)  
   - Sample .NET projects for build testing
 - [ ] Create test data and fixtures
   - Sample Visual Studio publish profiles
