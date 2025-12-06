@@ -126,11 +126,15 @@ For V1 (CLI tool), role-based access is not applicable as the tool runs locally 
 
 ### High priority (Must-have for V1)
 
-**FR-001: Visual Studio publish profile import**
+**FR-001: Visual Studio publish profile import and auto-discovery**
+- Automatically search for Visual Studio publish profiles (.pubxml files) in project directory
+- If exactly one profile found, use it automatically (prompt only for missing info)
+- If multiple profiles found, list them and let user select one
 - Read and parse existing Visual Studio publish profiles (.pubxml files)
 - Extract FTP connection details (server, port, username, path)
 - Convert to FTPSheep.NET deployment profile format with additional settings
 - Support FTP protocol specifications from Visual Studio profiles
+- Enable zero-configuration first run: `ftpsheep deploy` with no parameters
 
 **FR-002: Build and publish integration**
 - Invoke dotnet.exe or msbuild.exe based on project type and .NET version
@@ -179,7 +183,9 @@ For V1 (CLI tool), role-based access is not applicable as the tool runs locally 
 - Save deployment profiles to disk in JSON or XML format
 - Load existing deployment profiles by name or path
 - List available deployment profiles
-- Store profile-specific settings (server details, paths, concurrency settings)
+- Store profile-specific settings (server details, paths, concurrency settings, credentials)
+- Profiles contain all information needed for fully automated, non-interactive deployments
+- Support unattended execution when profile has complete configuration
 
 **FR-009: Console logging**
 - Output informative messages at each deployment stage
@@ -195,18 +201,21 @@ For V1 (CLI tool), role-based access is not applicable as the tool runs locally 
 - Clean up temporary folders on server after failures
 - Exit with appropriate error codes for scripting integration
 
+**FR-011: IIS app_offline.htm handling**
+- Create app_offline.htm file in destination root folder before upload starts
+- Ensure IIS releases locked executable files (DLLs, EXEs) before deployment
+- Delete app_offline.htm file after successful deployment completion
+- If deployment fails, keep app_offline.htm in place to prevent broken application access
+- Configurable option to skip app_offline.htm creation for non-IIS deployments
+- Support custom app_offline.htm content/template
+
 ### Medium priority (Should-have for V1 or V1.1)
 
-**FR-011: Deployment validation**
+**FR-012: Deployment validation**
 - Verify published folder contents before upload
 - Check server disk space availability before deployment
 - Validate deployment profile settings before execution
 - Warn about potential issues (large deployment size, slow connection)
-
-**FR-012: Deployment history**
-- Record deployment history locally (timestamp, profile, outcome)
-- Display recent deployment history via CLI command
-- Include deployment duration and file counts in history
 
 **FR-013: Dry-run mode**
 - Simulate deployment without actually uploading files
@@ -221,7 +230,12 @@ For V1 (CLI tool), role-based access is not applicable as the tool runs locally 
 
 ### Low priority (Nice-to-have for future versions)
 
-**FR-015: SFTP protocol support**
+**FR-015: Deployment history**
+- Record deployment history locally (timestamp, profile, outcome)
+- Display recent deployment history via CLI command
+- Include deployment duration and file counts in history
+
+**FR-016: SFTP protocol support**
 - Connect to SFTP servers using SSH File Transfer Protocol
 - Support custom ports for SFTP
 - Support both password and SSH key-based authentication
@@ -229,27 +243,30 @@ For V1 (CLI tool), role-based access is not applicable as the tool runs locally 
 - Handle SFTP-specific operations and errors
 - Encrypt SFTP credentials using appropriate security mechanisms
 
-**FR-016: Incremental deployment**
+**FR-017: Incremental deployment**
 - Compare local published files with server files
 - Upload only changed or new files
 - Support file comparison strategies (timestamp, hash, size)
 - Display savings from incremental deployment
 
-**FR-017: Pre/post deployment hooks**
+**FR-018: Pre/post deployment hooks**
 - Execute custom scripts before deployment starts
 - Execute custom scripts after deployment completes
 - Support PowerShell and batch scripts
 - Pass deployment context to hook scripts
 
-**FR-018: Configuration transformation**
-- Transform web.config or appsettings.json during deployment
-- Support environment-specific configuration values
-- Apply transformations before upload
-
 **FR-019: Multiple deployment target support**
 - Deploy to multiple servers in sequence or parallel
 - Define server groups in profiles
 - Report on multi-target deployment status
+
+**FR-020: IIS App_offline.htm progress updates**
+- Optional feature to upload App_offline.htm at deployment start to take IIS application offline
+- Periodically update App_offline.htm with deployment progress information
+- Display progress percentage, files uploaded count, and estimated completion time
+- Customizable HTML template for App_offline.htm page
+- Remove App_offline.htm automatically when deployment completes successfully
+- Keep App_offline.htm if deployment fails (with error message) until manual intervention
 
 ## User experience
 
@@ -263,7 +280,6 @@ Primary commands:
 - `ftpsheep deploy` - Execute a deployment
 - `ftpsheep profile` - Manage deployment profiles
 - `ftpsheep import` - Import Visual Studio publish profiles
-- `ftpsheep history` - View deployment history
 - `ftpsheep init` - Initialize a new deployment profile
 
 Users may invoke the tool from:
@@ -275,19 +291,28 @@ Users may invoke the tool from:
 
 ### Core user flows
 
-**Flow 1: First-time deployment setup**
+**Flow 1: First-time deployment setup (automatic)**
 
 1. Developer navigates to .NET project directory in terminal
-2. Runs `ftpsheep import` command with path to Visual Studio publish profile
-3. Tool reads .pubxml file and extracts connection details
-4. Tool prompts for missing information (if any) and deployment profile name
-5. Tool asks if credentials should be saved (encrypted)
-6. Tool creates FTPSheep.NET deployment profile and confirms location
-7. Developer runs `ftpsheep deploy --profile [name]` to execute first deployment
-8. Tool displays pre-deployment summary
-9. Developer confirms deployment
-10. Tool builds project, uploads files, and displays progress
-11. Tool shows deployment completion summary
+2. Runs `ftpsheep deploy` without any parameters or profiles
+3. Tool searches for Visual Studio publish profiles (.pubxml files) in project
+4. **If exactly one VS profile found:**
+   - Tool automatically reads the profile and extracts connection details
+   - Tool prompts only for missing information (e.g., credentials if not in profile)
+5. **If multiple VS profiles found:**
+   - Tool lists all available profiles with names and servers
+   - User selects which profile to use
+   - Tool reads selected profile and prompts for any missing information
+6. **If no VS profiles found:**
+   - Tool prompts user to create profile manually or provides guidance
+7. Tool validates credentials by connecting to FTP server
+8. If connection successful, tool asks if credentials should be saved (encrypted)
+9. If connection fails, tool prompts to re-enter credentials or abort
+10. Tool creates FTPSheep.NET deployment profile and saves it
+11. Tool displays pre-deployment summary
+12. Developer confirms deployment (or uses `--yes` to skip)
+13. Tool builds project, uploads files, and displays progress
+14. Tool shows deployment completion summary
 
 **Flow 2: Routine deployment execution**
 
@@ -297,15 +322,17 @@ Users may invoke the tool from:
 4. Tool invokes build and publish process
 5. Tool connects to FTP server
 6. Tool displays deployment summary (X files, Y MB, estimated Z minutes)
-7. Tool begins upload with progress display showing:
+7. Tool uploads app_offline.htm to destination root to take IIS application offline
+8. Tool begins upload with progress display showing:
    - Progress bar or percentage
    - Files uploaded (e.g., 45/120)
    - Current speed (e.g., 1.2 MB/s)
    - Time remaining (e.g., 2m 30s remaining)
-8. Tool completes upload, overwriting files directly on server
-9. If cleanup mode enabled, tool removes obsolete files (excluding App_Data and other configured exclusions)
-10. Tool displays success message with total deployment time
-11. Developer verifies deployment on server
+9. Tool completes upload, overwriting files directly on server
+10. If cleanup mode enabled, tool removes obsolete files (excluding App_Data and other configured exclusions)
+11. Tool deletes app_offline.htm to bring application back online
+12. Tool displays success message with total deployment time
+13. Developer verifies deployment on server
 
 **Flow 3: Managing multiple deployment profiles**
 
@@ -344,6 +371,8 @@ Power users can edit deployment profile files directly to configure:
 
 The tool supports integration into automated workflows:
 - Exit codes indicate success or failure for script error handling
+- `--yes` or `-y` flag for unattended execution without confirmation prompts
+- Profiles contain all necessary information for fully automated deployments
 - JSON output mode for parsing deployment results
 - Environment variable support for credentials in CI/CD environments
 - Silent mode for non-interactive execution
@@ -708,9 +737,25 @@ Success criteria:
 
 ### Profile management
 
-**US-004: Import Visual Studio publish profile**
+**US-004: First run with automatic profile discovery**
 
-**Description:** As a developer, I want to import my existing Visual Studio publish profile so that I can use FTPSheep.NET without manually recreating my deployment configuration.
+**Description:** As a developer running FTPSheep.NET for the first time, I want the tool to automatically discover my Visual Studio publish profiles so that I can deploy without learning complex commands or manually creating profiles.
+
+**Acceptance criteria:**
+- Running `ftpsheep deploy` without parameters triggers profile discovery
+- Tool searches for .pubxml files in project directory and subdirectories
+- If exactly one VS profile found, tool automatically uses it without asking
+- If multiple VS profiles found, tool displays numbered list with profile names and server URLs
+- User selects profile by entering number or name
+- Tool extracts settings from selected/discovered profile
+- Tool prompts only for missing required information (e.g., credentials)
+- After setup, profile is saved for future use
+- Clear messages guide user through the process
+- If no VS profiles found, tool provides helpful guidance on next steps
+
+**US-005: Import Visual Studio publish profile**
+
+**Description:** As a developer, I want to explicitly import my existing Visual Studio publish profile so that I can use FTPSheep.NET without manually recreating my deployment configuration.
 
 **Acceptance criteria:**
 - `ftpsheep import` command accepts path to .pubxml file
@@ -721,7 +766,7 @@ Success criteria:
 - Imported profile can be immediately used for deployment
 - Error message shown if .pubxml file is invalid or not found
 
-**US-005: Create deployment profile manually**
+**US-006: Create deployment profile manually**
 
 **Description:** As a developer, I want to create a new deployment profile from scratch so that I can configure deployments for servers not currently in Visual Studio.
 
@@ -733,7 +778,7 @@ Success criteria:
 - Profile is saved to disk in application data folder or specified location
 - Confirmation message includes profile name and location
 
-**US-006: List available deployment profiles**
+**US-007: List available deployment profiles**
 
 **Description:** As a developer, I want to see a list of all my saved deployment profiles so that I can choose which one to use for deployment.
 
@@ -744,7 +789,7 @@ Success criteria:
 - Message shown if no profiles exist
 - Command suggests creating or importing a profile if none exist
 
-**US-007: View deployment profile details**
+**US-008: View deployment profile details**
 
 **Description:** As a developer, I want to view the details of a specific deployment profile so that I can verify its configuration without opening the file.
 
@@ -755,7 +800,7 @@ Success criteria:
 - Error message if profile name doesn't exist
 - Suggestion of similar profile names if exact match not found
 
-**US-008: Edit deployment profile**
+**US-009: Edit deployment profile**
 
 **Description:** As a developer, I want to update an existing deployment profile so that I can change settings without creating a new profile.
 
@@ -767,7 +812,7 @@ Success criteria:
 - Option to test connection after editing
 - Confirmation message after successful save
 
-**US-009: Delete deployment profile**
+**US-010: Delete deployment profile**
 
 **Description:** As a developer, I want to delete a deployment profile I no longer need so that I can keep my profile list organized.
 
@@ -997,8 +1042,8 @@ Success criteria:
 - Optional cleanup mode removes files/folders that don't exist in published source
 - Cleanup runs only after all uploads complete successfully
 - Exclusion patterns prevent deletion of specific folders (e.g., App_Data, uploads, logs)
-- User is shown list of files to be deleted and prompted for confirmation
-- `--auto-cleanup` flag skips confirmation prompt
+- User is shown list of files to be deleted and prompted for confirmation (unless `--yes` flag used)
+- `--yes` or `-y` flag skips all confirmation prompts for unattended execution
 - Temporary build folder on local machine is deleted after deployment
 - Cleanup errors are logged but don't fail the deployment if upload succeeded
 
