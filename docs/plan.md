@@ -62,34 +62,31 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - XML parsing for .pubxml files
 
 ### 1.5 Initial Project Scaffolding
-- [ ] Create basic CLI entry point with version and help commands
+- [x] Create basic CLI entry point with version and help commands
   - Implement `ftpsheep --version`
   - Implement `ftpsheep --help`
   - Set up command routing infrastructure
-- [ ] Set up logging infrastructure
+- [x] Set up logging infrastructure
   - Configure log levels and output formats
   - Create console logger with color support
   - Set up file logging for debugging
-- [ ] Create core domain models
+- [x] Create core domain models
   - DeploymentProfile class
   - DeploymentResult class
   - BuildConfiguration class
   - ServerConnection class
-- [ ] Implement basic error handling framework
-  - Custom exception types
-  - Exit code constants
-  - Error message formatting utilities
+
 
 ### 1.6 Testing Infrastructure
-- [ ] Set up unit testing framework
+- [x] Set up unit testing framework
   - xUnit
   - Configure test project structure
-- [ ] Set up mocking framework
+- [x] Set up mocking framework
   - Moq for dependency mocking
-- [ ] Set up integration testing environment
+- [x] Set up integration testing environment
   - Test FTP server setup (local or containerized)  
   - Sample .NET projects for build testing
-- [ ] Create test data and fixtures
+- [x] Create test data and fixtures
   - Sample Visual Studio publish profiles
   - Sample deployment configurations
   - Mock server responses

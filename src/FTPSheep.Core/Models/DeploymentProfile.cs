@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace FTPSheep.Core.Models;
 
 /// <summary>
@@ -24,6 +26,12 @@ public sealed class DeploymentProfile
     /// Gets or sets the encrypted FTP password. Should not be used directly.
     /// </summary>
     public string? EncryptedPassword { get; set; }
+
+    /// <summary>
+    /// Gets or sets the plain-text password. This is never persisted to disk and is only used at runtime.
+    /// </summary>
+    [JsonIgnore]
+    public string? Password { get; set; }
 
     /// <summary>
     /// Gets or sets the remote path on the FTP server where files will be deployed.
@@ -72,6 +80,7 @@ public sealed class DeploymentProfile
     /// Gets or sets the FTP server hostname or IP address.
     /// </summary>
     [Obsolete("Use Connection.Host instead. This property will be removed in V2.0.")]
+    [JsonIgnore]
     public string Server
     {
         get => Connection.Host;
@@ -82,6 +91,7 @@ public sealed class DeploymentProfile
     /// Gets or sets the FTP server port. Default is 21 for FTP, 22 for SFTP.
     /// </summary>
     [Obsolete("Use Connection.Port instead. This property will be removed in V2.0.")]
+    [JsonIgnore]
     public int Port
     {
         get => Connection.Port;
@@ -92,6 +102,7 @@ public sealed class DeploymentProfile
     /// Gets or sets the protocol to use (FTP or SFTP).
     /// </summary>
     [Obsolete("Use Connection.Protocol instead. This property will be removed in V2.0.")]
+    [JsonIgnore]
     public ProtocolType Protocol
     {
         get => Connection.Protocol;
@@ -102,6 +113,7 @@ public sealed class DeploymentProfile
     /// Gets or sets the connection timeout in seconds.
     /// </summary>
     [Obsolete("Use Connection.TimeoutSeconds instead. This property will be removed in V2.0.")]
+    [JsonIgnore]
     public int TimeoutSeconds
     {
         get => Connection.TimeoutSeconds;
@@ -112,6 +124,7 @@ public sealed class DeploymentProfile
     /// Gets or sets the build configuration (Debug, Release, etc.).
     /// </summary>
     [Obsolete("Use Build.Configuration instead. This property will be removed in V2.0.")]
+    [JsonIgnore]
     public string BuildConfiguration
     {
         get => Build.Configuration;
@@ -122,6 +135,7 @@ public sealed class DeploymentProfile
     /// Gets or sets the target framework for publishing (e.g., net8.0).
     /// </summary>
     [Obsolete("Use Build.TargetFramework instead. This property will be removed in V2.0.")]
+    [JsonIgnore]
     public string? TargetFramework
     {
         get => Build.TargetFramework;
@@ -132,6 +146,7 @@ public sealed class DeploymentProfile
     /// Gets or sets the runtime identifier for publishing (e.g., win-x64).
     /// </summary>
     [Obsolete("Use Build.RuntimeIdentifier instead. This property will be removed in V2.0.")]
+    [JsonIgnore]
     public string? RuntimeIdentifier
     {
         get => Build.RuntimeIdentifier;

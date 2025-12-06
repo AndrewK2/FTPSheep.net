@@ -98,3 +98,6 @@ _ReSharper*/
 
 # FTPSheep specific
 *.log
+
+# FTPSheep user configuration
+.ftpsheep/
