@@ -1356,7 +1356,7 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 - SSH.NET - SFTP client (future)
 - System.CommandLine or Spectre.Console.Cli - CLI framework
 - Spectre.Console - Rich console UI
-- Serilog - Logging
+- NLog - Logging
 - System.Text.Json - JSON serialization
 - xUnit - Unit testing
 - Moq - Mocking
