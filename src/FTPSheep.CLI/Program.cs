@@ -1,4 +1,6 @@
 using FTPSheep.CLI.Commands;
+using NLog;
+using NLog.Extensions.Logging;
 using Spectre.Console.Cli;
 
 namespace FTPSheep.CLI;
@@ -7,42 +9,61 @@ internal class Program
 {
     private static int Main(string[] args)
     {
-        var app = new CommandApp();
+        var logger = LogManager.GetCurrentClassLogger();
 
-        app.Configure(config =>
+        try
         {
-            config.SetApplicationName("ftpsheep");
-            config.SetApplicationVersion("0.1.0");
+            logger.Info("FTPSheep.NET starting up...");
 
-            config.AddCommand<DeployCommand>("deploy")
-                .WithDescription("Deploy a .NET application to FTP server")
-                .WithExample(new[] { "deploy", "--profile", "production" })
-                .WithExample(new[] { "deploy", "--yes" });
+            var app = new CommandApp();
 
-            config.AddBranch("profile", profile =>
+            app.Configure(config =>
             {
-                profile.SetDescription("Manage deployment profiles");
+                config.SetApplicationName("ftpsheep");
+                config.SetApplicationVersion("0.1.0");
 
-                profile.AddCommand<ProfileListCommand>("list")
-                    .WithDescription("List all deployment profiles");
+                config.AddCommand<DeployCommand>("deploy")
+                    .WithDescription("Deploy a .NET application to FTP server")
+                    .WithExample(new[] { "deploy", "--profile", "production" })
+                    .WithExample(new[] { "deploy", "--yes" });
 
-                profile.AddCommand<ProfileCreateCommand>("create")
-                    .WithDescription("Create a new deployment profile");
-            });
+                config.AddBranch("profile", profile =>
+                {
+                    profile.SetDescription("Manage deployment profiles");
 
-            config.AddCommand<ImportCommand>("import")
-                .WithDescription("Import Visual Studio publish profile")
-                .WithExample(new[] { "import", "Properties/PublishProfiles/FTP.pubxml" });
+                    profile.AddCommand<ProfileListCommand>("list")
+                        .WithDescription("List all deployment profiles");
 
-            config.AddCommand<InitCommand>("init")
-                .WithDescription("Initialize a new deployment profile interactively");
+                    profile.AddCommand<ProfileCreateCommand>("create")
+                        .WithDescription("Create a new deployment profile");
+                });
+
+                config.AddCommand<ImportCommand>("import")
+                    .WithDescription("Import Visual Studio publish profile")
+                    .WithExample(new[] { "import", "Properties/PublishProfiles/FTP.pubxml" });
+
+                config.AddCommand<InitCommand>("init")
+                    .WithDescription("Initialize a new deployment profile interactively");
 
 #if DEBUG
-            config.PropagateExceptions();
-            config.ValidateExamples();
+                config.PropagateExceptions();
+                config.ValidateExamples();
 #endif
-        });
+            });
 
-        return app.Run(args);
+            var result = app.Run(args);
+
+            logger.Info("FTPSheep.NET shutting down with exit code {ExitCode}", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            logger.Fatal(ex, "Stopped program because of exception");
+            return 1;
+        }
+        finally
+        {
+            LogManager.Shutdown();
+        }
     }
 }
