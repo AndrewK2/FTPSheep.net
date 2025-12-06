@@ -1,34 +1,28 @@
 using FTPSheep.CLI.Commands;
 using NLog;
-using NLog.Extensions.Logging;
 using Spectre.Console.Cli;
 
 namespace FTPSheep.CLI;
 
-internal class Program
-{
-    private static int Main(string[] args)
-    {
+internal class Program {
+    private static int Main(string[] args) {
         var logger = LogManager.GetCurrentClassLogger();
 
-        try
-        {
+        try {
             logger.Info("FTPSheep.NET starting up...");
 
             var app = new CommandApp();
 
-            app.Configure(config =>
-            {
+            app.Configure(config => {
                 config.SetApplicationName("ftpsheep");
                 config.SetApplicationVersion("0.1.0");
 
                 config.AddCommand<DeployCommand>("deploy")
                     .WithDescription("Deploy a .NET application to FTP server")
-                    .WithExample(new[] { "deploy", "--profile", "production" })
-                    .WithExample(new[] { "deploy", "--yes" });
+                    .WithExample("deploy", "--profile", "production")
+                    .WithExample("deploy", "--yes");
 
-                config.AddBranch("profile", profile =>
-                {
+                config.AddBranch("profile", profile => {
                     profile.SetDescription("Manage deployment profiles");
 
                     profile.AddCommand<ProfileListCommand>("list")
@@ -40,7 +34,7 @@ internal class Program
 
                 config.AddCommand<ImportCommand>("import")
                     .WithDescription("Import Visual Studio publish profile")
-                    .WithExample(new[] { "import", "Properties/PublishProfiles/FTP.pubxml" });
+                    .WithExample("import", "Properties/PublishProfiles/FTP.pubxml");
 
                 config.AddCommand<InitCommand>("init")
                     .WithDescription("Initialize a new deployment profile interactively");
@@ -55,14 +49,10 @@ internal class Program
 
             logger.Info("FTPSheep.NET shutting down with exit code {ExitCode}", result);
             return result;
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             logger.Fatal(ex, "Stopped program because of exception");
             return 1;
-        }
-        finally
-        {
+        } finally {
             LogManager.Shutdown();
         }
     }
