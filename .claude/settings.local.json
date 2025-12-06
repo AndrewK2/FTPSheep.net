@@ -9,7 +9,10 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(dotnet remove:*)",
-      "Bash(dotnet run:*)"
+      "Bash(dotnet run:*)",
+      "Bash(dir:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(dotnet test:*)"
     ],
     "deny": [],
     "ask": []
