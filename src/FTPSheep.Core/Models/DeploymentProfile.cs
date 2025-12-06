@@ -11,19 +11,9 @@ public sealed class DeploymentProfile
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the FTP server hostname or IP address.
+    /// Gets or sets the server connection settings.
     /// </summary>
-    public string Server { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the FTP server port. Default is 21 for FTP, 22 for SFTP.
-    /// </summary>
-    public int Port { get; set; } = 21;
-
-    /// <summary>
-    /// Gets or sets the protocol to use (FTP or SFTP).
-    /// </summary>
-    public ProtocolType Protocol { get; set; } = ProtocolType.Ftp;
+    public ServerConnection Connection { get; set; } = new();
 
     /// <summary>
     /// Gets or sets the FTP username.
@@ -51,19 +41,14 @@ public sealed class DeploymentProfile
     public int Concurrency { get; set; } = 4;
 
     /// <summary>
-    /// Gets or sets the connection timeout in seconds.
-    /// </summary>
-    public int TimeoutSeconds { get; set; } = 30;
-
-    /// <summary>
     /// Gets or sets the number of retry attempts for failed operations.
     /// </summary>
     public int RetryCount { get; set; } = 3;
 
     /// <summary>
-    /// Gets or sets the build configuration (Debug, Release, etc.).
+    /// Gets or sets the build configuration settings.
     /// </summary>
-    public string BuildConfiguration { get; set; } = "Release";
+    public BuildConfiguration Build { get; set; } = new();
 
     /// <summary>
     /// Gets or sets the file exclusion patterns (glob patterns).
@@ -80,15 +65,78 @@ public sealed class DeploymentProfile
     /// </summary>
     public bool AppOfflineEnabled { get; set; } = true;
 
+    // Obsolete properties for backward compatibility
+    // These will be removed in V2.0
+
+    /// <summary>
+    /// Gets or sets the FTP server hostname or IP address.
+    /// </summary>
+    [Obsolete("Use Connection.Host instead. This property will be removed in V2.0.")]
+    public string Server
+    {
+        get => Connection.Host;
+        set => Connection.Host = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the FTP server port. Default is 21 for FTP, 22 for SFTP.
+    /// </summary>
+    [Obsolete("Use Connection.Port instead. This property will be removed in V2.0.")]
+    public int Port
+    {
+        get => Connection.Port;
+        set => Connection.Port = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the protocol to use (FTP or SFTP).
+    /// </summary>
+    [Obsolete("Use Connection.Protocol instead. This property will be removed in V2.0.")]
+    public ProtocolType Protocol
+    {
+        get => Connection.Protocol;
+        set => Connection.Protocol = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the connection timeout in seconds.
+    /// </summary>
+    [Obsolete("Use Connection.TimeoutSeconds instead. This property will be removed in V2.0.")]
+    public int TimeoutSeconds
+    {
+        get => Connection.TimeoutSeconds;
+        set => Connection.TimeoutSeconds = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the build configuration (Debug, Release, etc.).
+    /// </summary>
+    [Obsolete("Use Build.Configuration instead. This property will be removed in V2.0.")]
+    public string BuildConfiguration
+    {
+        get => Build.Configuration;
+        set => Build.Configuration = value;
+    }
+
     /// <summary>
     /// Gets or sets the target framework for publishing (e.g., net8.0).
     /// </summary>
-    public string? TargetFramework { get; set; }
+    [Obsolete("Use Build.TargetFramework instead. This property will be removed in V2.0.")]
+    public string? TargetFramework
+    {
+        get => Build.TargetFramework;
+        set => Build.TargetFramework = value;
+    }
 
     /// <summary>
     /// Gets or sets the runtime identifier for publishing (e.g., win-x64).
     /// </summary>
-    public string? RuntimeIdentifier { get; set; }
+    [Obsolete("Use Build.RuntimeIdentifier instead. This property will be removed in V2.0.")]
+    public string? RuntimeIdentifier
+    {
+        get => Build.RuntimeIdentifier;
+        set => Build.RuntimeIdentifier = value;
+    }
 }
 
 /// <summary>
