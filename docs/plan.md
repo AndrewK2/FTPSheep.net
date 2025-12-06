@@ -94,15 +94,29 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 ## 2. Backend Foundation
 
 ### 2.1 Core Domain Models and Interfaces
-- [ ] Define DeploymentProfile model
+- [x] Define DeploymentProfile model
   - Properties: Name, Server, Port, Protocol, Username, RemotePath, ProjectPath
   - Properties: Concurrency, Timeout, RetryCount, BuildConfiguration
   - Properties: ExclusionPatterns, CleanupMode, App_OfflineEnabled
   - Serialization/deserialization support
-- [ ] Define DeploymentResult model
+  - Added Connection and Build nested models for better organization
+  - Obsolete properties with delegation for backward compatibility
+- [x] Define DeploymentResult model
   - Properties: Success, StartTime, EndTime, Duration
   - Properties: FilesUploaded, TotalSize, AverageSpeed
   - Properties: ErrorMessages, WarningMessages
+- [x] Define BuildConfiguration model
+  - Properties: Configuration, TargetFramework, RuntimeIdentifier, SelfContained
+  - AdditionalProperties dictionary for extensibility
+  - Validation logic with detailed error messages
+- [x] Define ServerConnection model
+  - Properties: Host, Port, Protocol, TimeoutSeconds, ConnectionMode, UseSsl, ValidateSslCertificate
+  - GetConnectionString() method for URI generation
+  - Port normalization and validation logic
+- [x] Define ICredentialStore interface
+  - Methods: SaveCredentials, LoadCredentials, DeleteCredentials, HasCredentials
+  - Encryption/decryption methods (EncryptPassword, DecryptPassword)
+  - Credentials model class
 - [ ] Define IFtpClient interface
   - Methods: Connect, Disconnect, UploadFile, DeleteFile, ListFiles
   - Methods: CreateDirectory, TestConnection, GetServerInfo
@@ -110,30 +124,55 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 - [ ] Define IBuildTool interface
   - Methods: Build, Publish, GetProjectInfo
   - Support for both MSBuild and dotnet CLI implementations
-- [ ] Define ICredentialStore interface
-  - Methods: SaveCredentials, LoadCredentials, DeleteCredentials
-  - Encryption/decryption abstraction
 - [ ] Define IProgressTracker interface
   - Methods: ReportProgress, UpdateStatus, ReportFileUploaded
   - Event-based progress updates
 
 ### 2.2 Configuration and Settings Management
-- [ ] Implement configuration file structure
-  - Global configuration file location (~/.ftpsheep/config.json or %APPDATA%)
-  - Profile storage location and structure
-  - Default settings and overrides
-- [ ] Create configuration loader
-  - Read global configuration
-  - Merge with profile-specific settings
-  - Apply command-line overrides
-- [ ] Implement profile persistence
-  - Save profiles to JSON files
-  - Load profiles by name or path
-  - Profile validation on load
-- [ ] Create settings validation
-  - Validate server URLs and ports
-  - Validate file paths and patterns
-  - Validate numeric ranges (concurrency, timeouts)
+- [x] Implement configuration file structure
+  - Global configuration file location (%APPDATA%\.ftpsheep\config.json)
+  - Profile storage location (%APPDATA%\.ftpsheep\profiles\)
+  - Default settings and overrides via GlobalConfiguration model
+  - PathResolver utility for consistent path management
+- [x] Create configuration loader
+  - JsonConfigurationService with async I/O
+  - Automatic creation of default configuration
+  - Merge exclusion patterns (additive)
+  - Override numeric/string settings with smart defaults
+- [x] Implement profile persistence
+  - JsonProfileRepository with atomic writes (temp file → move)
+  - Save/load profiles by name or absolute path
+  - Profile validation on load with detailed error messages
+  - Integration with ICredentialStore for password management
+- [x] Create settings validation
+  - PathResolver validates profile names (alphanumeric, hyphens, underscores)
+  - Prevents Windows reserved names (CON, PRN, AUX, NUL, etc.)
+  - ServerConnection validates ports (1-65535) and protocols
+  - BuildConfiguration validates runtime identifiers
+  - ProfileService validates concurrency (1-32), retry count (0-10), paths
+- [x] Create exception hierarchy
+  - ProfileException (base), ProfileNotFoundException, ProfileAlreadyExistsException
+  - ProfileValidationException (with ValidationErrors), ProfileStorageException
+  - ConfigurationException for global config errors
+- [x] Create supporting models
+  - GlobalConfiguration with default settings
+  - ValidationResult with fluent API (errors, warnings, Success/Failed factories)
+  - ProfileSummary for lightweight listings
+- [x] Implement high-level ProfileService
+  - CreateProfileAsync, LoadProfileAsync, UpdateProfileAsync, DeleteProfileAsync
+  - ListProfilesAsync with ProfileSummary objects
+  - ValidateProfile with comprehensive validation
+  - Integration with ICredentialStore and IConfigurationService
+- [x] JSON serialization strategy
+  - System.Text.Json with camelCase, WriteIndented, enum conversion
+  - [JsonIgnore] on obsolete DeploymentProfile properties
+  - Automatic migration to nested structure (Connection, Build)
+  - Backward compatible deserialization
+- [x] Comprehensive unit tests (46 tests)
+  - PathResolverTests (15 tests)
+  - JsonProfileRepositoryTests (16 tests)
+  - ProfileServiceTests (15 tests)
+  - All 82 total tests passing
 
 ### 2.3 Credential Management and Encryption
 - [ ] Implement Windows DPAPI encryption wrapper
