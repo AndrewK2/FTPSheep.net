@@ -272,18 +272,45 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 ## 3. Build Integration (Backend)
 
 ### 3.1 Project Type Detection
-- [ ] Implement .NET project file parser
-  - Read .csproj, .vbproj, .fsproj files
-  - Extract TargetFramework or TargetFrameworks
-  - Determine project SDK (Microsoft.NET.Sdk.Web, etc.)
-- [ ] Create project type classifier
-  - Detect .NET Framework (4.x) projects
-  - Detect .NET Core / .NET 5+ projects
-  - Identify ASP.NET project types (MVC, Blazor, Web API, Razor Pages)
-- [ ] Implement build tool selector
-  - Choose MSBuild for .NET Framework projects
-  - Choose dotnet CLI for .NET Core/5+ projects
-  - Locate build tools on system (PATH, registry, well-known locations)
+- [x] Implement .NET project file parser
+  - ProjectFileParser service parses .csproj, .vbproj, .fsproj files using System.Xml.Linq
+  - Extracts TargetFramework (single) or TargetFrameworks (multi-targeting, semicolon-separated)
+  - Handles legacy .NET Framework projects (TargetFrameworkVersion → TFM conversion)
+  - Determines project SDK (Microsoft.NET.Sdk, Microsoft.NET.Sdk.Web, Microsoft.NET.Sdk.Worker, etc.)
+  - Detects OutputType (Exe, Library, WinExe) for project classification
+  - Identifies project format (SDK-style vs Legacy .NET Framework)
+  - ParseProjectAsync for async operations
+- [x] Create project type classifier
+  - ProjectTypeClassifier with classification methods:
+    * IsDotNetFramework() - detects .NET Framework 4.x projects
+    * IsDotNetCore() - detects .NET Core 1.0-3.1 projects
+    * IsDotNet5Plus() - detects .NET 5, 6, 7, 8+ projects
+    * IsDotNetStandard() - detects .NET Standard libraries
+    * IsAspNet() - detects any ASP.NET project type
+    * IsAspNetCore() - detects modern ASP.NET Core projects
+    * IsWebApplication() - determines if project requires web server
+  - GetProjectDescription() provides human-readable project description
+  - GetRecommendedBuildTool() suggests MSBuild or dotnet CLI
+  - Detects 10 project types: Library, Console, WindowsApp, AspNetWebApp, AspNetMvc, AspNetWebApi, AspNetCore, Blazor, RazorPages, WorkerService
+- [x] Implement build tool selector
+  - BuildToolLocator service with intelligent tool discovery:
+    * LocateDotnetCli() - finds dotnet.exe via PATH or well-known locations
+    * LocateMSBuild() - finds MSBuild.exe using vswhere, PATH, registry, VS installations
+    * Searches Visual Studio 2019/2022 (Community, Professional, Enterprise, BuildTools)
+    * IsDotnetCliAvailable() and IsMSBuildAvailable() for availability checks
+    * GetDotnetCliVersion() retrieves installed dotnet CLI version
+  - BuildTool enum (Unknown, MSBuild, DotnetCli)
+  - ProjectInfo model with comprehensive project metadata
+  - ProjectFormat enum (Unknown, LegacyFramework, SdkStyle)
+  - ProjectType enum (10 types from Unknown to WorkerService)
+- [x] Create custom exceptions (avoiding circular dependencies)
+  - ProjectParseException for project file parsing errors
+  - ToolNotFoundException for missing build tools
+- [x] Comprehensive unit tests (52 new tests, 320 total passing)
+  - ProjectFileParserTests (21 tests): SDK-style, legacy, multi-targeting, all project types
+  - ProjectTypeClassifierTests (19 tests): framework detection, project classification, build tool recommendation
+  - BuildToolLocatorTests (12 tests): tool location, availability checks, version retrieval
+  - All tests passing with full coverage
 
 ### 3.2 MSBuild Integration
 - [ ] Implement MSBuild tool wrapper
