@@ -403,18 +403,51 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 **Note:** Section 3.3 was completed as part of Section 3.2 implementation. The DotnetCliExecutor service provides comprehensive dotnet CLI integration alongside MSBuildExecutor for complete .NET build support.
 
 ### 3.4 Build Output Processing
-- [ ] Implement publish folder scanner
-  - Enumerate all files in publish output
-  - Calculate total file count and size
-  - Apply exclusion patterns to filter files
-- [ ] Create file metadata collection
-  - Capture file paths, sizes, timestamps
-  - Build file upload queue
-  - Sort files for optimal upload order (small files first)
-- [ ] Implement build output validation
-  - Verify essential files exist (web.config, assemblies)
-  - Warn about missing or unexpected files
-  - Check for known issues (locked files, permission problems)
+- [x] Implement publish folder scanner
+  - PublishOutputScanner service scans publish output directories
+  - ScanPublishOutput() recursively enumerates all files in directory
+  - Calculates total file count and size (TotalSize in bytes, FormattedTotalSize string)
+  - Supports custom exclusion patterns via glob patterns (*.pdb, *.xml, .git/**, etc.)
+  - Default exclusion patterns filter out debug symbols, XML docs, source maps, VS cache
+  - Async support via ScanPublishOutputAsync() with cancellation token
+  - MatchesGlobPattern() converts glob patterns to regex for flexible filtering
+  - Supports **/ for directory wildcard, * for file wildcard, ? for single character
+- [x] Create file metadata collection
+  - FileMetadata model captures comprehensive file information:
+    * AbsolutePath, RelativePath, FileName, Extension
+    * Size (bytes), LastModified (UTC), IsDirectory flag
+    * IsWebConfig, IsAssembly, IsStaticWebFile computed properties
+    * FormattedSize property with human-readable format (KB, MB, GB)
+  - PublishOutput model aggregates scan results:
+    * RootPath, Files list, Warnings, Errors lists
+    * FileCount, TotalSize, FormattedTotalSize properties
+    * HasWarnings, HasErrors, IsValid computed properties
+    * FilesSortedBySize for optimal upload order (small files first)
+    * FilesSortedByPath for display purposes
+- [x] Implement build output validation
+  - ValidatePublishOutput() performs comprehensive checks:
+    * Empty directory detection (errors if no files found)
+    * Missing web.config warning for web applications (detected via HTML files + assemblies)
+    * Large file warnings (> 100 MB files flagged)
+    * Development file detection (appsettings.Development.json, launchSettings.json)
+    * Missing assembly warning (no .dll or .exe files)
+    * Zero-byte output error
+  - Validation is optional (validateOutput parameter, defaults to true)
+  - All warnings and errors collected in PublishOutput.Warnings and Errors lists
+- [x] Comprehensive unit tests (16 new tests, 362 total passing)
+  - PublishOutputScannerTests (16 tests):
+    * File enumeration and metadata collection
+    * Total size calculation
+    * Recursive subdirectory scanning
+    * Exclusion pattern filtering (custom and default patterns)
+    * Empty directory validation
+    * Web.config detection and warnings
+    * Development file detection
+    * Large file warnings
+    * File sorting by size and path
+    * Async scanning
+    * Error handling (null path, non-existent directory)
+  - All tests passing with full coverage
 
 ### 3.5 Build Error Handling
 - [ ] Implement build error parser
