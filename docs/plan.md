@@ -175,19 +175,27 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - All 82 total tests passing
 
 ### 2.3 Credential Management and Encryption
-- [ ] Implement Windows DPAPI encryption wrapper
-  - Encrypt string data using DPAPI
-  - Decrypt protected data
-  - Handle encryption errors gracefully
-- [ ] Create credential storage service
-  - Save encrypted credentials to profile
-  - Load and decrypt credentials
-  - Prompt for credentials if not stored
-  - Support environment variable credentials (FTP_USERNAME, FTP_PASSWORD)
-- [ ] Implement secure credential handling
-  - Never log credentials in plain text
-  - Clear credentials from memory after use
-  - Validate credential encryption/decryption
+- [x] Implement Windows DPAPI encryption wrapper
+  - DpapiEncryptionService with Encrypt/Decrypt methods
+  - Uses Windows Data Protection API with CurrentUser scope
+  - Handles encryption errors gracefully with detailed messages
+  - Platform availability check (IsAvailable method)
+- [x] Create credential storage service
+  - CredentialStore implements ICredentialStore
+  - Saves encrypted credentials to %APPDATA%\.ftpsheep\credentials\
+  - Loads and decrypts credentials with automatic directory creation
+  - Full support for environment variable credentials (FTP_USERNAME, FTP_PASSWORD)
+  - Environment variables override stored credentials
+- [x] Implement secure credential handling
+  - Passwords never stored in plain text (DPAPI encryption)
+  - Credentials.Clear() method to clear passwords from memory
+  - Comprehensive error handling with user-friendly messages
+  - Validates DPAPI availability before operations
+- [x] Comprehensive unit tests (30 tests)
+  - DpapiEncryptionServiceTests (13 tests)
+  - CredentialStoreTests (17 tests)
+  - All tests passing with full coverage
+  - Tests for encryption, environment variables, Unicode, special characters
 
 ### 2.4 Logging and Diagnostics
 - [ ] Implement structured logging system
