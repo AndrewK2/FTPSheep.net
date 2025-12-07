@@ -462,30 +462,42 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 
 ## 4. FTP/SFTP Integration (Backend)
 
-### 4.1 FTP Client Implementation
-- [ ] Integrate FluentFTP library
+### 4.1 FTP Client Implementation ✅
+- [x] Integrate FluentFTP library
   - Configure FTP client with connection settings
   - Support active and passive modes
   - Handle custom ports
-- [ ] Implement FTP connection management
+- [x] Implement FTP connection management
   - Connect to FTP server with credentials
   - Validate connection before operations
   - Handle connection timeouts
   - Implement connection pooling for concurrent uploads
-- [ ] Create FTP upload operations
+- [x] Create FTP upload operations
   - Upload single file to specified path
   - Create remote directories as needed
   - Overwrite existing files
   - Set file permissions if supported
-- [ ] Implement FTP directory operations
+- [x] Implement FTP directory operations
   - List files in remote directory
   - Create nested directory structures
   - Delete files and directories
   - Verify remote path exists
-- [ ] Add FTP error handling
+- [x] Add FTP error handling
   - Handle connection errors, timeouts, authentication failures
   - Retry transient failures
   - Provide clear error messages for FTP-specific issues
+
+**Implementation Notes:**
+- Created `FtpConnectionConfig` model with comprehensive FTP settings (host, port, credentials, encryption modes, timeouts, etc.)
+- Implemented `FtpClientService` using FluentFTP's `AsyncFtpClient` with full async/await support
+- Configured FTP client with data connection types (active/passive), encryption modes (None/Explicit/Implicit), certificate validation
+- Created local `FtpException` in Protocols project to avoid circular dependencies
+- Implemented comprehensive error handling with transient error detection for retry logic
+- Added full suite of FTP operations: connect, disconnect, upload, directory operations, file operations
+- All methods support CancellationToken for proper async cancellation
+- Implemented IDisposable for proper resource cleanup
+- Created 22 comprehensive unit tests covering configuration validation, connection state, and error handling
+- All tests passing (22/22)
 
 ### 4.2 SFTP Client Implementation (Low Priority for V1)
 - [ ] Integrate SSH.NET library
