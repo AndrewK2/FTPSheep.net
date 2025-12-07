@@ -198,18 +198,29 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - Tests for encryption, environment variables, Unicode, special characters
 
 ### 2.4 Logging and Diagnostics
-- [ ] Implement structured logging system
-  - Configure log levels (Minimal, Normal, Verbose, Debug)
-  - Timestamp all log entries
-  - Support colored console output
-- [ ] Create deployment history storage
-  - SQLite database or JSON file storage
-  - Record timestamp, profile, result, duration, file counts
-  - Store error messages for failed deployments
-- [ ] Implement log file management
-  - Rotate log files by size or date
-  - Store logs in appropriate application data folder
-  - Provide command to view recent logs
+- [x] Implement structured logging system
+  - LogVerbosity enum (Minimal, Normal, Verbose, Debug)
+  - ColoredConsoleLogger with timestamp and colored output by log level
+  - FileLogger with automatic file rotation
+  - Full integration with Microsoft.Extensions.Logging
+- [x] Create deployment history storage
+  - JsonDeploymentHistoryService with JSON file storage
+  - DeploymentHistoryEntry model with comprehensive deployment data
+  - Records timestamp, profile, result, duration, file counts, speed metrics
+  - Stores error and warning messages
+  - Thread-safe operations with SemaphoreSlim
+  - Automatic history trimming (max 1000 entries)
+- [x] Implement log file management
+  - FileLogger with configurable rotation by size (default 10MB)
+  - Configurable max file count (default 5 files)
+  - Automatic log directory creation in %APPDATA%\.ftpsheep\logs
+  - UTC timestamps for all log entries
+  - Atomic file writes using temp files
+- [x] Comprehensive unit tests (41 new tests, 143 total passing)
+  - JsonDeploymentHistoryServiceTests (10 tests)
+  - FileLoggerTests (8 tests)
+  - ColoredConsoleLoggerTests (9 tests)
+  - All tests passing with full coverage
 
 ### 2.5 Error Handling and Recovery
 - [ ] Define custom exception hierarchy
