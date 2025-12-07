@@ -223,23 +223,51 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - All tests passing with full coverage
 
 ### 2.5 Error Handling and Recovery
-- [ ] Define custom exception hierarchy
-  - BuildException, ConnectionException, AuthenticationException
-  - DeploymentException, ConfigurationException
-- [ ] Implement retry logic framework
-  - Configurable retry count and backoff strategy
-  - Exponential backoff for transient failures
-  - Don't retry permanent errors (authentication failures)
-- [ ] Create error message formatting
-  - User-friendly error messages with context
-  - Suggestions for common issues
-  - Technical details available in verbose mode
-- [ ] Implement exit code handling
-  - Exit code 0: Success
-  - Exit code 1: General error
+- [x] Define custom exception hierarchy
+  - BuildException with ProjectPath and BuildConfiguration properties
+  - BuildCompilationException with BuildErrors collection
+  - BuildToolNotFoundException for missing MSBuild/dotnet CLI
+  - ConnectionException with Host, Port, IsTransient properties
+  - ConnectionTimeoutException, ConnectionRefusedException, SslCertificateException
+  - AuthenticationException with Username, Host, IsCredentialError properties
+  - InvalidCredentialsException, InsufficientPermissionsException
+  - DeploymentException with ProfileName, Phase, IsRetryable properties
+  - DeploymentPhase enum (Initialization, Build, Connection, Authentication, Upload, Verification, Cleanup)
+  - FileTransferException, InsufficientDiskSpaceException
+- [x] Implement retry logic framework
+  - RetryPolicy with configurable retry count (default 3), delays, exponential backoff
+  - BackoffMultiplier (default 2.0), MaxDelay (default 30s)
+  - IsRetryableException function to determine if exception should be retried
+  - DefaultIsRetryable() checks exception types and properties (IsTransient, IsRetryable)
+  - RetryHandler for executing operations with retry logic
+  - Supports async/sync operations with/without return values
+  - Logs retry attempts and delays with optional ILogger integration
+  - Respects cancellation tokens
+- [x] Create error message formatting
+  - ErrorMessageFormatter with FormatException() and FormatConcise() methods
+  - User-friendly error messages with contextual suggestions for all exception types
+  - GetSuggestions() provides specific troubleshooting steps based on exception type
+  - AppendTechnicalDetails() adds stack traces and exception properties in verbose mode
+  - LogVerbosity integration (Normal vs Verbose vs Debug)
+- [x] Implement exit code handling
+  - ExitCodes static class with constants (Success=0, GeneralError=1, etc.)
+  - FromException() method maps exceptions to appropriate exit codes
+  - GetDescription() method for human-readable exit code descriptions
   - Exit code 2: Build failure
   - Exit code 3: Connection failure
   - Exit code 4: Authentication failure
+  - Exit code 5: Deployment failure
+  - Exit code 6: Configuration error
+  - Exit code 7: Profile not found
+  - Exit code 8: Invalid arguments
+  - Exit code 9: Operation cancelled
+- [x] Comprehensive unit tests (125 new tests, 268 total passing)
+  - RetryPolicyTests (24 tests)
+  - RetryHandlerTests (16 tests)
+  - ExitCodesTests (24 tests)
+  - ErrorMessageFormatterTests (26 tests)
+  - ExceptionTests (35 tests)
+  - All tests passing with full coverage
 
 ## 3. Build Integration (Backend)
 

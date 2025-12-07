@@ -12,7 +12,8 @@
       "Bash(dotnet run:*)",
       "Bash(dir:*)",
       "Bash(dotnet clean:*)",
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
