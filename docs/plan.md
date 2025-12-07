@@ -371,19 +371,36 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - All tests passing with full coverage
 
 ### 3.3 dotnet CLI Integration
-- [ ] Implement dotnet CLI tool wrapper
-  - Locate dotnet.exe on system
-  - Build command-line arguments for publish operation
-  - Support for different build configurations and runtime identifiers
-- [ ] Create dotnet process executor
-  - Execute `dotnet publish` with appropriate arguments
-  - Capture stdout and stderr
-  - Parse build output for errors and warnings
-  - Detect build success or failure
-- [ ] Implement publish operation for .NET Core/5+
-  - Publish to temporary local folder
-  - Support self-contained and framework-dependent deployments
-  - Handle multi-targeting projects
+- [x] Implement dotnet CLI tool wrapper
+  - DotnetCliExecutor uses BuildToolLocator.LocateDotnetCli() to find dotnet.exe
+  - BuildAsync() constructs arguments: `dotnet build "project.csproj" --configuration Release --output "path" --nologo`
+  - PublishAsync() constructs arguments with runtime and self-contained support
+  - Full support for runtime identifiers (win-x64, linux-x64, osx-x64, etc.)
+  - Supports both framework-dependent and self-contained deployments
+- [x] Create dotnet process executor
+  - PublishAsync() executes `dotnet publish` with full argument support:
+    * Configuration (Debug, Release, custom)
+    * Output path for published files
+    * Runtime identifier for platform-specific builds
+    * Self-contained flag for deployment mode
+  - Uses System.Diagnostics.Process with async execution
+  - Captures stdout and stderr with event handlers (same pattern as MSBuildExecutor)
+  - Regex-based error and warning parsing (error/warning [A-Z]+\d+:)
+  - Returns BuildResult with Success, ExitCode, Output, ErrorOutput, Errors, Warnings, Duration
+- [x] Implement publish operation for .NET Core/5+
+  - PublishAsync() outputs to specified folder (temporary or permanent)
+  - Self-contained deployments via `--self-contained true` flag
+  - Framework-dependent deployments via `--self-contained false` or omitting flag
+  - Multi-targeting handled automatically by dotnet CLI (builds for primary framework or all frameworks)
+  - BuildService.PublishDotNetCoreAsync() provides high-level interface with validation
+- [x] Additional operations implemented
+  - BuildAsync() for building without publishing
+  - CleanAsync() for cleaning build artifacts
+  - RestoreAsync() for explicit NuGet package restoration
+  - All operations return consistent BuildResult model
+  - Full cancellation token support for all async operations
+
+**Note:** Section 3.3 was completed as part of Section 3.2 implementation. The DotnetCliExecutor service provides comprehensive dotnet CLI integration alongside MSBuildExecutor for complete .NET build support.
 
 ### 3.4 Build Output Processing
 - [ ] Implement publish folder scanner
