@@ -313,19 +313,62 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - All tests passing with full coverage
 
 ### 3.2 MSBuild Integration
-- [ ] Implement MSBuild tool wrapper
-  - Locate msbuild.exe (Developer Command Prompt, VS installation)
-  - Build command-line arguments for publish operation
-  - Support for different build configurations (Debug, Release)
-- [ ] Create MSBuild process executor
-  - Execute msbuild with appropriate arguments
-  - Capture stdout and stderr
-  - Parse build output for errors and warnings
-  - Detect build success or failure
-- [ ] Implement publish operation for .NET Framework
-  - Publish to temporary local folder
-  - Support Web Application projects
-  - Handle project dependencies and references
+- [x] Implement MSBuild tool wrapper
+  - MSBuildWrapper service builds command-line arguments for MSBuild operations
+  - GetMSBuildPath() uses BuildToolLocator to find MSBuild.exe
+  - BuildArguments() constructs full command line with all properties and options:
+    * Project path with quote escaping
+    * Build targets (/t:Build;Publish;Clean etc.)
+    * Configuration (/p:Configuration=Release)
+    * Platform, OutputPath, TargetFramework properties
+    * Custom properties dictionary with automatic value escaping
+    * Verbosity levels (Quiet, Minimal, Normal, Detailed, Diagnostic)
+    * Parallel build (/m or /m:N for specific CPU count)
+    * Package restore (/restore flag)
+    * Warnings as errors (/p:TreatWarningsAsErrors=true)
+    * Publish profile support
+  - Helper methods: CreateBuildOptions(), CreatePublishOptions(), CreateCleanOptions()
+  - Automatic property value escaping for paths with spaces
+- [x] Create MSBuild process executor
+  - MSBuildExecutor service executes MSBuild.exe and captures output
+  - BuildAsync() - executes build operation
+  - PublishAsync() - executes publish operation with output path tracking
+  - CleanAsync() - executes clean operation
+  - RebuildAsync() - executes rebuild (Clean + Build)
+  - Uses System.Diagnostics.Process for process execution
+  - Async stdout/stderr capture with event handlers
+  - Regex-based error and warning parsing (error/warning [A-Z]+\d+:)
+  - Build duration tracking with DateTime.UtcNow
+  - Cancellation token support with graceful process termination
+  - Returns BuildResult with Success, ExitCode, Output, ErrorOutput, Errors, Warnings, Duration
+- [x] Create dotnet CLI executor
+  - DotnetCliExecutor service for .NET Core/.NET 5+ projects
+  - BuildAsync() - dotnet build with configuration and output path
+  - PublishAsync() - dotnet publish with runtime and self-contained options
+  - CleanAsync() - dotnet clean
+  - RestoreAsync() - dotnet restore for explicit package restoration
+  - Same async output capture and parsing as MSBuildExecutor
+  - Consistent BuildResult return model
+- [x] Implement high-level build service
+  - BuildService orchestrates build operations across MSBuild and dotnet CLI
+  - Automatically selects appropriate build tool based on ProjectInfo:
+    * .NET Framework → MSBuild
+    * .NET Core/.NET 5+ → dotnet CLI
+  - BuildAsync() - unified build interface
+  - PublishAsync() - unified publish interface
+  - PublishDotNetCoreAsync() - advanced dotnet publish with runtime/self-contained options
+  - CleanAsync(), RebuildAsync(), RestoreAsync() - full lifecycle operations
+  - GetProjectInfo() and GetProjectDescription() helper methods
+  - Validates project types (throws InvalidOperationException for .NET Framework on dotnet-only operations)
+- [x] Create models for build operations
+  - MSBuildOptions: ProjectPath, Configuration, Platform, OutputPath, TargetFramework, PublishProfile, Properties dictionary, Targets list, Verbosity, MaxCpuCount, RestorePackages, TreatWarningsAsErrors
+  - MSBuildVerbosity enum: Quiet=0, Minimal=1, Normal=2, Detailed=3, Diagnostic=4
+  - BuildResult: Success, ExitCode, Output, ErrorOutput, Errors list, Warnings list, Duration, OutputPath, HasWarnings, HasErrors properties
+  - Static factory methods: BuildResult.Successful(), BuildResult.Failed()
+- [x] Comprehensive unit tests (25 new tests, 346 total passing)
+  - MSBuildWrapperTests (23 tests): argument building, verbosity levels, properties, targets, options validation
+  - BuildServiceTests (4 tests): tool selection, error handling, SDK vs Framework detection
+  - All tests passing with full coverage
 
 ### 3.3 dotnet CLI Integration
 - [ ] Implement dotnet CLI tool wrapper
