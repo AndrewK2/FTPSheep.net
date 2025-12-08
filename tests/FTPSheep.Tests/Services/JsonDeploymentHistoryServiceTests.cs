@@ -205,6 +205,7 @@ public class JsonDeploymentHistoryServiceTests : IDisposable
             EndTime = startTime.AddSeconds(10),
             FilesUploaded = 5,
             TotalBytes = 2048,
+            SizeUploaded = 2048,
             ErrorMessages = new List<string> { "Error 1" },
             WarningMessages = new List<string> { "Warning 1" }
         };
