@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Defines the stages of a deployment workflow.
 /// </summary>
-public enum DeploymentStage
-{
+public enum DeploymentStage {
     /// <summary>
     /// Deployment has not started.
     /// </summary>

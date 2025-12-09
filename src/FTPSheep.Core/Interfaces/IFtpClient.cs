@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Interfaces;
 /// <summary>
 /// Defines the contract for FTP/SFTP client operations.
 /// </summary>
-public interface IFtpClient : IDisposable
-{
+public interface IFtpClient : IDisposable {
     /// <summary>
     /// Connects to the FTP server.
     /// </summary>

@@ -4,21 +4,17 @@ using FTPSheep.Protocols.Services;
 
 namespace FTPSheep.Tests.Protocols;
 
-public class FtpClientServiceTests
-{
+public class FtpClientServiceTests {
     [Fact]
-    public void Constructor_WithNullConfig_ThrowsArgumentNullException()
-    {
+    public void Constructor_WithNullConfig_ThrowsArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new FtpClientService(null!));
     }
 
     [Fact]
-    public void Constructor_WithEmptyHost_ThrowsArgumentException()
-    {
+    public void Constructor_WithEmptyHost_ThrowsArgumentException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "",
             Username = "user",
             Password = "pass"
@@ -30,11 +26,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void Constructor_WithInvalidPort_ThrowsArgumentException()
-    {
+    public void Constructor_WithInvalidPort_ThrowsArgumentException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Port = 0,
             Username = "user",
@@ -47,11 +41,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void Constructor_WithPortTooHigh_ThrowsArgumentException()
-    {
+    public void Constructor_WithPortTooHigh_ThrowsArgumentException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Port = 70000,
             Username = "user",
@@ -64,11 +56,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void Constructor_WithEmptyUsername_ThrowsArgumentException()
-    {
+    public void Constructor_WithEmptyUsername_ThrowsArgumentException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "",
             Password = "pass"
@@ -80,11 +70,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void Constructor_WithValidConfig_CreatesInstance()
-    {
+    public void Constructor_WithValidConfig_CreatesInstance() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Port = 21,
             Username = "user",
@@ -100,11 +88,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void IsConnected_BeforeConnect_ReturnsFalse()
-    {
+    public void IsConnected_BeforeConnect_ReturnsFalse() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -118,11 +104,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public async Task UploadFileAsync_WhenNotConnected_ThrowsInvalidOperationException()
-    {
+    public async Task UploadFileAsync_WhenNotConnected_ThrowsInvalidOperationException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -137,11 +121,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public async Task CreateDirectoryAsync_WhenNotConnected_ThrowsInvalidOperationException()
-    {
+    public async Task CreateDirectoryAsync_WhenNotConnected_ThrowsInvalidOperationException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -156,11 +138,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public async Task DirectoryExistsAsync_WhenNotConnected_ThrowsInvalidOperationException()
-    {
+    public async Task DirectoryExistsAsync_WhenNotConnected_ThrowsInvalidOperationException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -175,11 +155,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public async Task ListDirectoryAsync_WhenNotConnected_ThrowsInvalidOperationException()
-    {
+    public async Task ListDirectoryAsync_WhenNotConnected_ThrowsInvalidOperationException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -194,11 +172,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public async Task DeleteFileAsync_WhenNotConnected_ThrowsInvalidOperationException()
-    {
+    public async Task DeleteFileAsync_WhenNotConnected_ThrowsInvalidOperationException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -213,11 +189,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public async Task DeleteDirectoryAsync_WhenNotConnected_ThrowsInvalidOperationException()
-    {
+    public async Task DeleteDirectoryAsync_WhenNotConnected_ThrowsInvalidOperationException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -232,11 +206,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public async Task FileExistsAsync_WhenNotConnected_ThrowsInvalidOperationException()
-    {
+    public async Task FileExistsAsync_WhenNotConnected_ThrowsInvalidOperationException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -251,11 +223,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public async Task GetFileSizeAsync_WhenNotConnected_ThrowsInvalidOperationException()
-    {
+    public async Task GetFileSizeAsync_WhenNotConnected_ThrowsInvalidOperationException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -270,11 +240,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public async Task SetFilePermissionsAsync_WhenNotConnected_ThrowsInvalidOperationException()
-    {
+    public async Task SetFilePermissionsAsync_WhenNotConnected_ThrowsInvalidOperationException() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -289,11 +257,9 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void Dispose_CanBeCalledMultipleTimes()
-    {
+    public void Dispose_CanBeCalledMultipleTimes() {
         // Arrange
-        var config = new FtpConnectionConfig
-        {
+        var config = new FtpConnectionConfig {
             Host = "ftp.example.com",
             Username = "user",
             Password = "pass"
@@ -308,8 +274,7 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void FtpConnectionConfig_DefaultValues_AreCorrect()
-    {
+    public void FtpConnectionConfig_DefaultValues_AreCorrect() {
         // Arrange & Act
         var config = new FtpConnectionConfig();
 
@@ -327,8 +292,7 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void FtpException_CanBeCreated_WithMessage()
-    {
+    public void FtpException_CanBeCreated_WithMessage() {
         // Arrange
         var message = "Test error message";
 
@@ -343,8 +307,7 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void FtpException_CanBeCreated_WithMessageAndInnerException()
-    {
+    public void FtpException_CanBeCreated_WithMessageAndInnerException() {
         // Arrange
         var message = "Test error message";
         var innerException = new InvalidOperationException("Inner error");
@@ -358,8 +321,7 @@ public class FtpClientServiceTests
     }
 
     [Fact]
-    public void FtpException_Properties_CanBeSet()
-    {
+    public void FtpException_Properties_CanBeSet() {
         // Arrange
         var exception = new FtpException("Test error");
 

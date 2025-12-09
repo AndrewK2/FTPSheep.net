@@ -1,25 +1,20 @@
 using FTPSheep.Core.Exceptions;
 using FTPSheep.Core.Services;
-using Xunit;
 
 namespace FTPSheep.Tests.Services;
 
-public class PublishProfileParserTests : IDisposable
-{
+public class PublishProfileParserTests : IDisposable {
     private readonly string _testDirectory;
     private readonly PublishProfileParser _parser;
 
-    public PublishProfileParserTests()
-    {
+    public PublishProfileParserTests() {
         _testDirectory = Path.Combine(Path.GetTempPath(), $"ftpsheep-test-{Guid.NewGuid()}");
         Directory.CreateDirectory(_testDirectory);
         _parser = new PublishProfileParser();
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-        {
+    public void Dispose() {
+        if(Directory.Exists(_testDirectory)) {
             Directory.Delete(_testDirectory, recursive: true);
         }
     }
@@ -27,22 +22,19 @@ public class PublishProfileParserTests : IDisposable
     #region ParseProfile Tests
 
     [Fact]
-    public void ParseProfile_WithNullPath_ThrowsArgumentException()
-    {
+    public void ParseProfile_WithNullPath_ThrowsArgumentException() {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => _parser.ParseProfile(null!));
     }
 
     [Fact]
-    public void ParseProfile_WithEmptyPath_ThrowsArgumentException()
-    {
+    public void ParseProfile_WithEmptyPath_ThrowsArgumentException() {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => _parser.ParseProfile(string.Empty));
     }
 
     [Fact]
-    public void ParseProfile_WithNonExistentFile_ThrowsFileNotFoundException()
-    {
+    public void ParseProfile_WithNonExistentFile_ThrowsFileNotFoundException() {
         // Arrange
         var path = Path.Combine(_testDirectory, "nonexistent.pubxml");
 
@@ -51,8 +43,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void ParseProfile_WithValidFtpProfile_ParsesCorrectly()
-    {
+    public void ParseProfile_WithValidFtpProfile_ParsesCorrectly() {
         // Arrange
         var pubxmlPath = Path.Combine(_testDirectory, "test.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -86,8 +77,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void ParseProfile_WithPublishMethodElement_ParsesCorrectly()
-    {
+    public void ParseProfile_WithPublishMethodElement_ParsesCorrectly() {
         // Arrange
         var pubxmlPath = Path.Combine(_testDirectory, "test2.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -108,8 +98,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void ParseProfile_WithSavePWDTrue_ParsesCorrectly()
-    {
+    public void ParseProfile_WithSavePWDTrue_ParsesCorrectly() {
         // Arrange
         var pubxmlPath = Path.Combine(_testDirectory, "test3.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -130,8 +119,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void ParseProfile_WithAdditionalProperties_CapturesProperties()
-    {
+    public void ParseProfile_WithAdditionalProperties_CapturesProperties() {
         // Arrange
         var pubxmlPath = Path.Combine(_testDirectory, "test4.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -155,8 +143,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void ParseProfile_WithInvalidXml_ThrowsProfileException()
-    {
+    public void ParseProfile_WithInvalidXml_ThrowsProfileException() {
         // Arrange
         var pubxmlPath = Path.Combine(_testDirectory, "invalid.pubxml");
         File.WriteAllText(pubxmlPath, "invalid xml content <><");
@@ -167,8 +154,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void ParseProfile_WithoutPropertyGroup_ThrowsProfileException()
-    {
+    public void ParseProfile_WithoutPropertyGroup_ThrowsProfileException() {
         // Arrange
         var pubxmlPath = Path.Combine(_testDirectory, "no-propgroup.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -181,8 +167,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public async Task ParseProfileAsync_WithValidProfile_ParsesCorrectly()
-    {
+    public async Task ParseProfileAsync_WithValidProfile_ParsesCorrectly() {
         // Arrange
         var pubxmlPath = Path.Combine(_testDirectory, "async-test.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -210,8 +195,7 @@ public class PublishProfileParserTests : IDisposable
     #region DiscoverProfiles Tests
 
     [Fact]
-    public void DiscoverProfiles_WithStandardLocation_FindsProfiles()
-    {
+    public void DiscoverProfiles_WithStandardLocation_FindsProfiles() {
         // Arrange
         var propertiesDir = Path.Combine(_testDirectory, "Properties", "PublishProfiles");
         Directory.CreateDirectory(propertiesDir);
@@ -230,8 +214,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void DiscoverProfiles_WithNonStandardLocation_FindsProfiles()
-    {
+    public void DiscoverProfiles_WithNonStandardLocation_FindsProfiles() {
         // Arrange
         var subDir = Path.Combine(_testDirectory, "SubDir");
         Directory.CreateDirectory(subDir);
@@ -247,8 +230,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void DiscoverProfiles_WithNoProfiles_ReturnsEmptyList()
-    {
+    public void DiscoverProfiles_WithNoProfiles_ReturnsEmptyList() {
         // Act
         var profiles = _parser.DiscoverProfiles(_testDirectory);
 
@@ -257,8 +239,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void DiscoverProfiles_WithNullPath_UsesCurrentDirectory()
-    {
+    public void DiscoverProfiles_WithNullPath_UsesCurrentDirectory() {
         // Act
         var profiles = _parser.DiscoverProfiles(null!);
 
@@ -267,8 +248,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void DiscoverProfiles_WithNonExistentDirectory_ReturnsEmptyList()
-    {
+    public void DiscoverProfiles_WithNonExistentDirectory_ReturnsEmptyList() {
         // Arrange
         var nonExistentPath = Path.Combine(_testDirectory, "nonexistent");
 
@@ -280,8 +260,7 @@ public class PublishProfileParserTests : IDisposable
     }
 
     [Fact]
-    public void DiscoverProfiles_PrefersStandardLocation_OverRecursiveSearch()
-    {
+    public void DiscoverProfiles_PrefersStandardLocation_OverRecursiveSearch() {
         // Arrange
         // Create profile in standard location
         var propertiesDir = Path.Combine(_testDirectory, "Properties", "PublishProfiles");

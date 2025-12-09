@@ -5,8 +5,7 @@ namespace FTPSheep.Core.Interfaces;
 /// <summary>
 /// Defines the contract for managing deployment history.
 /// </summary>
-public interface IDeploymentHistoryService
-{
+public interface IDeploymentHistoryService {
     /// <summary>
     /// Adds a deployment entry to the history.
     /// </summary>

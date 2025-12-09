@@ -1,29 +1,23 @@
 using FTPSheep.Core.Logging;
 using Microsoft.Extensions.Logging;
-using Xunit;
 
 namespace FTPSheep.Tests.Logging;
 
-public class FileLoggerTests : IDisposable
-{
+public class FileLoggerTests : IDisposable {
     private readonly string _testLogDirectory;
 
-    public FileLoggerTests()
-    {
+    public FileLoggerTests() {
         _testLogDirectory = Path.Combine(Path.GetTempPath(), $"ftpsheep-logs-{Guid.NewGuid()}");
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_testLogDirectory))
-        {
+    public void Dispose() {
+        if(Directory.Exists(_testLogDirectory)) {
             Directory.Delete(_testLogDirectory, true);
         }
     }
 
     [Fact]
-    public void Log_Information_WritesToFile()
-    {
+    public void Log_Information_WritesToFile() {
         // Arrange
         using var logger = new FileLogger("TestCategory", _testLogDirectory, minLevel: LogLevel.Information);
 
@@ -41,8 +35,7 @@ public class FileLoggerTests : IDisposable
     }
 
     [Fact]
-    public void Log_BelowMinLevel_DoesNotWrite()
-    {
+    public void Log_BelowMinLevel_DoesNotWrite() {
         // Arrange
         using var logger = new FileLogger("TestCategory", _testLogDirectory, minLevel: LogLevel.Warning);
 
@@ -60,8 +53,7 @@ public class FileLoggerTests : IDisposable
     }
 
     [Fact]
-    public void Log_WithException_IncludesExceptionDetails()
-    {
+    public void Log_WithException_IncludesExceptionDetails() {
         // Arrange
         using var logger = new FileLogger("TestCategory", _testLogDirectory);
         var exception = new InvalidOperationException("Test exception");
@@ -78,8 +70,7 @@ public class FileLoggerTests : IDisposable
     }
 
     [Fact]
-    public void IsEnabled_RespectsMinLevel()
-    {
+    public void IsEnabled_RespectsMinLevel() {
         // Arrange
         using var logger = new FileLogger("TestCategory", _testLogDirectory, minLevel: LogLevel.Warning);
 
@@ -93,8 +84,7 @@ public class FileLoggerTests : IDisposable
     }
 
     [Fact]
-    public void Log_CreatesLogDirectory_IfNotExists()
-    {
+    public void Log_CreatesLogDirectory_IfNotExists() {
         // Arrange
         var nonExistentDir = Path.Combine(_testLogDirectory, "subdir");
         Assert.False(Directory.Exists(nonExistentDir));
@@ -108,8 +98,7 @@ public class FileLoggerTests : IDisposable
     }
 
     [Fact]
-    public void Log_MultipleMessages_AppendsToSameFile()
-    {
+    public void Log_MultipleMessages_AppendsToSameFile() {
         // Arrange
         using var logger = new FileLogger("TestCategory", _testLogDirectory);
 
@@ -129,8 +118,7 @@ public class FileLoggerTests : IDisposable
     }
 
     [Fact]
-    public void Log_IncludesTimestamp()
-    {
+    public void Log_IncludesTimestamp() {
         // Arrange
         using var logger = new FileLogger("TestCategory", _testLogDirectory);
 

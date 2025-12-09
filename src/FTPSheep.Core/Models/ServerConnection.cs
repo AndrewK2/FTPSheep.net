@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Represents FTP/SFTP server connection settings.
 /// </summary>
-public sealed class ServerConnection
-{
+public sealed class ServerConnection {
     /// <summary>
     /// Gets or sets the server hostname or IP address.
     /// </summary>
@@ -55,16 +54,14 @@ public sealed class ServerConnection
     /// <summary>
     /// Creates a default ServerConnection instance.
     /// </summary>
-    public ServerConnection()
-    {
+    public ServerConnection() {
     }
 
     /// <summary>
     /// Creates a ServerConnection with the specified host.
     /// </summary>
     /// <param name="host">The server hostname or IP address.</param>
-    public ServerConnection(string host)
-    {
+    public ServerConnection(string host) {
         Host = host ?? string.Empty;
     }
 
@@ -74,8 +71,7 @@ public sealed class ServerConnection
     /// <param name="host">The server hostname or IP address.</param>
     /// <param name="port">The server port.</param>
     /// <param name="protocol">The protocol to use.</param>
-    public ServerConnection(string host, int port, ProtocolType protocol)
-    {
+    public ServerConnection(string host, int port, ProtocolType protocol) {
         Host = host ?? string.Empty;
         Port = port;
         Protocol = protocol;
@@ -85,8 +81,7 @@ public sealed class ServerConnection
     /// Gets the connection string representation (for display purposes).
     /// </summary>
     /// <returns>A connection string in the format: protocol://host:port</returns>
-    public string GetConnectionString()
-    {
+    public string GetConnectionString() {
         var protocol = Protocol == ProtocolType.Sftp ? "sftp" : (UseSsl ? "ftps" : "ftp");
         return $"{protocol}://{Host}:{Port}";
     }
@@ -96,41 +91,31 @@ public sealed class ServerConnection
     /// </summary>
     /// <param name="errors">A list of validation error messages.</param>
     /// <returns>True if valid, otherwise false.</returns>
-    public bool Validate(out List<string> errors)
-    {
+    public bool Validate(out List<string> errors) {
         errors = new List<string>();
 
-        if (string.IsNullOrWhiteSpace(Host))
-        {
+        if(string.IsNullOrWhiteSpace(Host)) {
             errors.Add("Server host cannot be empty.");
         }
 
-        if (Port <= 0 || Port > 65535)
-        {
+        if(Port <= 0 || Port > 65535) {
             errors.Add($"Port {Port} is invalid. Must be between 1 and 65535.");
         }
 
-        if (TimeoutSeconds <= 0)
-        {
+        if(TimeoutSeconds <= 0) {
             errors.Add($"Timeout {TimeoutSeconds} is invalid. Must be greater than 0.");
         }
 
         // Protocol-specific validation
-        if (Protocol == ProtocolType.Ftp)
-        {
-            if (Port == 22)
-            {
+        if(Protocol == ProtocolType.Ftp) {
+            if(Port == 22) {
                 errors.Add("Port 22 is typically used for SFTP, but protocol is set to FTP. Did you mean to use SFTP?");
             }
-        }
-        else if (Protocol == ProtocolType.Sftp)
-        {
-            if (Port == 21)
-            {
+        } else if(Protocol == ProtocolType.Sftp) {
+            if(Port == 21) {
                 errors.Add("Port 21 is typically used for FTP, but protocol is set to SFTP. Did you mean to use FTP?");
             }
-            if (UseSsl)
-            {
+            if(UseSsl) {
                 errors.Add("SSL/TLS settings are not applicable for SFTP (SFTP always uses SSH encryption).");
             }
         }
@@ -141,14 +126,10 @@ public sealed class ServerConnection
     /// <summary>
     /// Sets default port based on protocol if port is at default value.
     /// </summary>
-    public void NormalizePort()
-    {
-        if (Port == 21 && Protocol == ProtocolType.Sftp)
-        {
+    public void NormalizePort() {
+        if(Port == 21 && Protocol == ProtocolType.Sftp) {
             Port = 22;
-        }
-        else if (Port == 22 && Protocol == ProtocolType.Ftp)
-        {
+        } else if(Port == 22 && Protocol == ProtocolType.Ftp) {
             Port = 21;
         }
     }
@@ -157,8 +138,7 @@ public sealed class ServerConnection
 /// <summary>
 /// Defines FTP connection modes.
 /// </summary>
-public enum FtpConnectionMode
-{
+public enum FtpConnectionMode {
     /// <summary>
     /// Active mode (server connects to client for data transfer).
     /// </summary>

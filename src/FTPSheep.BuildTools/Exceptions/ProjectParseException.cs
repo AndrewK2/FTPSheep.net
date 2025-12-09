@@ -3,8 +3,7 @@ namespace FTPSheep.BuildTools.Exceptions;
 /// <summary>
 /// Exception thrown when a project file cannot be parsed.
 /// </summary>
-public class ProjectParseException : Exception
-{
+public class ProjectParseException : Exception {
     /// <summary>
     /// Gets the path to the project file that failed to parse.
     /// </summary>
@@ -13,16 +12,14 @@ public class ProjectParseException : Exception
     /// <summary>
     /// Initializes a new instance of the <see cref="ProjectParseException"/> class.
     /// </summary>
-    public ProjectParseException()
-    {
+    public ProjectParseException() {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProjectParseException"/> class with a specified error message.
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
-    public ProjectParseException(string message) : base(message)
-    {
+    public ProjectParseException(string message) : base(message) {
     }
 
     /// <summary>
@@ -30,8 +27,7 @@ public class ProjectParseException : Exception
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public ProjectParseException(string message, Exception innerException) : base(message, innerException)
-    {
+    public ProjectParseException(string message, Exception innerException) : base(message, innerException) {
     }
 
     /// <summary>
@@ -39,8 +35,7 @@ public class ProjectParseException : Exception
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
     /// <param name="projectPath">The path to the project file.</param>
-    public ProjectParseException(string message, string projectPath) : base(message)
-    {
+    public ProjectParseException(string message, string projectPath) : base(message) {
         ProjectPath = projectPath;
     }
 
@@ -50,8 +45,7 @@ public class ProjectParseException : Exception
     /// <param name="message">The message that describes the error.</param>
     /// <param name="projectPath">The path to the project file.</param>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public ProjectParseException(string message, string projectPath, Exception innerException) : base(message, innerException)
-    {
+    public ProjectParseException(string message, string projectPath, Exception innerException) : base(message, innerException) {
         ProjectPath = projectPath;
     }
 }

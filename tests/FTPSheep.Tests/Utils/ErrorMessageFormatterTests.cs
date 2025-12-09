@@ -1,28 +1,24 @@
-using FTPSheep.Core.Utils;
 using FTPSheep.Core.Exceptions;
 using FTPSheep.Core.Models;
+using FTPSheep.Core.Utils;
 
 namespace FTPSheep.Tests.Utils;
 
-public class ErrorMessageFormatterTests
-{
+public class ErrorMessageFormatterTests {
     [Fact]
-    public void FormatException_WithNullException_ShouldThrowArgumentNullException()
-    {
+    public void FormatException_WithNullException_ShouldThrowArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => ErrorMessageFormatter.FormatException(null!));
     }
 
     [Fact]
-    public void FormatConcise_WithNullException_ShouldThrowArgumentNullException()
-    {
+    public void FormatConcise_WithNullException_ShouldThrowArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => ErrorMessageFormatter.FormatConcise(null!));
     }
 
     [Fact]
-    public void FormatException_WithSimpleException_ShouldIncludeErrorMessage()
-    {
+    public void FormatException_WithSimpleException_ShouldIncludeErrorMessage() {
         // Arrange
         var exception = new InvalidOperationException("Test error");
 
@@ -34,8 +30,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatConcise_ShouldReturnTypeAndMessage()
-    {
+    public void FormatConcise_ShouldReturnTypeAndMessage() {
         // Arrange
         var exception = new InvalidOperationException("Test error");
 
@@ -47,8 +42,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithBuildToolNotFoundException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithBuildToolNotFoundException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new BuildToolNotFoundException("MSBuild");
 
@@ -62,8 +56,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithBuildCompilationException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithBuildCompilationException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new BuildCompilationException(new[] { "Error CS1001" });
 
@@ -78,8 +71,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithConnectionTimeoutException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithConnectionTimeoutException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new ConnectionTimeoutException("server.com", 21, TimeSpan.FromSeconds(30));
 
@@ -95,8 +87,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithConnectionRefusedException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithConnectionRefusedException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new ConnectionRefusedException("ftp.example.com", 21);
 
@@ -111,8 +102,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithSslCertificateException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithSslCertificateException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new SslCertificateException("server.com", "Certificate expired");
 
@@ -127,8 +117,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithInvalidCredentialsException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithInvalidCredentialsException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new InvalidCredentialsException("testuser", "server.com");
 
@@ -144,8 +133,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithInsufficientPermissionsException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithInsufficientPermissionsException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new InsufficientPermissionsException("testuser", "server.com", "WRITE");
 
@@ -160,8 +148,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithAuthenticationException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithAuthenticationException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new AuthenticationException("Auth failed", "testuser", "server.com");
 
@@ -176,8 +163,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithFileTransferException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithFileTransferException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new FileTransferException("/local/file.txt", "/remote/file.txt");
 
@@ -193,8 +179,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithInsufficientDiskSpaceException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithInsufficientDiskSpaceException_ShouldIncludeSuggestions() {
         // Arrange
         var requiredBytes = 1000L * 1024 * 1024; // 1000 MB
         var availableBytes = 500L * 1024 * 1024;  // 500 MB
@@ -211,8 +196,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithProfileNotFoundException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithProfileNotFoundException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new ProfileNotFoundException("myprofile");
 
@@ -227,8 +211,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithProfileValidationException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithProfileValidationException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new ProfileValidationException("profile1", new[] { "Error 1" });
 
@@ -243,8 +226,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithConfigurationException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithConfigurationException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new ConfigurationException("Invalid config");
 
@@ -259,8 +241,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithOperationCanceledException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithOperationCanceledException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new OperationCanceledException("Operation cancelled");
 
@@ -274,8 +255,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithRetryableDeploymentException_ShouldIncludeSuggestions()
-    {
+    public void FormatException_WithRetryableDeploymentException_ShouldIncludeSuggestions() {
         // Arrange
         var exception = new DeploymentException("Deploy failed", "profile1", DeploymentPhase.Upload, isRetryable: true);
 
@@ -289,8 +269,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithVerboseVerbosity_ShouldIncludeTechnicalDetails()
-    {
+    public void FormatException_WithVerboseVerbosity_ShouldIncludeTechnicalDetails() {
         // Arrange
         var exception = new BuildException("Build failed", "/path/to/project.csproj", "Release");
 
@@ -307,8 +286,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithNormalVerbosity_ShouldNotIncludeTechnicalDetails()
-    {
+    public void FormatException_WithNormalVerbosity_ShouldNotIncludeTechnicalDetails() {
         // Arrange
         var exception = new BuildException("Build failed");
 
@@ -321,8 +299,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithInnerException_ShouldIncludeInnerExceptionDetails()
-    {
+    public void FormatException_WithInnerException_ShouldIncludeInnerExceptionDetails() {
         // Arrange
         var innerException = new InvalidOperationException("Inner error");
         var exception = new DeploymentException("Deployment failed", innerException);
@@ -336,8 +313,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithConnectionException_ShouldIncludeConnectionDetails()
-    {
+    public void FormatException_WithConnectionException_ShouldIncludeConnectionDetails() {
         // Arrange
         var exception = new ConnectionException("Connection failed", "server.com", 21, isTransient: true);
 
@@ -351,8 +327,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithAuthenticationExceptionInVerboseMode_ShouldIncludeAuthDetails()
-    {
+    public void FormatException_WithAuthenticationExceptionInVerboseMode_ShouldIncludeAuthDetails() {
         // Arrange
         var exception = new AuthenticationException("Auth failed", "testuser", "server.com");
 
@@ -365,8 +340,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithDeploymentExceptionInVerboseMode_ShouldIncludeDeploymentDetails()
-    {
+    public void FormatException_WithDeploymentExceptionInVerboseMode_ShouldIncludeDeploymentDetails() {
         // Arrange
         var exception = new DeploymentException("Deploy failed", "profile1", DeploymentPhase.Upload, isRetryable: true);
 
@@ -380,8 +354,7 @@ public class ErrorMessageFormatterTests
     }
 
     [Fact]
-    public void FormatException_WithProfileException_ShouldIncludeProfileName()
-    {
+    public void FormatException_WithProfileException_ShouldIncludeProfileName() {
         // Arrange
         var exception = new ProfileNotFoundException("myprofile");
 

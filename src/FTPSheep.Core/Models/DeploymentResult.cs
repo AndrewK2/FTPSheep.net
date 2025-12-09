@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Represents the result of a deployment operation.
 /// </summary>
-public sealed class DeploymentResult
-{
+public sealed class DeploymentResult {
     /// <summary>
     /// Gets or sets the unique identifier for this deployment.
     /// </summary>
@@ -73,12 +72,9 @@ public sealed class DeploymentResult
     /// <summary>
     /// Gets the average upload speed in bytes per second.
     /// </summary>
-    public double? AverageSpeedBytesPerSecond
-    {
-        get
-        {
-            if (Duration?.TotalSeconds > 0)
-            {
+    public double? AverageSpeedBytesPerSecond {
+        get {
+            if(Duration?.TotalSeconds > 0) {
                 return SizeUploaded / Duration.Value.TotalSeconds;
             }
             return null;
@@ -88,13 +84,11 @@ public sealed class DeploymentResult
     /// <summary>
     /// Gets a formatted string representation of the average upload speed.
     /// </summary>
-    public string FormattedUploadSpeed
-    {
-        get
-        {
+    public string FormattedUploadSpeed {
+        get {
             var speed = AverageSpeedBytesPerSecond ?? 0;
-            if (speed < 1024) return $"{speed:F2} B/s";
-            if (speed < 1024 * 1024) return $"{speed / 1024:F2} KB/s";
+            if(speed < 1024) return $"{speed:F2} B/s";
+            if(speed < 1024 * 1024) return $"{speed / 1024:F2} KB/s";
             return $"{speed / (1024 * 1024):F2} MB/s";
         }
     }
@@ -143,8 +137,7 @@ public sealed class DeploymentResult
     /// Adds an error message to the result.
     /// </summary>
     /// <param name="message">The error message to add.</param>
-    public void AddError(string message)
-    {
+    public void AddError(string message) {
         ErrorMessages.Add(message);
         Success = false;
     }
@@ -153,8 +146,7 @@ public sealed class DeploymentResult
     /// Adds a warning message to the result.
     /// </summary>
     /// <param name="message">The warning message to add.</param>
-    public void AddWarning(string message)
-    {
+    public void AddWarning(string message) {
         WarningMessages.Add(message);
     }
 
@@ -162,8 +154,7 @@ public sealed class DeploymentResult
     /// Marks the deployment as complete.
     /// </summary>
     /// <param name="success">Whether the deployment was successful.</param>
-    public void Complete(bool success = true)
-    {
+    public void Complete(bool success = true) {
         EndTime = DateTime.UtcNow;
         Success = success && ErrorMessages.Count == 0;
         FinalStage = Success ? DeploymentStage.Completed : DeploymentStage.Failed;
@@ -172,10 +163,8 @@ public sealed class DeploymentResult
     /// <summary>
     /// Creates a successful deployment result from a deployment state.
     /// </summary>
-    public static DeploymentResult FromSuccess(DeploymentState state)
-    {
-        return new DeploymentResult
-        {
+    public static DeploymentResult FromSuccess(DeploymentState state) {
+        return new DeploymentResult {
             DeploymentId = state.DeploymentId,
             Success = true,
             FinalStage = DeploymentStage.Completed,
@@ -196,10 +185,8 @@ public sealed class DeploymentResult
     /// <summary>
     /// Creates a failed deployment result from a deployment state.
     /// </summary>
-    public static DeploymentResult FromFailure(DeploymentState state, string errorMessage, Exception? exception = null)
-    {
-        return new DeploymentResult
-        {
+    public static DeploymentResult FromFailure(DeploymentState state, string errorMessage, Exception? exception = null) {
+        return new DeploymentResult {
             DeploymentId = state.DeploymentId,
             Success = false,
             FinalStage = DeploymentStage.Failed,
@@ -222,10 +209,8 @@ public sealed class DeploymentResult
     /// <summary>
     /// Creates a cancelled deployment result from a deployment state.
     /// </summary>
-    public static DeploymentResult FromCancellation(DeploymentState state)
-    {
-        return new DeploymentResult
-        {
+    public static DeploymentResult FromCancellation(DeploymentState state) {
+        return new DeploymentResult {
             DeploymentId = state.DeploymentId,
             Success = false,
             FinalStage = DeploymentStage.Cancelled,

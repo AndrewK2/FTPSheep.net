@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
@@ -11,25 +10,21 @@ namespace FTPSheep.CLI.Commands;
 /// <summary>
 /// Command to import Visual Studio publish profile.
 /// </summary>
-internal sealed class ImportCommand : Command<ImportCommand.Settings>
-{
+internal sealed class ImportCommand : Command<ImportCommand.Settings> {
     /// <summary>
     /// Settings for the import command.
     /// </summary>
-    public sealed class Settings : CommandSettings
-    {
+    public sealed class Settings : CommandSettings {
         [Description("Path to the Visual Studio publish profile (.pubxml)")]
         [CommandArgument(0, "[PROFILE_PATH]")]
         public string? ProfilePath { get; init; }
     }
 
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
-    {
+    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken) {
         AnsiConsole.MarkupLine("[bold]Import Visual Studio Publish Profile[/]");
         AnsiConsole.WriteLine();
 
-        try
-        {
+        try {
             // Create service instances
             var loggerFactory = LoggerFactory.Create(builder => builder.AddNLog());
             var parser = new PublishProfileParser();
@@ -39,35 +34,27 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings>
 
             // Determine which .pubxml file to import
             string pubxmlPath;
-            if (!string.IsNullOrWhiteSpace(settings.ProfilePath))
-            {
+            if(!string.IsNullOrWhiteSpace(settings.ProfilePath)) {
                 pubxmlPath = settings.ProfilePath;
-                if (!File.Exists(pubxmlPath))
-                {
+                if(!File.Exists(pubxmlPath)) {
                     AnsiConsole.MarkupLine($"[red]Error:[/] File not found: {pubxmlPath}");
                     return 1;
                 }
-            }
-            else
-            {
+            } else {
                 // Discover .pubxml files in current directory
                 var currentDir = Directory.GetCurrentDirectory();
                 var discoveredProfiles = parser.DiscoverProfiles(currentDir);
 
-                if (discoveredProfiles.Count == 0)
-                {
+                if(discoveredProfiles.Count == 0) {
                     AnsiConsole.MarkupLine("[yellow]No publish profiles (.pubxml) found in the current directory.[/]");
                     AnsiConsole.MarkupLine("Please specify a path to a .pubxml file or run this command from a project directory.");
                     return 1;
                 }
 
-                if (discoveredProfiles.Count == 1)
-                {
+                if(discoveredProfiles.Count == 1) {
                     pubxmlPath = discoveredProfiles[0];
                     AnsiConsole.MarkupLine($"Found profile: [cyan]{Path.GetFileName(pubxmlPath)}[/]");
-                }
-                else
-                {
+                } else {
                     // Let user select from multiple profiles
                     var profileNames = discoveredProfiles
                         .Select(p => Path.GetFileName(p))
@@ -84,8 +71,7 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings>
 
             AnsiConsole.WriteLine();
             AnsiConsole.Status()
-                .Start("Importing profile...", ctx =>
-                {
+                .Start("Importing profile...", ctx => {
                     ctx.Status("Parsing publish profile...");
 
                     // Parse the .pubxml file
@@ -97,11 +83,9 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings>
 
                     // Validate the converted profile
                     var validationErrors = converter.ValidateImportedProfile(deploymentProfile);
-                    if (validationErrors.Count > 0)
-                    {
+                    if(validationErrors.Count > 0) {
                         AnsiConsole.MarkupLine("[red]Validation errors:[/]");
-                        foreach (var error in validationErrors)
-                        {
+                        foreach(var error in validationErrors) {
                             AnsiConsole.MarkupLine($"  [red]•[/] {error}");
                         }
                         throw new InvalidOperationException("Profile validation failed.");
@@ -136,11 +120,9 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings>
             var profileName = AnsiConsole.Ask("Enter profile name:", defaultName);
 
             // Check if profile already exists
-            if (repository.ExistsAsync(profileName, cancellationToken).Result)
-            {
+            if(repository.ExistsAsync(profileName, cancellationToken).Result) {
                 var overwrite = AnsiConsole.Confirm($"Profile '{profileName}' already exists. Overwrite?", false);
-                if (!overwrite)
-                {
+                if(!overwrite) {
                     AnsiConsole.MarkupLine("[yellow]Import cancelled.[/]");
                     return 0;
                 }
@@ -150,8 +132,7 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings>
             convertedProfile.Name = profileName;
 
             // Prompt for password if not already set
-            if (string.IsNullOrWhiteSpace(convertedProfile.Username))
-            {
+            if(string.IsNullOrWhiteSpace(convertedProfile.Username)) {
                 var username = AnsiConsole.Ask<string>("Enter FTP username:");
                 convertedProfile.Username = username;
             }
@@ -161,14 +142,12 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings>
                     .Secret());
 
             // Encrypt and store the password
-            if (!string.IsNullOrWhiteSpace(password))
-            {
+            if(!string.IsNullOrWhiteSpace(password)) {
                 convertedProfile.EncryptedPassword = encryption.Encrypt(password);
             }
 
             // Prompt for project path if not set
-            if (string.IsNullOrWhiteSpace(convertedProfile.ProjectPath))
-            {
+            if(string.IsNullOrWhiteSpace(convertedProfile.ProjectPath)) {
                 var projectPath = AnsiConsole.Ask(
                     "Enter path to .csproj file:",
                     Directory.GetCurrentDirectory());
@@ -185,9 +164,7 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings>
             AnsiConsole.MarkupLine($"You can now deploy using: [cyan]ftpsheep deploy --profile {profileName}[/]");
 
             return 0;
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine($"[red]Error:[/] {ex.Message}");
             return 1;

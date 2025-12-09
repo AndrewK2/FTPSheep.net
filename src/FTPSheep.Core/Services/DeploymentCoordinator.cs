@@ -1,4 +1,3 @@
-using FTPSheep.Core.Exceptions;
 using FTPSheep.Core.Models;
 
 namespace FTPSheep.Core.Services;
@@ -6,8 +5,7 @@ namespace FTPSheep.Core.Services;
 /// <summary>
 /// Coordinates the entire deployment workflow from build to upload to finalization.
 /// </summary>
-public class DeploymentCoordinator
-{
+public class DeploymentCoordinator {
     private readonly DeploymentState _state;
     private CancellationTokenSource? _cancellationTokenSource;
 
@@ -24,8 +22,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Initializes a new instance of the <see cref="DeploymentCoordinator"/> class.
     /// </summary>
-    public DeploymentCoordinator()
-    {
+    public DeploymentCoordinator() {
         _state = new DeploymentState();
     }
 
@@ -42,10 +39,8 @@ public class DeploymentCoordinator
     /// <returns>The deployment result.</returns>
     public async Task<DeploymentResult> ExecuteDeploymentAsync(
         DeploymentOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        if (options == null)
-        {
+        CancellationToken cancellationToken = default) {
+        if(options == null) {
             throw new ArgumentNullException(nameof(options));
         }
 
@@ -53,8 +48,7 @@ public class DeploymentCoordinator
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = _cancellationTokenSource.Token;
 
-        try
-        {
+        try {
             // Initialize deployment state
             InitializeDeployment(options);
 
@@ -75,8 +69,7 @@ public class DeploymentCoordinator
                 () => DisplayPreDeploymentSummaryAsync(options, token), token);
 
             // Stage 5: Upload app_offline.htm (if enabled)
-            if (options.UseAppOffline)
-            {
+            if(options.UseAppOffline) {
                 await ExecuteStageAsync(DeploymentStage.UploadingAppOffline,
                     () => UploadAppOfflineAsync(options, token), token);
             }
@@ -86,15 +79,13 @@ public class DeploymentCoordinator
                 () => UploadFilesAsync(options, token), token);
 
             // Stage 7: Clean up obsolete files (if cleanup mode enabled)
-            if (options.CleanupMode)
-            {
+            if(options.CleanupMode) {
                 await ExecuteStageAsync(DeploymentStage.CleaningUpObsoleteFiles,
                     () => CleanupObsoleteFilesAsync(options, token), token);
             }
 
             // Stage 8: Delete app_offline.htm (if deployment succeeded)
-            if (options.UseAppOffline)
-            {
+            if(options.UseAppOffline) {
                 await ExecuteStageAsync(DeploymentStage.DeletingAppOffline,
                     () => DeleteAppOfflineAsync(options, token), token);
             }
@@ -106,20 +97,14 @@ public class DeploymentCoordinator
             // Complete successfully
             CompleteDeployment(DeploymentStage.Completed);
             return DeploymentResult.FromSuccess(_state);
-        }
-        catch (OperationCanceledException)
-        {
+        } catch(OperationCanceledException) {
             CompleteDeployment(DeploymentStage.Cancelled);
             return DeploymentResult.FromCancellation(_state);
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             var errorMessage = $"Deployment failed at stage {_state.CurrentStage}: {ex.Message}";
             CompleteDeployment(DeploymentStage.Failed, errorMessage, ex);
             return DeploymentResult.FromFailure(_state, errorMessage, ex);
-        }
-        finally
-        {
+        } finally {
             _cancellationTokenSource?.Dispose();
             _cancellationTokenSource = null;
         }
@@ -128,10 +113,8 @@ public class DeploymentCoordinator
     /// <summary>
     /// Cancels the deployment if it's currently in progress.
     /// </summary>
-    public void CancelDeployment()
-    {
-        if (_state.IsInProgress && _state.CanCancel)
-        {
+    public void CancelDeployment() {
+        if(_state.IsInProgress && _state.CanCancel) {
             _state.CancellationRequested = true;
             _cancellationTokenSource?.Cancel();
         }
@@ -140,8 +123,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Initializes the deployment state.
     /// </summary>
-    private void InitializeDeployment(DeploymentOptions options)
-    {
+    private void InitializeDeployment(DeploymentOptions options) {
         _state.StartedAt = DateTime.UtcNow;
         _state.CurrentStage = DeploymentStage.NotStarted;
         _state.ProfileName = options.ProfileName;
@@ -155,8 +137,7 @@ public class DeploymentCoordinator
     private async Task ExecuteStageAsync(
         DeploymentStage stage,
         Func<Task> stageAction,
-        CancellationToken cancellationToken)
-    {
+        CancellationToken cancellationToken) {
         cancellationToken.ThrowIfCancellationRequested();
 
         // Update stage
@@ -171,8 +152,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Stage 1: Load profile and validate configuration.
     /// </summary>
-    private Task LoadProfileAsync(DeploymentOptions options, CancellationToken cancellationToken)
-    {
+    private Task LoadProfileAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // TODO: Implement profile loading and validation
         // This will be implemented when profile management is added
         return Task.CompletedTask;
@@ -181,8 +161,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Stage 2: Build and publish project.
     /// </summary>
-    private Task BuildProjectAsync(DeploymentOptions options, CancellationToken cancellationToken)
-    {
+    private Task BuildProjectAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // TODO: Implement build and publish using BuildTools services
         // This will use MSBuildWrapper or DotnetCliExecutor
         return Task.CompletedTask;
@@ -191,8 +170,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Stage 3: Connect to server and validate connection.
     /// </summary>
-    private Task ConnectToServerAsync(DeploymentOptions options, CancellationToken cancellationToken)
-    {
+    private Task ConnectToServerAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // TODO: Implement connection validation using FTP/SFTP services
         // This will use the Protocol services from Section 4
         return Task.CompletedTask;
@@ -201,8 +179,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Stage 4: Display pre-deployment summary and wait for confirmation.
     /// </summary>
-    private Task DisplayPreDeploymentSummaryAsync(DeploymentOptions options, CancellationToken cancellationToken)
-    {
+    private Task DisplayPreDeploymentSummaryAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // TODO: Implement pre-deployment summary display
         // This will calculate file counts, sizes, and prompt for confirmation
         return Task.CompletedTask;
@@ -211,8 +188,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Stage 5: Upload app_offline.htm.
     /// </summary>
-    private Task UploadAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken)
-    {
+    private Task UploadAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // TODO: Implement app_offline.htm upload
         // This will be implemented when direct deployment strategy is added (Section 5.1)
         return Task.CompletedTask;
@@ -221,8 +197,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Stage 6: Upload all published files.
     /// </summary>
-    private Task UploadFilesAsync(DeploymentOptions options, CancellationToken cancellationToken)
-    {
+    private Task UploadFilesAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // TODO: Implement concurrent file upload
         // This will use the upload engine from Section 4.4
         return Task.CompletedTask;
@@ -231,8 +206,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Stage 7: Clean up obsolete files.
     /// </summary>
-    private Task CleanupObsoleteFilesAsync(DeploymentOptions options, CancellationToken cancellationToken)
-    {
+    private Task CleanupObsoleteFilesAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // TODO: Implement cleanup mode
         // This will be implemented when cleanup mode is added (Section 5.1)
         return Task.CompletedTask;
@@ -241,8 +215,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Stage 8: Delete app_offline.htm.
     /// </summary>
-    private Task DeleteAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken)
-    {
+    private Task DeleteAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // TODO: Implement app_offline.htm deletion
         // This will be implemented when direct deployment strategy is added (Section 5.1)
         return Task.CompletedTask;
@@ -251,8 +224,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Stage 9: Record deployment history.
     /// </summary>
-    private Task RecordHistoryAsync(DeploymentOptions options, CancellationToken cancellationToken)
-    {
+    private Task RecordHistoryAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // TODO: Implement deployment history recording
         // This will save deployment results to history
         return Task.CompletedTask;
@@ -261,8 +233,7 @@ public class DeploymentCoordinator
     /// <summary>
     /// Completes the deployment.
     /// </summary>
-    private void CompleteDeployment(DeploymentStage finalStage, string? errorMessage = null, Exception? exception = null)
-    {
+    private void CompleteDeployment(DeploymentStage finalStage, string? errorMessage = null, Exception? exception = null) {
         _state.CurrentStage = finalStage;
         _state.CompletedAt = DateTime.UtcNow;
         _state.ErrorMessage = errorMessage;
@@ -273,16 +244,14 @@ public class DeploymentCoordinator
     /// <summary>
     /// Raises the StageChanged event.
     /// </summary>
-    private void OnStageChanged(DeploymentStage stage)
-    {
+    private void OnStageChanged(DeploymentStage stage) {
         StageChanged?.Invoke(this, new DeploymentStageChangedEventArgs(stage, _state));
     }
 
     /// <summary>
     /// Raises the ProgressUpdated event.
     /// </summary>
-    private void OnProgressUpdated()
-    {
+    private void OnProgressUpdated() {
         ProgressUpdated?.Invoke(this, new DeploymentProgressEventArgs(_state));
     }
 }
@@ -290,8 +259,7 @@ public class DeploymentCoordinator
 /// <summary>
 /// Event args for deployment stage changes.
 /// </summary>
-public class DeploymentStageChangedEventArgs : EventArgs
-{
+public class DeploymentStageChangedEventArgs : EventArgs {
     /// <summary>
     /// Gets the new deployment stage.
     /// </summary>
@@ -305,8 +273,7 @@ public class DeploymentStageChangedEventArgs : EventArgs
     /// <summary>
     /// Initializes a new instance of the <see cref="DeploymentStageChangedEventArgs"/> class.
     /// </summary>
-    public DeploymentStageChangedEventArgs(DeploymentStage stage, DeploymentState state)
-    {
+    public DeploymentStageChangedEventArgs(DeploymentStage stage, DeploymentState state) {
         Stage = stage;
         State = state;
     }
@@ -315,8 +282,7 @@ public class DeploymentStageChangedEventArgs : EventArgs
 /// <summary>
 /// Event args for deployment progress updates.
 /// </summary>
-public class DeploymentProgressEventArgs : EventArgs
-{
+public class DeploymentProgressEventArgs : EventArgs {
     /// <summary>
     /// Gets the deployment state.
     /// </summary>
@@ -325,8 +291,7 @@ public class DeploymentProgressEventArgs : EventArgs
     /// <summary>
     /// Initializes a new instance of the <see cref="DeploymentProgressEventArgs"/> class.
     /// </summary>
-    public DeploymentProgressEventArgs(DeploymentState state)
-    {
+    public DeploymentProgressEventArgs(DeploymentState state) {
         State = state;
     }
 }
@@ -334,8 +299,7 @@ public class DeploymentProgressEventArgs : EventArgs
 /// <summary>
 /// Options for deployment execution.
 /// </summary>
-public class DeploymentOptions
-{
+public class DeploymentOptions {
     /// <summary>
     /// Gets or sets the profile name to use for deployment.
     /// </summary>

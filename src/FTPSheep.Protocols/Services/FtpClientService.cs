@@ -1,15 +1,13 @@
 using FluentFTP;
 using FTPSheep.Protocols.Exceptions;
 using FTPSheep.Protocols.Models;
-using System.Text;
 
 namespace FTPSheep.Protocols.Services;
 
 /// <summary>
 /// Service for FTP client operations using FluentFTP.
 /// </summary>
-public class FtpClientService : IDisposable
-{
+public class FtpClientService : IDisposable {
     private readonly FtpConnectionConfig _config;
     private AsyncFtpClient? _client;
     private bool _disposed;
@@ -18,8 +16,7 @@ public class FtpClientService : IDisposable
     /// Initializes a new instance of the <see cref="FtpClientService"/> class.
     /// </summary>
     /// <param name="config">The FTP connection configuration.</param>
-    public FtpClientService(FtpConnectionConfig config)
-    {
+    public FtpClientService(FtpConnectionConfig config) {
         _config = config ?? throw new ArgumentNullException(nameof(config));
         ValidateConfig(config);
     }
@@ -33,10 +30,8 @@ public class FtpClientService : IDisposable
     /// Connects to the FTP server.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task ConnectAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
+    public async Task ConnectAsync(CancellationToken cancellationToken = default) {
+        try {
             _client = new AsyncFtpClient(
                 _config.Host,
                 _config.Username,
@@ -55,17 +50,13 @@ public class FtpClientService : IDisposable
             await _client.Connect(cancellationToken);
 
             // Change to root directory if specified
-            if (!string.IsNullOrWhiteSpace(_config.RemoteRootPath))
-            {
+            if(!string.IsNullOrWhiteSpace(_config.RemoteRootPath)) {
                 await _client.SetWorkingDirectory(_config.RemoteRootPath, cancellationToken);
             }
-        }
-        catch (Exception ex) when (ex is not FtpException)
-        {
+        } catch(Exception ex) when(ex is not FtpException) {
             throw new FtpException(
                 $"Failed to connect to FTP server {_config.Host}:{_config.Port}",
-                ex)
-            {
+                ex) {
                 Host = _config.Host,
                 Port = _config.Port,
                 IsTransient = IsTransientError(ex)
@@ -76,10 +67,8 @@ public class FtpClientService : IDisposable
     /// <summary>
     /// Disconnects from the FTP server.
     /// </summary>
-    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
-    {
-        if (_client != null && _client.IsConnected)
-        {
+    public async Task DisconnectAsync(CancellationToken cancellationToken = default) {
+        if(_client != null && _client.IsConnected) {
             await _client.Disconnect(cancellationToken);
         }
     }
@@ -98,12 +87,10 @@ public class FtpClientService : IDisposable
         string remotePath,
         bool overwrite = true,
         bool createRemoteDir = true,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         EnsureConnected();
 
-        try
-        {
+        try {
             var existsMode = overwrite ? FtpRemoteExists.Overwrite : FtpRemoteExists.Skip;
 
             var result = await _client!.UploadFile(
@@ -114,9 +101,7 @@ public class FtpClientService : IDisposable
                 token: cancellationToken);
 
             return result;
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to upload file {localPath} to {remotePath}",
                 ex);
@@ -128,16 +113,12 @@ public class FtpClientService : IDisposable
     /// </summary>
     /// <param name="remotePath">The remote directory path.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task CreateDirectoryAsync(string remotePath, CancellationToken cancellationToken = default)
-    {
+    public async Task CreateDirectoryAsync(string remotePath, CancellationToken cancellationToken = default) {
         EnsureConnected();
 
-        try
-        {
+        try {
             await _client!.CreateDirectory(remotePath, cancellationToken);
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to create directory {remotePath}",
                 ex);
@@ -150,16 +131,12 @@ public class FtpClientService : IDisposable
     /// <param name="remotePath">The remote directory path.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if the directory exists; otherwise, false.</returns>
-    public async Task<bool> DirectoryExistsAsync(string remotePath, CancellationToken cancellationToken = default)
-    {
+    public async Task<bool> DirectoryExistsAsync(string remotePath, CancellationToken cancellationToken = default) {
         EnsureConnected();
 
-        try
-        {
+        try {
             return await _client!.DirectoryExists(remotePath, cancellationToken);
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to check if directory exists: {remotePath}",
                 ex);
@@ -174,16 +151,12 @@ public class FtpClientService : IDisposable
     /// <returns>Array of file listings.</returns>
     public async Task<FtpListItem[]> ListDirectoryAsync(
         string remotePath,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         EnsureConnected();
 
-        try
-        {
+        try {
             return await _client!.GetListing(remotePath, cancellationToken);
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to list directory: {remotePath}",
                 ex);
@@ -195,16 +168,12 @@ public class FtpClientService : IDisposable
     /// </summary>
     /// <param name="remotePath">The remote file path.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task DeleteFileAsync(string remotePath, CancellationToken cancellationToken = default)
-    {
+    public async Task DeleteFileAsync(string remotePath, CancellationToken cancellationToken = default) {
         EnsureConnected();
 
-        try
-        {
+        try {
             await _client!.DeleteFile(remotePath, cancellationToken);
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to delete file: {remotePath}",
                 ex);
@@ -216,16 +185,12 @@ public class FtpClientService : IDisposable
     /// </summary>
     /// <param name="remotePath">The remote directory path.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task DeleteDirectoryAsync(string remotePath, CancellationToken cancellationToken = default)
-    {
+    public async Task DeleteDirectoryAsync(string remotePath, CancellationToken cancellationToken = default) {
         EnsureConnected();
 
-        try
-        {
+        try {
             await _client!.DeleteDirectory(remotePath, cancellationToken);
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to delete directory: {remotePath}",
                 ex);
@@ -238,16 +203,12 @@ public class FtpClientService : IDisposable
     /// <param name="remotePath">The remote file path.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if the file exists; otherwise, false.</returns>
-    public async Task<bool> FileExistsAsync(string remotePath, CancellationToken cancellationToken = default)
-    {
+    public async Task<bool> FileExistsAsync(string remotePath, CancellationToken cancellationToken = default) {
         EnsureConnected();
 
-        try
-        {
+        try {
             return await _client!.FileExists(remotePath, cancellationToken);
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to check if file exists: {remotePath}",
                 ex);
@@ -260,16 +221,12 @@ public class FtpClientService : IDisposable
     /// <param name="remotePath">The remote file path.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The file size in bytes.</returns>
-    public async Task<long> GetFileSizeAsync(string remotePath, CancellationToken cancellationToken = default)
-    {
+    public async Task<long> GetFileSizeAsync(string remotePath, CancellationToken cancellationToken = default) {
         EnsureConnected();
 
-        try
-        {
+        try {
             return await _client!.GetFileSize(remotePath, -1, cancellationToken);
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to get file size: {remotePath}",
                 ex);
@@ -285,16 +242,12 @@ public class FtpClientService : IDisposable
     public async Task SetFilePermissionsAsync(
         string remotePath,
         int permissions,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         EnsureConnected();
 
-        try
-        {
+        try {
             await _client!.SetFilePermissions(remotePath, permissions, cancellationToken);
-        }
-        catch (Exception ex)
-        {
+        } catch(Exception ex) {
             // Don't throw - permissions may not be supported
             Console.WriteLine($"Warning: Failed to set permissions on {remotePath}: {ex.Message}");
         }
@@ -303,20 +256,16 @@ public class FtpClientService : IDisposable
     /// <summary>
     /// Validates the FTP connection configuration.
     /// </summary>
-    private static void ValidateConfig(FtpConnectionConfig config)
-    {
-        if (string.IsNullOrWhiteSpace(config.Host))
-        {
+    private static void ValidateConfig(FtpConnectionConfig config) {
+        if(string.IsNullOrWhiteSpace(config.Host)) {
             throw new ArgumentException("Host is required.", nameof(config));
         }
 
-        if (config.Port <= 0 || config.Port > 65535)
-        {
+        if(config.Port <= 0 || config.Port > 65535) {
             throw new ArgumentException("Port must be between 1 and 65535.", nameof(config));
         }
 
-        if (string.IsNullOrWhiteSpace(config.Username))
-        {
+        if(string.IsNullOrWhiteSpace(config.Username)) {
             throw new ArgumentException("Username is required.", nameof(config));
         }
     }
@@ -324,10 +273,8 @@ public class FtpClientService : IDisposable
     /// <summary>
     /// Ensures the client is connected.
     /// </summary>
-    private void EnsureConnected()
-    {
-        if (_client == null || !_client.IsConnected)
-        {
+    private void EnsureConnected() {
+        if(_client == null || !_client.IsConnected) {
             throw new InvalidOperationException(
                 "FTP client is not connected. Call ConnectAsync first.");
         }
@@ -336,8 +283,7 @@ public class FtpClientService : IDisposable
     /// <summary>
     /// Determines if an error is transient and can be retried.
     /// </summary>
-    private static bool IsTransientError(Exception ex)
-    {
+    private static bool IsTransientError(Exception ex) {
         var message = ex.Message.ToLowerInvariant();
         return message.Contains("timeout") ||
                message.Contains("connection") ||
@@ -348,10 +294,8 @@ public class FtpClientService : IDisposable
     /// <summary>
     /// Disposes the FTP client.
     /// </summary>
-    public void Dispose()
-    {
-        if (!_disposed)
-        {
+    public void Dispose() {
+        if(!_disposed) {
             _client?.Dispose();
             _disposed = true;
         }

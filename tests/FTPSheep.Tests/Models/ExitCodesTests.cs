@@ -1,13 +1,11 @@
-using FTPSheep.Core.Models;
 using FTPSheep.Core.Exceptions;
+using FTPSheep.Core.Models;
 
 namespace FTPSheep.Tests.Models;
 
-public class ExitCodesTests
-{
+public class ExitCodesTests {
     [Fact]
-    public void ExitCodes_ShouldHaveExpectedValues()
-    {
+    public void ExitCodes_ShouldHaveExpectedValues() {
         // Assert
         Assert.Equal(0, ExitCodes.Success);
         Assert.Equal(1, ExitCodes.GeneralError);
@@ -22,8 +20,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithBuildException_ShouldReturnBuildFailure()
-    {
+    public void FromException_WithBuildException_ShouldReturnBuildFailure() {
         // Arrange
         var exception = new BuildException("Build failed");
 
@@ -35,8 +32,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithBuildCompilationException_ShouldReturnBuildFailure()
-    {
+    public void FromException_WithBuildCompilationException_ShouldReturnBuildFailure() {
         // Arrange
         var exception = new BuildCompilationException(new[] { "Error 1", "Error 2" });
 
@@ -48,8 +44,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithConnectionException_ShouldReturnConnectionFailure()
-    {
+    public void FromException_WithConnectionException_ShouldReturnConnectionFailure() {
         // Arrange
         var exception = new ConnectionException("Connection failed");
 
@@ -61,8 +56,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithConnectionTimeoutException_ShouldReturnConnectionFailure()
-    {
+    public void FromException_WithConnectionTimeoutException_ShouldReturnConnectionFailure() {
         // Arrange
         var exception = new ConnectionTimeoutException("server.com", 21, TimeSpan.FromSeconds(30));
 
@@ -74,8 +68,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithAuthenticationException_ShouldReturnAuthenticationFailure()
-    {
+    public void FromException_WithAuthenticationException_ShouldReturnAuthenticationFailure() {
         // Arrange
         var exception = new AuthenticationException("Auth failed");
 
@@ -87,8 +80,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithInvalidCredentialsException_ShouldReturnAuthenticationFailure()
-    {
+    public void FromException_WithInvalidCredentialsException_ShouldReturnAuthenticationFailure() {
         // Arrange
         var exception = new InvalidCredentialsException("user", "server.com");
 
@@ -100,8 +92,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithDeploymentException_ShouldReturnDeploymentFailure()
-    {
+    public void FromException_WithDeploymentException_ShouldReturnDeploymentFailure() {
         // Arrange
         var exception = new DeploymentException("Deployment failed");
 
@@ -113,8 +104,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithFileTransferException_ShouldReturnDeploymentFailure()
-    {
+    public void FromException_WithFileTransferException_ShouldReturnDeploymentFailure() {
         // Arrange
         var exception = new FileTransferException("/local/file.txt", "/remote/file.txt");
 
@@ -126,8 +116,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithConfigurationException_ShouldReturnConfigurationError()
-    {
+    public void FromException_WithConfigurationException_ShouldReturnConfigurationError() {
         // Arrange
         var exception = new ConfigurationException("Config error");
 
@@ -139,8 +128,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithProfileNotFoundException_ShouldReturnProfileNotFound()
-    {
+    public void FromException_WithProfileNotFoundException_ShouldReturnProfileNotFound() {
         // Arrange
         var exception = new ProfileNotFoundException("profile1");
 
@@ -152,8 +140,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithProfileValidationException_ShouldReturnConfigurationError()
-    {
+    public void FromException_WithProfileValidationException_ShouldReturnConfigurationError() {
         // Arrange
         var exception = new ProfileValidationException("profile1", new[] { "Error 1" });
 
@@ -165,8 +152,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithOperationCanceledException_ShouldReturnOperationCancelled()
-    {
+    public void FromException_WithOperationCanceledException_ShouldReturnOperationCancelled() {
         // Arrange
         var exception = new OperationCanceledException("Cancelled");
 
@@ -178,8 +164,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithArgumentException_ShouldReturnInvalidArguments()
-    {
+    public void FromException_WithArgumentException_ShouldReturnInvalidArguments() {
         // Arrange
         var exception = new ArgumentException("Invalid argument");
 
@@ -191,8 +176,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void FromException_WithUnknownException_ShouldReturnGeneralError()
-    {
+    public void FromException_WithUnknownException_ShouldReturnGeneralError() {
         // Arrange
         var exception = new InvalidOperationException("Unknown error");
 
@@ -204,8 +188,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithSuccess_ShouldReturnSuccessMessage()
-    {
+    public void GetDescription_WithSuccess_ShouldReturnSuccessMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.Success);
 
@@ -214,8 +197,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithGeneralError_ShouldReturnGeneralErrorMessage()
-    {
+    public void GetDescription_WithGeneralError_ShouldReturnGeneralErrorMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.GeneralError);
 
@@ -224,8 +206,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithBuildFailure_ShouldReturnBuildFailureMessage()
-    {
+    public void GetDescription_WithBuildFailure_ShouldReturnBuildFailureMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.BuildFailure);
 
@@ -234,8 +215,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithConnectionFailure_ShouldReturnConnectionFailureMessage()
-    {
+    public void GetDescription_WithConnectionFailure_ShouldReturnConnectionFailureMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.ConnectionFailure);
 
@@ -244,8 +224,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithAuthenticationFailure_ShouldReturnAuthenticationFailureMessage()
-    {
+    public void GetDescription_WithAuthenticationFailure_ShouldReturnAuthenticationFailureMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.AuthenticationFailure);
 
@@ -254,8 +233,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithDeploymentFailure_ShouldReturnDeploymentFailureMessage()
-    {
+    public void GetDescription_WithDeploymentFailure_ShouldReturnDeploymentFailureMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.DeploymentFailure);
 
@@ -264,8 +242,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithConfigurationError_ShouldReturnConfigurationErrorMessage()
-    {
+    public void GetDescription_WithConfigurationError_ShouldReturnConfigurationErrorMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.ConfigurationError);
 
@@ -274,8 +251,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithProfileNotFound_ShouldReturnProfileNotFoundMessage()
-    {
+    public void GetDescription_WithProfileNotFound_ShouldReturnProfileNotFoundMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.ProfileNotFound);
 
@@ -284,8 +260,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithInvalidArguments_ShouldReturnInvalidArgumentsMessage()
-    {
+    public void GetDescription_WithInvalidArguments_ShouldReturnInvalidArgumentsMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.InvalidArguments);
 
@@ -294,8 +269,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithOperationCancelled_ShouldReturnOperationCancelledMessage()
-    {
+    public void GetDescription_WithOperationCancelled_ShouldReturnOperationCancelledMessage() {
         // Act
         var description = ExitCodes.GetDescription(ExitCodes.OperationCancelled);
 
@@ -304,8 +278,7 @@ public class ExitCodesTests
     }
 
     [Fact]
-    public void GetDescription_WithUnknownExitCode_ShouldReturnUnknownErrorMessage()
-    {
+    public void GetDescription_WithUnknownExitCode_ShouldReturnUnknownErrorMessage() {
         // Act
         var description = ExitCodes.GetDescription(999);
 

@@ -1,34 +1,27 @@
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
-using Xunit;
 
 namespace FTPSheep.Tests.Services;
 
-public class JsonDeploymentHistoryServiceTests : IDisposable
-{
+public class JsonDeploymentHistoryServiceTests : IDisposable {
     private readonly string _testHistoryFile;
     private readonly JsonDeploymentHistoryService _service;
 
-    public JsonDeploymentHistoryServiceTests()
-    {
+    public JsonDeploymentHistoryServiceTests() {
         _testHistoryFile = Path.Combine(Path.GetTempPath(), $"test-history-{Guid.NewGuid()}.json");
         _service = new JsonDeploymentHistoryService(_testHistoryFile);
     }
 
-    public void Dispose()
-    {
-        if (File.Exists(_testHistoryFile))
-        {
+    public void Dispose() {
+        if(File.Exists(_testHistoryFile)) {
             File.Delete(_testHistoryFile);
         }
     }
 
     [Fact]
-    public async Task AddEntryAsync_ValidEntry_AddsToHistory()
-    {
+    public async Task AddEntryAsync_ValidEntry_AddsToHistory() {
         // Arrange
-        var entry = new DeploymentHistoryEntry
-        {
+        var entry = new DeploymentHistoryEntry {
             ProfileName = "test-profile",
             ServerHost = "ftp.example.com",
             Success = true,
@@ -49,13 +42,10 @@ public class JsonDeploymentHistoryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetRecentEntriesAsync_MultipleEntries_ReturnsInDescendingOrder()
-    {
+    public async Task GetRecentEntriesAsync_MultipleEntries_ReturnsInDescendingOrder() {
         // Arrange
-        for (int i = 0; i < 5; i++)
-        {
-            var entry = new DeploymentHistoryEntry
-            {
+        for(int i = 0; i < 5; i++) {
+            var entry = new DeploymentHistoryEntry {
                 ProfileName = $"profile-{i}",
                 ServerHost = "ftp.example.com",
                 Success = true,
@@ -74,13 +64,10 @@ public class JsonDeploymentHistoryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetRecentEntriesAsync_WithCount_ReturnsLimitedEntries()
-    {
+    public async Task GetRecentEntriesAsync_WithCount_ReturnsLimitedEntries() {
         // Arrange
-        for (int i = 0; i < 10; i++)
-        {
-            var entry = new DeploymentHistoryEntry
-            {
+        for(int i = 0; i < 10; i++) {
+            var entry = new DeploymentHistoryEntry {
                 ProfileName = $"profile-{i}",
                 ServerHost = "ftp.example.com",
                 Success = true
@@ -96,23 +83,19 @@ public class JsonDeploymentHistoryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetProfileEntriesAsync_FiltersByProfileName()
-    {
+    public async Task GetProfileEntriesAsync_FiltersByProfileName() {
         // Arrange
-        await _service.AddEntryAsync(new DeploymentHistoryEntry
-        {
+        await _service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "profile-a",
             ServerHost = "ftp.example.com",
             Success = true
         });
-        await _service.AddEntryAsync(new DeploymentHistoryEntry
-        {
+        await _service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "profile-b",
             ServerHost = "ftp.example.com",
             Success = true
         });
-        await _service.AddEntryAsync(new DeploymentHistoryEntry
-        {
+        await _service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "profile-a",
             ServerHost = "ftp.example.com",
             Success = false
@@ -127,26 +110,22 @@ public class JsonDeploymentHistoryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetEntriesByDateRangeAsync_FiltersByDate()
-    {
+    public async Task GetEntriesByDateRangeAsync_FiltersByDate() {
         // Arrange
         var now = DateTime.UtcNow;
-        await _service.AddEntryAsync(new DeploymentHistoryEntry
-        {
+        await _service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "test",
             ServerHost = "ftp.example.com",
             Success = true,
             Timestamp = now.AddDays(-5)
         });
-        await _service.AddEntryAsync(new DeploymentHistoryEntry
-        {
+        await _service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "test",
             ServerHost = "ftp.example.com",
             Success = true,
             Timestamp = now.AddDays(-2)
         });
-        await _service.AddEntryAsync(new DeploymentHistoryEntry
-        {
+        await _service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "test",
             ServerHost = "ftp.example.com",
             Success = true,
@@ -161,11 +140,9 @@ public class JsonDeploymentHistoryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task ClearHistoryAsync_RemovesAllEntries()
-    {
+    public async Task ClearHistoryAsync_RemovesAllEntries() {
         // Arrange
-        await _service.AddEntryAsync(new DeploymentHistoryEntry
-        {
+        await _service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "test",
             ServerHost = "ftp.example.com",
             Success = true
@@ -180,26 +157,22 @@ public class JsonDeploymentHistoryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task AddEntryAsync_WithNullEntry_ThrowsArgumentNullException()
-    {
+    public async Task AddEntryAsync_WithNullEntry_ThrowsArgumentNullException() {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => _service.AddEntryAsync(null!));
     }
 
     [Fact]
-    public async Task GetProfileEntriesAsync_WithEmptyProfileName_ThrowsArgumentException()
-    {
+    public async Task GetProfileEntriesAsync_WithEmptyProfileName_ThrowsArgumentException() {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() => _service.GetProfileEntriesAsync(""));
     }
 
     [Fact]
-    public void DeploymentHistoryEntry_FromResult_CreatesCorrectEntry()
-    {
+    public void DeploymentHistoryEntry_FromResult_CreatesCorrectEntry() {
         // Arrange
         var startTime = DateTime.UtcNow;
-        var result = new DeploymentResult
-        {
+        var result = new DeploymentResult {
             Success = true,
             StartTime = startTime,
             EndTime = startTime.AddSeconds(10),

@@ -1,24 +1,19 @@
 using FTPSheep.BuildTools.Models;
 using FTPSheep.BuildTools.Services;
-using Xunit;
 
 namespace FTPSheep.Tests.BuildTools;
 
-public class MSBuildWrapperTests
-{
+public class MSBuildWrapperTests {
     private readonly MSBuildWrapper _wrapper;
 
-    public MSBuildWrapperTests()
-    {
+    public MSBuildWrapperTests() {
         _wrapper = new MSBuildWrapper();
     }
 
     [Fact]
-    public void BuildArguments_WithMinimalOptions_GeneratesCorrectCommand()
-    {
+    public void BuildArguments_WithMinimalOptions_GeneratesCorrectCommand() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release"
         };
@@ -38,11 +33,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithPlatform_IncludesPlatformProperty()
-    {
+    public void BuildArguments_WithPlatform_IncludesPlatformProperty() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             Platform = "Any CPU"
@@ -56,11 +49,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithOutputPath_IncludesOutputPathProperty()
-    {
+    public void BuildArguments_WithOutputPath_IncludesOutputPathProperty() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             OutputPath = @"C:\Output\MyApp"
@@ -74,11 +65,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithTargetFramework_IncludesTargetFrameworkProperty()
-    {
+    public void BuildArguments_WithTargetFramework_IncludesTargetFrameworkProperty() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             TargetFramework = "net472"
@@ -92,11 +81,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithPublishProfile_IncludesPublishProfileProperty()
-    {
+    public void BuildArguments_WithPublishProfile_IncludesPublishProfileProperty() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             PublishProfile = "FolderProfile"
@@ -110,11 +97,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithCustomProperties_IncludesAllProperties()
-    {
+    public void BuildArguments_WithCustomProperties_IncludesAllProperties() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             Properties = new Dictionary<string, string>
@@ -136,11 +121,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithMultipleTargets_IncludesAllTargets()
-    {
+    public void BuildArguments_WithMultipleTargets_IncludesAllTargets() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             Targets = new List<string> { "Clean", "Build", "Publish" }
@@ -159,11 +142,9 @@ public class MSBuildWrapperTests
     [InlineData(MSBuildVerbosity.Normal, "/v:normal")]
     [InlineData(MSBuildVerbosity.Detailed, "/v:detailed")]
     [InlineData(MSBuildVerbosity.Diagnostic, "/v:diagnostic")]
-    public void BuildArguments_WithVerbosity_IncludesCorrectVerbosityFlag(MSBuildVerbosity verbosity, string expectedFlag)
-    {
+    public void BuildArguments_WithVerbosity_IncludesCorrectVerbosityFlag(MSBuildVerbosity verbosity, string expectedFlag) {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             Verbosity = verbosity
@@ -177,11 +158,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithMaxCpuCount_IncludesMaxCpuCountFlag()
-    {
+    public void BuildArguments_WithMaxCpuCount_IncludesMaxCpuCountFlag() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             MaxCpuCount = 4
@@ -195,11 +174,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithoutMaxCpuCount_UsesParallelBuildByDefault()
-    {
+    public void BuildArguments_WithoutMaxCpuCount_UsesParallelBuildByDefault() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release"
         };
@@ -213,11 +190,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithRestorePackagesFalse_DoesNotIncludeRestoreFlag()
-    {
+    public void BuildArguments_WithRestorePackagesFalse_DoesNotIncludeRestoreFlag() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             RestorePackages = false
@@ -231,11 +206,9 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithTreatWarningsAsErrors_IncludesTreatWarningsAsErrorsProperty()
-    {
+    public void BuildArguments_WithTreatWarningsAsErrors_IncludesTreatWarningsAsErrorsProperty() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
             TreatWarningsAsErrors = true
@@ -249,18 +222,15 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void BuildArguments_WithNullOptions_ThrowsArgumentNullException()
-    {
+    public void BuildArguments_WithNullOptions_ThrowsArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => _wrapper.BuildArguments(null!));
     }
 
     [Fact]
-    public void BuildArguments_WithEmptyProjectPath_ThrowsArgumentException()
-    {
+    public void BuildArguments_WithEmptyProjectPath_ThrowsArgumentException() {
         // Arrange
-        var options = new MSBuildOptions
-        {
+        var options = new MSBuildOptions {
             ProjectPath = "",
             Configuration = "Release"
         };
@@ -270,8 +240,7 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void CreateBuildOptions_GeneratesCorrectOptions()
-    {
+    public void CreateBuildOptions_GeneratesCorrectOptions() {
         // Act
         var options = _wrapper.CreateBuildOptions(@"C:\Projects\MyApp\MyApp.csproj", "Debug");
 
@@ -283,8 +252,7 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void CreatePublishOptions_GeneratesCorrectOptions()
-    {
+    public void CreatePublishOptions_GeneratesCorrectOptions() {
         // Act
         var options = _wrapper.CreatePublishOptions(
             @"C:\Projects\MyApp\MyApp.csproj",
@@ -304,8 +272,7 @@ public class MSBuildWrapperTests
     }
 
     [Fact]
-    public void CreateCleanOptions_GeneratesCorrectOptions()
-    {
+    public void CreateCleanOptions_GeneratesCorrectOptions() {
         // Act
         var options = _wrapper.CreateCleanOptions(@"C:\Projects\MyApp\MyApp.csproj", "Release");
 

@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Defines the verbosity levels for console and log output.
 /// </summary>
-public enum LogVerbosity
-{
+public enum LogVerbosity {
     /// <summary>
     /// Minimal output - only critical messages and final results.
     /// Suitable for CI/CD and automated scenarios.

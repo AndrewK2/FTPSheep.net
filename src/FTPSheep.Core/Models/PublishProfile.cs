@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Represents a parsed Visual Studio publish profile (.pubxml).
 /// </summary>
-public class PublishProfile
-{
+public class PublishProfile {
     /// <summary>
     /// Gets or sets the publish method (e.g., "FTP", "MSDeploy", "FileSystem").
     /// </summary>
@@ -74,22 +73,18 @@ public class PublishProfile
     /// Parses the publish URL to extract host, port, and path components.
     /// </summary>
     /// <returns>A tuple containing (host, port, remotePath).</returns>
-    public (string host, int port, string remotePath) ParsePublishUrl()
-    {
-        if (string.IsNullOrWhiteSpace(PublishUrl))
-        {
+    public (string host, int port, string remotePath) ParsePublishUrl() {
+        if(string.IsNullOrWhiteSpace(PublishUrl)) {
             return (string.Empty, 21, string.Empty);
         }
 
-        try
-        {
+        try {
             // Handle URLs like "ftp://ftp.example.com/site/wwwroot" or "ftp.example.com/site/wwwroot"
             var url = PublishUrl;
 
             // Add ftp:// prefix if not present
-            if (!url.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase) &&
-                !url.StartsWith("ftps://", StringComparison.OrdinalIgnoreCase))
-            {
+            if(!url.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase) &&
+                !url.StartsWith("ftps://", StringComparison.OrdinalIgnoreCase)) {
                 url = "ftp://" + url;
             }
 
@@ -99,15 +94,12 @@ public class PublishProfile
             var remotePath = uri.AbsolutePath;
 
             // Clean up remote path
-            if (remotePath == "/")
-            {
+            if(remotePath == "/") {
                 remotePath = string.Empty;
             }
 
             return (host, port, remotePath);
-        }
-        catch
-        {
+        } catch {
             // If parsing fails, try simple string split
             var parts = PublishUrl.Split('/');
             var hostPart = parts[0];

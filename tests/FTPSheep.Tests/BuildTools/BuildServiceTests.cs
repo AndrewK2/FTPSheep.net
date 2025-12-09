@@ -1,20 +1,17 @@
 using FTPSheep.BuildTools.Services;
-using Xunit;
 
 namespace FTPSheep.Tests.BuildTools;
 
 /// <summary>
 /// Tests for the BuildService class.
 /// </summary>
-public class BuildServiceTests
-{
+public class BuildServiceTests {
     private readonly BuildService _buildService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BuildServiceTests"/> class.
     /// </summary>
-    public BuildServiceTests()
-    {
+    public BuildServiceTests() {
         _buildService = new BuildService();
     }
 
@@ -22,8 +19,7 @@ public class BuildServiceTests
     /// Tests that GetProjectInfo throws FileNotFoundException for non-existent project.
     /// </summary>
     [Fact]
-    public void GetProjectInfo_WithNonExistentProject_ThrowsFileNotFoundException()
-    {
+    public void GetProjectInfo_WithNonExistentProject_ThrowsFileNotFoundException() {
         // Arrange
         var projectPath = Path.Combine(Path.GetTempPath(), "NonExistent.csproj");
 
@@ -35,15 +31,13 @@ public class BuildServiceTests
     /// Tests that PublishDotNetCoreAsync throws InvalidOperationException for .NET Framework projects.
     /// </summary>
     [Fact]
-    public async Task PublishDotNetCoreAsync_WithFrameworkProject_ThrowsInvalidOperationException()
-    {
+    public async Task PublishDotNetCoreAsync_WithFrameworkProject_ThrowsInvalidOperationException() {
         // Arrange - Create a temporary .NET Framework project file
         var tempPath = Path.GetTempFileName();
         File.Delete(tempPath);
         var projectPath = Path.ChangeExtension(tempPath, ".csproj");
 
-        try
-        {
+        try {
             // Create a legacy .NET Framework project file
             File.WriteAllText(projectPath, @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""15.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
@@ -58,11 +52,8 @@ public class BuildServiceTests
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                 await _buildService.PublishDotNetCoreAsync(projectPath, outputPath));
-        }
-        finally
-        {
-            if (File.Exists(projectPath))
-            {
+        } finally {
+            if(File.Exists(projectPath)) {
                 File.Delete(projectPath);
             }
         }
@@ -72,15 +63,13 @@ public class BuildServiceTests
     /// Tests that GetProjectInfo correctly identifies an SDK-style project.
     /// </summary>
     [Fact]
-    public void GetProjectInfo_WithSdkStyleProject_ReturnsCorrectInfo()
-    {
+    public void GetProjectInfo_WithSdkStyleProject_ReturnsCorrectInfo() {
         // Arrange - Create a temporary SDK-style project file
         var tempPath = Path.GetTempFileName();
         File.Delete(tempPath);
         var projectPath = Path.ChangeExtension(tempPath, ".csproj");
 
-        try
-        {
+        try {
             File.WriteAllText(projectPath, @"<Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -94,11 +83,8 @@ public class BuildServiceTests
             // Assert
             Assert.True(info.IsSdkStyle);
             Assert.Equal("Microsoft.NET.Sdk", info.Sdk);
-        }
-        finally
-        {
-            if (File.Exists(projectPath))
-            {
+        } finally {
+            if(File.Exists(projectPath)) {
                 File.Delete(projectPath);
             }
         }
@@ -108,15 +94,13 @@ public class BuildServiceTests
     /// Tests that GetProjectDescription returns appropriate description.
     /// </summary>
     [Fact]
-    public void GetProjectDescription_WithConsoleProject_ReturnsConsoleDescription()
-    {
+    public void GetProjectDescription_WithConsoleProject_ReturnsConsoleDescription() {
         // Arrange - Create a temporary console project file
         var tempPath = Path.GetTempFileName();
         File.Delete(tempPath);
         var projectPath = Path.ChangeExtension(tempPath, ".csproj");
 
-        try
-        {
+        try {
             File.WriteAllText(projectPath, @"<Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -130,11 +114,8 @@ public class BuildServiceTests
             // Assert
             Assert.NotNull(description);
             Assert.NotEmpty(description);
-        }
-        finally
-        {
-            if (File.Exists(projectPath))
-            {
+        } finally {
+            if(File.Exists(projectPath)) {
                 File.Delete(projectPath);
             }
         }

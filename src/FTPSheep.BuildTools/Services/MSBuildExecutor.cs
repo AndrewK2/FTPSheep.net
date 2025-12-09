@@ -1,15 +1,14 @@
-using FTPSheep.BuildTools.Models;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
+using FTPSheep.BuildTools.Models;
 
 namespace FTPSheep.BuildTools.Services;
 
 /// <summary>
 /// Executes MSBuild operations and captures build output.
 /// </summary>
-public class MSBuildExecutor
-{
+public class MSBuildExecutor {
     private readonly MSBuildWrapper _wrapper;
     private static readonly Regex ErrorPattern = new(@"error\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex WarningPattern = new(@"warning\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -18,8 +17,7 @@ public class MSBuildExecutor
     /// Initializes a new instance of the <see cref="MSBuildExecutor"/> class.
     /// </summary>
     /// <param name="wrapper">The MSBuild wrapper for building arguments.</param>
-    public MSBuildExecutor(MSBuildWrapper? wrapper = null)
-    {
+    public MSBuildExecutor(MSBuildWrapper? wrapper = null) {
         _wrapper = wrapper ?? new MSBuildWrapper();
     }
 
@@ -29,10 +27,8 @@ public class MSBuildExecutor
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    public async Task<BuildResult> BuildAsync(MSBuildOptions options, CancellationToken cancellationToken = default)
-    {
-        if (!options.Targets.Contains("Build"))
-        {
+    public async Task<BuildResult> BuildAsync(MSBuildOptions options, CancellationToken cancellationToken = default) {
+        if(!options.Targets.Contains("Build")) {
             options.Targets.Add("Build");
         }
 
@@ -45,18 +41,15 @@ public class MSBuildExecutor
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    public async Task<BuildResult> PublishAsync(MSBuildOptions options, CancellationToken cancellationToken = default)
-    {
-        if (!options.Targets.Contains("Publish"))
-        {
+    public async Task<BuildResult> PublishAsync(MSBuildOptions options, CancellationToken cancellationToken = default) {
+        if(!options.Targets.Contains("Publish")) {
             options.Targets.Add("Publish");
         }
 
         var result = await ExecuteAsync(options, cancellationToken);
 
         // Set output path if publish was successful
-        if (result.Success && !string.IsNullOrWhiteSpace(options.OutputPath))
-        {
+        if(result.Success && !string.IsNullOrWhiteSpace(options.OutputPath)) {
             result.OutputPath = options.OutputPath;
         }
 
@@ -69,8 +62,7 @@ public class MSBuildExecutor
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    public async Task<BuildResult> CleanAsync(MSBuildOptions options, CancellationToken cancellationToken = default)
-    {
+    public async Task<BuildResult> CleanAsync(MSBuildOptions options, CancellationToken cancellationToken = default) {
         options.Targets.Clear();
         options.Targets.Add("Clean");
         options.RestorePackages = false;
@@ -84,8 +76,7 @@ public class MSBuildExecutor
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    public async Task<BuildResult> RebuildAsync(MSBuildOptions options, CancellationToken cancellationToken = default)
-    {
+    public async Task<BuildResult> RebuildAsync(MSBuildOptions options, CancellationToken cancellationToken = default) {
         options.Targets.Clear();
         options.Targets.Add("Rebuild");
 
@@ -98,8 +89,7 @@ public class MSBuildExecutor
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    private async Task<BuildResult> ExecuteAsync(MSBuildOptions options, CancellationToken cancellationToken)
-    {
+    private async Task<BuildResult> ExecuteAsync(MSBuildOptions options, CancellationToken cancellationToken) {
         var msbuildPath = _wrapper.GetMSBuildPath();
         var arguments = _wrapper.BuildArguments(options);
 
@@ -107,8 +97,7 @@ public class MSBuildExecutor
         var outputBuilder = new StringBuilder();
         var errorBuilder = new StringBuilder();
 
-        var processStartInfo = new ProcessStartInfo
-        {
+        var processStartInfo = new ProcessStartInfo {
             FileName = msbuildPath,
             Arguments = arguments,
             UseShellExecute = false,
@@ -121,18 +110,14 @@ public class MSBuildExecutor
         using var process = new Process { StartInfo = processStartInfo };
 
         // Capture output and error streams
-        process.OutputDataReceived += (sender, e) =>
-        {
-            if (e.Data != null)
-            {
+        process.OutputDataReceived += (sender, e) => {
+            if(e.Data != null) {
                 outputBuilder.AppendLine(e.Data);
             }
         };
 
-        process.ErrorDataReceived += (sender, e) =>
-        {
-            if (e.Data != null)
-            {
+        process.ErrorDataReceived += (sender, e) => {
+            if(e.Data != null) {
                 errorBuilder.AppendLine(e.Data);
             }
         };
@@ -152,12 +137,9 @@ public class MSBuildExecutor
         var errors = ParseErrors(output + errorOutput);
         var warnings = ParseWarnings(output);
 
-        if (process.ExitCode == 0 && errors.Count == 0)
-        {
+        if(process.ExitCode == 0 && errors.Count == 0) {
             return BuildResult.Successful(output, duration, options.OutputPath);
-        }
-        else
-        {
+        } else {
             return BuildResult.Failed(process.ExitCode, output, errorOutput, errors, duration);
         }
     }
@@ -165,18 +147,12 @@ public class MSBuildExecutor
     /// <summary>
     /// Waits for a process to exit asynchronously.
     /// </summary>
-    private static async Task WaitForExitAsync(Process process, CancellationToken cancellationToken)
-    {
-        while (!process.HasExited)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
+    private static async Task WaitForExitAsync(Process process, CancellationToken cancellationToken) {
+        while(!process.HasExited) {
+            if(cancellationToken.IsCancellationRequested) {
+                try {
                     process.Kill();
-                }
-                catch
-                {
+                } catch {
                     // Process may have already exited
                 }
                 cancellationToken.ThrowIfCancellationRequested();
@@ -189,15 +165,12 @@ public class MSBuildExecutor
     /// <summary>
     /// Parses error messages from MSBuild output.
     /// </summary>
-    private static List<string> ParseErrors(string output)
-    {
+    private static List<string> ParseErrors(string output) {
         var errors = new List<string>();
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (var line in lines)
-        {
-            if (ErrorPattern.IsMatch(line))
-            {
+        foreach(var line in lines) {
+            if(ErrorPattern.IsMatch(line)) {
                 errors.Add(line.Trim());
             }
         }
@@ -208,15 +181,12 @@ public class MSBuildExecutor
     /// <summary>
     /// Parses warning messages from MSBuild output.
     /// </summary>
-    private static List<string> ParseWarnings(string output)
-    {
+    private static List<string> ParseWarnings(string output) {
         var warnings = new List<string>();
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (var line in lines)
-        {
-            if (WarningPattern.IsMatch(line))
-            {
+        foreach(var line in lines) {
+            if(WarningPattern.IsMatch(line)) {
                 warnings.Add(line.Trim());
             }
         }

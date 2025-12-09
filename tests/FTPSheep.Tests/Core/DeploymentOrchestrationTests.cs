@@ -3,13 +3,11 @@ using FTPSheep.Core.Services;
 
 namespace FTPSheep.Tests.Core;
 
-public class DeploymentOrchestrationTests
-{
+public class DeploymentOrchestrationTests {
     #region DeploymentStage Tests
 
     [Fact]
-    public void DeploymentStage_EnumValues_AreCorrect()
-    {
+    public void DeploymentStage_EnumValues_AreCorrect() {
         Assert.Equal(0, (int)DeploymentStage.NotStarted);
         Assert.Equal(1, (int)DeploymentStage.LoadingProfile);
         Assert.Equal(2, (int)DeploymentStage.BuildingProject);
@@ -30,8 +28,7 @@ public class DeploymentOrchestrationTests
     #region DeploymentState Tests
 
     [Fact]
-    public void DeploymentState_Constructor_InitializesDefaults()
-    {
+    public void DeploymentState_Constructor_InitializesDefaults() {
         var state = new DeploymentState();
 
         Assert.NotEqual(Guid.Empty, state.DeploymentId);
@@ -46,10 +43,8 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentState_ProgressPercentage_CalculatesCorrectly()
-    {
-        var state = new DeploymentState
-        {
+    public void DeploymentState_ProgressPercentage_CalculatesCorrectly() {
+        var state = new DeploymentState {
             TotalFiles = 100,
             FilesUploaded = 50
         };
@@ -58,10 +53,8 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentState_ProgressPercentage_WithZeroFiles_ReturnsZero()
-    {
-        var state = new DeploymentState
-        {
+    public void DeploymentState_ProgressPercentage_WithZeroFiles_ReturnsZero() {
+        var state = new DeploymentState {
             TotalFiles = 0,
             FilesUploaded = 0
         };
@@ -70,11 +63,9 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentState_ElapsedTime_CalculatesCorrectly()
-    {
+    public void DeploymentState_ElapsedTime_CalculatesCorrectly() {
         var startTime = DateTime.UtcNow.AddMinutes(-5);
-        var state = new DeploymentState
-        {
+        var state = new DeploymentState {
             StartedAt = startTime
         };
 
@@ -85,12 +76,10 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentState_ElapsedTime_WithCompletedAt_UsesCompletedTime()
-    {
+    public void DeploymentState_ElapsedTime_WithCompletedAt_UsesCompletedTime() {
         var startTime = DateTime.UtcNow.AddMinutes(-10);
         var completedTime = startTime.AddMinutes(5);
-        var state = new DeploymentState
-        {
+        var state = new DeploymentState {
             StartedAt = startTime,
             CompletedAt = completedTime
         };
@@ -102,8 +91,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentState_IsInProgress_ReturnsTrueForActiveStages()
-    {
+    public void DeploymentState_IsInProgress_ReturnsTrueForActiveStages() {
         var state = new DeploymentState { CurrentStage = DeploymentStage.UploadingFiles };
         Assert.True(state.IsInProgress);
 
@@ -112,8 +100,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentState_IsInProgress_ReturnsFalseForFinalStages()
-    {
+    public void DeploymentState_IsInProgress_ReturnsFalseForFinalStages() {
         var state = new DeploymentState { CurrentStage = DeploymentStage.Completed };
         Assert.False(state.IsInProgress);
 
@@ -128,8 +115,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentState_IsCompleted_ReturnsTrueForFinalStages()
-    {
+    public void DeploymentState_IsCompleted_ReturnsTrueForFinalStages() {
         var state = new DeploymentState { CurrentStage = DeploymentStage.Completed };
         Assert.True(state.IsCompleted);
         Assert.True(state.IsSuccess);
@@ -138,8 +124,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentState_IsFailed_ReturnsTrueWhenFailed()
-    {
+    public void DeploymentState_IsFailed_ReturnsTrueWhenFailed() {
         var state = new DeploymentState { CurrentStage = DeploymentStage.Failed };
         Assert.True(state.IsCompleted);
         Assert.False(state.IsSuccess);
@@ -148,8 +133,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentState_IsCancelled_ReturnsTrueWhenCancelled()
-    {
+    public void DeploymentState_IsCancelled_ReturnsTrueWhenCancelled() {
         var state = new DeploymentState { CurrentStage = DeploymentStage.Cancelled };
         Assert.True(state.IsCompleted);
         Assert.False(state.IsSuccess);
@@ -162,8 +146,7 @@ public class DeploymentOrchestrationTests
     #region DeploymentResult Tests
 
     [Fact]
-    public void DeploymentResult_Constructor_InitializesDefaults()
-    {
+    public void DeploymentResult_Constructor_InitializesDefaults() {
         var result = new DeploymentResult();
 
         Assert.NotEqual(Guid.Empty, result.DeploymentId);
@@ -177,12 +160,10 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_Duration_CalculatesCorrectly()
-    {
+    public void DeploymentResult_Duration_CalculatesCorrectly() {
         var startTime = DateTime.UtcNow;
         var endTime = startTime.AddMinutes(5);
-        var result = new DeploymentResult
-        {
+        var result = new DeploymentResult {
             StartTime = startTime,
             EndTime = endTime
         };
@@ -191,12 +172,10 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_AverageSpeedBytesPerSecond_CalculatesCorrectly()
-    {
+    public void DeploymentResult_AverageSpeedBytesPerSecond_CalculatesCorrectly() {
         var startTime = DateTime.UtcNow;
         var endTime = startTime.AddSeconds(10);
-        var result = new DeploymentResult
-        {
+        var result = new DeploymentResult {
             StartTime = startTime,
             EndTime = endTime,
             SizeUploaded = 1000
@@ -206,10 +185,8 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_AverageSpeedBytesPerSecond_WithNoDuration_ReturnsNull()
-    {
-        var result = new DeploymentResult
-        {
+    public void DeploymentResult_AverageSpeedBytesPerSecond_WithNoDuration_ReturnsNull() {
+        var result = new DeploymentResult {
             SizeUploaded = 1000
         };
 
@@ -217,14 +194,12 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_FormattedUploadSpeed_FormatsCorrectly()
-    {
+    public void DeploymentResult_FormattedUploadSpeed_FormatsCorrectly() {
         var startTime = DateTime.UtcNow;
         var endTime = startTime.AddSeconds(10);
 
         // Test bytes per second
-        var result1 = new DeploymentResult
-        {
+        var result1 = new DeploymentResult {
             StartTime = startTime,
             EndTime = endTime,
             SizeUploaded = 500
@@ -232,8 +207,7 @@ public class DeploymentOrchestrationTests
         Assert.Contains("B/s", result1.FormattedUploadSpeed);
 
         // Test kilobytes per second
-        var result2 = new DeploymentResult
-        {
+        var result2 = new DeploymentResult {
             StartTime = startTime,
             EndTime = endTime,
             SizeUploaded = 10240
@@ -241,8 +215,7 @@ public class DeploymentOrchestrationTests
         Assert.Contains("KB/s", result2.FormattedUploadSpeed);
 
         // Test megabytes per second
-        var result3 = new DeploymentResult
-        {
+        var result3 = new DeploymentResult {
             StartTime = startTime,
             EndTime = endTime,
             SizeUploaded = 10485760
@@ -251,8 +224,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_AddError_AddsErrorAndMarksFailed()
-    {
+    public void DeploymentResult_AddError_AddsErrorAndMarksFailed() {
         var result = new DeploymentResult { Success = true };
 
         result.AddError("Test error");
@@ -263,8 +235,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_AddWarning_AddsWarningWithoutAffectingSuccess()
-    {
+    public void DeploymentResult_AddWarning_AddsWarningWithoutAffectingSuccess() {
         var result = new DeploymentResult { Success = true };
 
         result.AddWarning("Test warning");
@@ -275,10 +246,8 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_Complete_SetsEndTimeAndFinalStage()
-    {
-        var result = new DeploymentResult
-        {
+    public void DeploymentResult_Complete_SetsEndTimeAndFinalStage() {
+        var result = new DeploymentResult {
             StartTime = DateTime.UtcNow
         };
 
@@ -290,10 +259,8 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_Complete_WithErrors_MarksFailed()
-    {
-        var result = new DeploymentResult
-        {
+    public void DeploymentResult_Complete_WithErrors_MarksFailed() {
+        var result = new DeploymentResult {
             StartTime = DateTime.UtcNow
         };
         result.AddError("Test error");
@@ -305,10 +272,8 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_FromSuccess_CreatesSuccessfulResult()
-    {
-        var state = new DeploymentState
-        {
+    public void DeploymentResult_FromSuccess_CreatesSuccessfulResult() {
+        var state = new DeploymentState {
             DeploymentId = Guid.NewGuid(),
             StartedAt = DateTime.UtcNow.AddMinutes(-5),
             CompletedAt = DateTime.UtcNow,
@@ -336,10 +301,8 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_FromFailure_CreatesFailedResult()
-    {
-        var state = new DeploymentState
-        {
+    public void DeploymentResult_FromFailure_CreatesFailedResult() {
+        var state = new DeploymentState {
             DeploymentId = Guid.NewGuid(),
             StartedAt = DateTime.UtcNow.AddMinutes(-5),
             CompletedAt = DateTime.UtcNow,
@@ -359,10 +322,8 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentResult_FromCancellation_CreatesCancelledResult()
-    {
-        var state = new DeploymentState
-        {
+    public void DeploymentResult_FromCancellation_CreatesCancelledResult() {
+        var state = new DeploymentState {
             DeploymentId = Guid.NewGuid(),
             StartedAt = DateTime.UtcNow.AddMinutes(-5),
             CompletedAt = DateTime.UtcNow,
@@ -385,8 +346,7 @@ public class DeploymentOrchestrationTests
     #region DeploymentCoordinator Tests
 
     [Fact]
-    public void DeploymentCoordinator_Constructor_InitializesState()
-    {
+    public void DeploymentCoordinator_Constructor_InitializesState() {
         var coordinator = new DeploymentCoordinator();
 
         Assert.NotNull(coordinator.State);
@@ -394,8 +354,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithNullOptions_ThrowsArgumentNullException()
-    {
+    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithNullOptions_ThrowsArgumentNullException() {
         var coordinator = new DeploymentCoordinator();
 
         await Assert.ThrowsAsync<ArgumentNullException>(
@@ -403,11 +362,9 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_InitializesState()
-    {
+    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_InitializesState() {
         var coordinator = new DeploymentCoordinator();
-        var options = new DeploymentOptions
-        {
+        var options = new DeploymentOptions {
             ProfileName = "TestProfile",
             ProjectPath = "C:\\Test\\Project.csproj",
             TargetHost = "ftp.example.com"
@@ -422,11 +379,9 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_CompletesSuccessfully()
-    {
+    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_CompletesSuccessfully() {
         var coordinator = new DeploymentCoordinator();
-        var options = new DeploymentOptions
-        {
+        var options = new DeploymentOptions {
             UseAppOffline = false,
             CleanupMode = false
         };
@@ -439,11 +394,9 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_RaisesStageChangedEvents()
-    {
+    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_RaisesStageChangedEvents() {
         var coordinator = new DeploymentCoordinator();
-        var options = new DeploymentOptions
-        {
+        var options = new DeploymentOptions {
             UseAppOffline = false,
             CleanupMode = false
         };
@@ -460,11 +413,9 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithAppOffline_IncludesAppOfflineStages()
-    {
+    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithAppOffline_IncludesAppOfflineStages() {
         var coordinator = new DeploymentCoordinator();
-        var options = new DeploymentOptions
-        {
+        var options = new DeploymentOptions {
             UseAppOffline = true,
             CleanupMode = false
         };
@@ -479,11 +430,9 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithCleanupMode_IncludesCleanupStage()
-    {
+    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithCleanupMode_IncludesCleanupStage() {
         var coordinator = new DeploymentCoordinator();
-        var options = new DeploymentOptions
-        {
+        var options = new DeploymentOptions {
             UseAppOffline = false,
             CleanupMode = true
         };
@@ -497,8 +446,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithCancellation_ReturnsCancelledResult()
-    {
+    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithCancellation_ReturnsCancelledResult() {
         var coordinator = new DeploymentCoordinator();
         var options = new DeploymentOptions();
         var cts = new CancellationTokenSource();
@@ -514,8 +462,7 @@ public class DeploymentOrchestrationTests
     }
 
     [Fact]
-    public void DeploymentCoordinator_CancelDeployment_CanBeCalledSafely()
-    {
+    public void DeploymentCoordinator_CancelDeployment_CanBeCalledSafely() {
         var coordinator = new DeploymentCoordinator();
 
         // Should not throw even when not in progress
@@ -531,8 +478,7 @@ public class DeploymentOrchestrationTests
     #region DeploymentOptions Tests
 
     [Fact]
-    public void DeploymentOptions_Constructor_SetsDefaults()
-    {
+    public void DeploymentOptions_Constructor_SetsDefaults() {
         var options = new DeploymentOptions();
 
         Assert.True(options.UseAppOffline);

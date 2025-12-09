@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Exceptions;
 /// <summary>
 /// Base exception for all connection-related errors.
 /// </summary>
-public class ConnectionException : Exception
-{
+public class ConnectionException : Exception {
     /// <summary>
     /// Gets the server host associated with this exception.
     /// </summary>
@@ -23,16 +22,14 @@ public class ConnectionException : Exception
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectionException"/> class.
     /// </summary>
-    public ConnectionException()
-    {
+    public ConnectionException() {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectionException"/> class with a specified error message.
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
-    public ConnectionException(string message) : base(message)
-    {
+    public ConnectionException(string message) : base(message) {
     }
 
     /// <summary>
@@ -40,8 +37,7 @@ public class ConnectionException : Exception
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public ConnectionException(string message, Exception innerException) : base(message, innerException)
-    {
+    public ConnectionException(string message, Exception innerException) : base(message, innerException) {
     }
 
     /// <summary>
@@ -52,8 +48,7 @@ public class ConnectionException : Exception
     /// <param name="port">The server port.</param>
     /// <param name="isTransient">Whether this is a transient error.</param>
     public ConnectionException(string message, string host, int port, bool isTransient = false)
-        : base(message)
-    {
+        : base(message) {
         Host = host;
         Port = port;
         IsTransient = isTransient;
@@ -68,8 +63,7 @@ public class ConnectionException : Exception
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
     /// <param name="isTransient">Whether this is a transient error.</param>
     public ConnectionException(string message, string host, int port, Exception innerException, bool isTransient = false)
-        : base(message, innerException)
-    {
+        : base(message, innerException) {
         Host = host;
         Port = port;
         IsTransient = isTransient;
@@ -79,8 +73,7 @@ public class ConnectionException : Exception
 /// <summary>
 /// Exception thrown when a connection timeout occurs.
 /// </summary>
-public class ConnectionTimeoutException : ConnectionException
-{
+public class ConnectionTimeoutException : ConnectionException {
     /// <summary>
     /// Gets the timeout duration that was exceeded.
     /// </summary>
@@ -91,8 +84,7 @@ public class ConnectionTimeoutException : ConnectionException
     /// </summary>
     /// <param name="timeout">The timeout duration.</param>
     public ConnectionTimeoutException(TimeSpan timeout)
-        : base($"Connection timed out after {timeout.TotalSeconds:F1} seconds.")
-    {
+        : base($"Connection timed out after {timeout.TotalSeconds:F1} seconds.") {
         Timeout = timeout;
         IsTransient = true; // Timeouts are often transient
     }
@@ -104,8 +96,7 @@ public class ConnectionTimeoutException : ConnectionException
     /// <param name="port">The server port.</param>
     /// <param name="timeout">The timeout duration.</param>
     public ConnectionTimeoutException(string host, int port, TimeSpan timeout)
-        : base($"Connection to {host}:{port} timed out after {timeout.TotalSeconds:F1} seconds.", host, port, isTransient: true)
-    {
+        : base($"Connection to {host}:{port} timed out after {timeout.TotalSeconds:F1} seconds.", host, port, isTransient: true) {
         Timeout = timeout;
     }
 }
@@ -113,13 +104,11 @@ public class ConnectionTimeoutException : ConnectionException
 /// <summary>
 /// Exception thrown when the server refuses the connection.
 /// </summary>
-public class ConnectionRefusedException : ConnectionException
-{
+public class ConnectionRefusedException : ConnectionException {
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectionRefusedException"/> class.
     /// </summary>
-    public ConnectionRefusedException()
-    {
+    public ConnectionRefusedException() {
     }
 
     /// <summary>
@@ -128,8 +117,7 @@ public class ConnectionRefusedException : ConnectionException
     /// <param name="host">The server host.</param>
     /// <param name="port">The server port.</param>
     public ConnectionRefusedException(string host, int port)
-        : base($"Connection to {host}:{port} was refused. Ensure the server is running and accessible.", host, port, isTransient: false)
-    {
+        : base($"Connection to {host}:{port} was refused. Ensure the server is running and accessible.", host, port, isTransient: false) {
     }
 
     /// <summary>
@@ -139,16 +127,14 @@ public class ConnectionRefusedException : ConnectionException
     /// <param name="port">The server port.</param>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
     public ConnectionRefusedException(string host, int port, Exception innerException)
-        : base($"Connection to {host}:{port} was refused. Ensure the server is running and accessible.", host, port, innerException, isTransient: false)
-    {
+        : base($"Connection to {host}:{port} was refused. Ensure the server is running and accessible.", host, port, innerException, isTransient: false) {
     }
 }
 
 /// <summary>
 /// Exception thrown when SSL/TLS certificate validation fails.
 /// </summary>
-public class SslCertificateException : ConnectionException
-{
+public class SslCertificateException : ConnectionException {
     /// <summary>
     /// Gets the certificate validation error.
     /// </summary>
@@ -157,8 +143,7 @@ public class SslCertificateException : ConnectionException
     /// <summary>
     /// Initializes a new instance of the <see cref="SslCertificateException"/> class.
     /// </summary>
-    public SslCertificateException()
-    {
+    public SslCertificateException() {
     }
 
     /// <summary>
@@ -166,8 +151,7 @@ public class SslCertificateException : ConnectionException
     /// </summary>
     /// <param name="validationError">The certificate validation error.</param>
     public SslCertificateException(string validationError)
-        : base($"SSL certificate validation failed: {validationError}")
-    {
+        : base($"SSL certificate validation failed: {validationError}") {
         ValidationError = validationError;
         IsTransient = false; // Certificate errors are not transient
     }
@@ -178,8 +162,7 @@ public class SslCertificateException : ConnectionException
     /// <param name="host">The server host.</param>
     /// <param name="validationError">The certificate validation error.</param>
     public SslCertificateException(string host, string validationError)
-        : base($"SSL certificate validation failed for {host}: {validationError}", host, 0, isTransient: false)
-    {
+        : base($"SSL certificate validation failed for {host}: {validationError}", host, 0, isTransient: false) {
         ValidationError = validationError;
     }
 }

@@ -3,8 +3,7 @@ namespace FTPSheep.BuildTools.Models;
 /// <summary>
 /// Configuration options for MSBuild operations.
 /// </summary>
-public class MSBuildOptions
-{
+public class MSBuildOptions {
     /// <summary>
     /// Gets or sets the path to the project or solution file.
     /// </summary>
@@ -69,8 +68,7 @@ public class MSBuildOptions
 /// <summary>
 /// MSBuild verbosity levels.
 /// </summary>
-public enum MSBuildVerbosity
-{
+public enum MSBuildVerbosity {
     /// <summary>
     /// Quiet - minimal output.
     /// </summary>

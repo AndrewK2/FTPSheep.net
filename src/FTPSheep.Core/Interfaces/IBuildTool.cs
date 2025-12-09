@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Interfaces;
 /// <summary>
 /// Defines the contract for .NET build tools (MSBuild or dotnet CLI).
 /// </summary>
-public interface IBuildTool
-{
+public interface IBuildTool {
     /// <summary>
     /// Builds a .NET project.
     /// </summary>
@@ -63,8 +62,7 @@ public interface IBuildTool
 /// <summary>
 /// Represents the result of a build or publish operation.
 /// </summary>
-public sealed class BuildResult
-{
+public sealed class BuildResult {
     /// <summary>
     /// Gets or sets a value indicating whether the build was successful.
     /// </summary>
@@ -104,8 +102,7 @@ public sealed class BuildResult
 /// <summary>
 /// Represents information about a .NET project.
 /// </summary>
-public sealed class ProjectInfo
-{
+public sealed class ProjectInfo {
     /// <summary>
     /// Gets or sets the project file path.
     /// </summary>

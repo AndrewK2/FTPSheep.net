@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Global configuration settings that apply as defaults to all deployment profiles.
 /// </summary>
-public sealed class GlobalConfiguration
-{
+public sealed class GlobalConfiguration {
     /// <summary>
     /// Gets or sets the default number of concurrent file transfers.
     /// </summary>
@@ -53,8 +52,7 @@ public sealed class GlobalConfiguration
     /// Creates a new instance of <see cref="GlobalConfiguration"/> with default values.
     /// </summary>
     /// <returns>A new <see cref="GlobalConfiguration"/> instance with default settings.</returns>
-    public static GlobalConfiguration CreateDefault()
-    {
+    public static GlobalConfiguration CreateDefault() {
         return new GlobalConfiguration();
     }
 }

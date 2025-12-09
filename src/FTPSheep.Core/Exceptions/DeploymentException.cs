@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Exceptions;
 /// <summary>
 /// Base exception for all deployment-related errors.
 /// </summary>
-public class DeploymentException : Exception
-{
+public class DeploymentException : Exception {
     /// <summary>
     /// Gets the profile name associated with this exception, if applicable.
     /// </summary>
@@ -23,16 +22,14 @@ public class DeploymentException : Exception
     /// <summary>
     /// Initializes a new instance of the <see cref="DeploymentException"/> class.
     /// </summary>
-    public DeploymentException()
-    {
+    public DeploymentException() {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DeploymentException"/> class with a specified error message.
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
-    public DeploymentException(string message) : base(message)
-    {
+    public DeploymentException(string message) : base(message) {
     }
 
     /// <summary>
@@ -40,8 +37,7 @@ public class DeploymentException : Exception
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public DeploymentException(string message, Exception innerException) : base(message, innerException)
-    {
+    public DeploymentException(string message, Exception innerException) : base(message, innerException) {
     }
 
     /// <summary>
@@ -52,8 +48,7 @@ public class DeploymentException : Exception
     /// <param name="phase">The deployment phase where the error occurred.</param>
     /// <param name="isRetryable">Whether this error is retryable.</param>
     public DeploymentException(string message, string profileName, DeploymentPhase phase, bool isRetryable = false)
-        : base(message)
-    {
+        : base(message) {
         ProfileName = profileName;
         Phase = phase;
         IsRetryable = isRetryable;
@@ -68,8 +63,7 @@ public class DeploymentException : Exception
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
     /// <param name="isRetryable">Whether this error is retryable.</param>
     public DeploymentException(string message, string profileName, DeploymentPhase phase, Exception innerException, bool isRetryable = false)
-        : base(message, innerException)
-    {
+        : base(message, innerException) {
         ProfileName = profileName;
         Phase = phase;
         IsRetryable = isRetryable;
@@ -79,8 +73,7 @@ public class DeploymentException : Exception
 /// <summary>
 /// Defines the phases of a deployment operation.
 /// </summary>
-public enum DeploymentPhase
-{
+public enum DeploymentPhase {
     /// <summary>
     /// Unknown or unspecified phase.
     /// </summary>
@@ -125,8 +118,7 @@ public enum DeploymentPhase
 /// <summary>
 /// Exception thrown when a file transfer fails during deployment.
 /// </summary>
-public class FileTransferException : DeploymentException
-{
+public class FileTransferException : DeploymentException {
     /// <summary>
     /// Gets the file path that failed to transfer.
     /// </summary>
@@ -140,8 +132,7 @@ public class FileTransferException : DeploymentException
     /// <summary>
     /// Initializes a new instance of the <see cref="FileTransferException"/> class.
     /// </summary>
-    public FileTransferException()
-    {
+    public FileTransferException() {
     }
 
     /// <summary>
@@ -150,8 +141,7 @@ public class FileTransferException : DeploymentException
     /// <param name="filePath">The local file path.</param>
     /// <param name="remotePath">The remote path.</param>
     public FileTransferException(string filePath, string remotePath)
-        : base($"Failed to transfer file '{filePath}' to '{remotePath}'.")
-    {
+        : base($"Failed to transfer file '{filePath}' to '{remotePath}'.") {
         FilePath = filePath;
         RemotePath = remotePath;
         Phase = DeploymentPhase.Upload;
@@ -165,8 +155,7 @@ public class FileTransferException : DeploymentException
     /// <param name="remotePath">The remote path.</param>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
     public FileTransferException(string filePath, string remotePath, Exception innerException)
-        : base($"Failed to transfer file '{filePath}' to '{remotePath}': {innerException.Message}", innerException)
-    {
+        : base($"Failed to transfer file '{filePath}' to '{remotePath}': {innerException.Message}", innerException) {
         FilePath = filePath;
         RemotePath = remotePath;
         Phase = DeploymentPhase.Upload;
@@ -177,8 +166,7 @@ public class FileTransferException : DeploymentException
 /// <summary>
 /// Exception thrown when there is insufficient disk space on the remote server.
 /// </summary>
-public class InsufficientDiskSpaceException : DeploymentException
-{
+public class InsufficientDiskSpaceException : DeploymentException {
     /// <summary>
     /// Gets the required disk space in bytes.
     /// </summary>
@@ -192,8 +180,7 @@ public class InsufficientDiskSpaceException : DeploymentException
     /// <summary>
     /// Initializes a new instance of the <see cref="InsufficientDiskSpaceException"/> class.
     /// </summary>
-    public InsufficientDiskSpaceException()
-    {
+    public InsufficientDiskSpaceException() {
     }
 
     /// <summary>
@@ -202,8 +189,7 @@ public class InsufficientDiskSpaceException : DeploymentException
     /// <param name="requiredBytes">The required disk space in bytes.</param>
     /// <param name="availableBytes">The available disk space in bytes.</param>
     public InsufficientDiskSpaceException(long requiredBytes, long availableBytes)
-        : base($"Insufficient disk space on remote server. Required: {requiredBytes / 1024 / 1024} MB, Available: {availableBytes / 1024 / 1024} MB")
-    {
+        : base($"Insufficient disk space on remote server. Required: {requiredBytes / 1024 / 1024} MB, Available: {availableBytes / 1024 / 1024} MB") {
         RequiredBytes = requiredBytes;
         AvailableBytes = availableBytes;
         Phase = DeploymentPhase.Upload;

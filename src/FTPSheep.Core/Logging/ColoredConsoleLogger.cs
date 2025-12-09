@@ -5,8 +5,7 @@ namespace FTPSheep.Core.Logging;
 /// <summary>
 /// A console logger that supports colored output based on log level.
 /// </summary>
-public sealed class ColoredConsoleLogger : ILogger
-{
+public sealed class ColoredConsoleLogger : ILogger {
     private readonly string _categoryName;
     private readonly bool _enableColors;
     private readonly LogLevel _minLevel;
@@ -17,22 +16,19 @@ public sealed class ColoredConsoleLogger : ILogger
     /// <param name="categoryName">The category name for the logger.</param>
     /// <param name="enableColors">Whether to enable colored output.</param>
     /// <param name="minLevel">The minimum log level to output.</param>
-    public ColoredConsoleLogger(string categoryName, bool enableColors = true, LogLevel minLevel = LogLevel.Information)
-    {
+    public ColoredConsoleLogger(string categoryName, bool enableColors = true, LogLevel minLevel = LogLevel.Information) {
         _categoryName = categoryName;
         _enableColors = enableColors && !Console.IsOutputRedirected;
         _minLevel = minLevel;
     }
 
     /// <inheritdoc />
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
-    {
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull {
         return null;
     }
 
     /// <inheritdoc />
-    public bool IsEnabled(LogLevel logLevel)
-    {
+    public bool IsEnabled(LogLevel logLevel) {
         return logLevel >= _minLevel;
     }
 
@@ -42,28 +38,22 @@ public sealed class ColoredConsoleLogger : ILogger
         EventId eventId,
         TState state,
         Exception? exception,
-        Func<TState, Exception?, string> formatter)
-    {
-        if (!IsEnabled(logLevel))
-        {
+        Func<TState, Exception?, string> formatter) {
+        if(!IsEnabled(logLevel)) {
             return;
         }
 
         var message = formatter(state, exception);
-        if (string.IsNullOrEmpty(message) && exception == null)
-        {
+        if(string.IsNullOrEmpty(message) && exception == null) {
             return;
         }
 
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
         var logLevelString = GetLogLevelString(logLevel);
 
-        if (_enableColors)
-        {
+        if(_enableColors) {
             WriteColoredMessage(timestamp, logLevelString, message, exception, logLevel);
-        }
-        else
-        {
+        } else {
             WriteMessage(timestamp, logLevelString, message, exception);
         }
     }
@@ -73,12 +63,10 @@ public sealed class ColoredConsoleLogger : ILogger
         string logLevelString,
         string message,
         Exception? exception,
-        LogLevel logLevel)
-    {
+        LogLevel logLevel) {
         var originalColor = Console.ForegroundColor;
 
-        try
-        {
+        try {
             // Write timestamp in gray
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.Write($"[{timestamp}] ");
@@ -88,30 +76,22 @@ public sealed class ColoredConsoleLogger : ILogger
             Console.Write($"{logLevelString} ");
 
             // Write message in default or error color
-            if (logLevel >= LogLevel.Error)
-            {
+            if(logLevel >= LogLevel.Error) {
                 Console.ForegroundColor = ConsoleColor.Red;
-            }
-            else if (logLevel == LogLevel.Warning)
-            {
+            } else if(logLevel == LogLevel.Warning) {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-            }
-            else
-            {
+            } else {
                 Console.ForegroundColor = originalColor;
             }
 
             Console.WriteLine(message);
 
             // Write exception if present
-            if (exception != null)
-            {
+            if(exception != null) {
                 Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine(exception.ToString());
             }
-        }
-        finally
-        {
+        } finally {
             Console.ForegroundColor = originalColor;
         }
     }
@@ -120,20 +100,16 @@ public sealed class ColoredConsoleLogger : ILogger
         string timestamp,
         string logLevelString,
         string message,
-        Exception? exception)
-    {
+        Exception? exception) {
         Console.WriteLine($"[{timestamp}] {logLevelString} {message}");
 
-        if (exception != null)
-        {
+        if(exception != null) {
             Console.WriteLine(exception.ToString());
         }
     }
 
-    private static string GetLogLevelString(LogLevel logLevel)
-    {
-        return logLevel switch
-        {
+    private static string GetLogLevelString(LogLevel logLevel) {
+        return logLevel switch {
             LogLevel.Trace => "TRCE",
             LogLevel.Debug => "DBUG",
             LogLevel.Information => "INFO",
@@ -144,10 +120,8 @@ public sealed class ColoredConsoleLogger : ILogger
         };
     }
 
-    private static ConsoleColor GetLogLevelColor(LogLevel logLevel)
-    {
-        return logLevel switch
-        {
+    private static ConsoleColor GetLogLevelColor(LogLevel logLevel) {
+        return logLevel switch {
             LogLevel.Trace => ConsoleColor.Gray,
             LogLevel.Debug => ConsoleColor.DarkGray,
             LogLevel.Information => ConsoleColor.Green,

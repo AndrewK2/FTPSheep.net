@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Represents build and publish configuration settings for a .NET project.
 /// </summary>
-public sealed class BuildConfiguration
-{
+public sealed class BuildConfiguration {
     /// <summary>
     /// Gets or sets the build configuration name (Debug, Release, etc.).
     /// </summary>
@@ -48,16 +47,14 @@ public sealed class BuildConfiguration
     /// <summary>
     /// Creates a default BuildConfiguration instance.
     /// </summary>
-    public BuildConfiguration()
-    {
+    public BuildConfiguration() {
     }
 
     /// <summary>
     /// Creates a BuildConfiguration with the specified configuration name.
     /// </summary>
     /// <param name="configuration">The build configuration name.</param>
-    public BuildConfiguration(string configuration)
-    {
+    public BuildConfiguration(string configuration) {
         Configuration = configuration ?? "Release";
     }
 
@@ -66,20 +63,16 @@ public sealed class BuildConfiguration
     /// </summary>
     /// <param name="errors">A list of validation error messages.</param>
     /// <returns>True if valid, otherwise false.</returns>
-    public bool Validate(out List<string> errors)
-    {
+    public bool Validate(out List<string> errors) {
         errors = new List<string>();
 
-        if (string.IsNullOrWhiteSpace(Configuration))
-        {
+        if(string.IsNullOrWhiteSpace(Configuration)) {
             errors.Add("Configuration name cannot be empty.");
         }
 
         // RuntimeIdentifier format validation (basic)
-        if (!string.IsNullOrWhiteSpace(RuntimeIdentifier))
-        {
-            if (!RuntimeIdentifier.Contains('-'))
-            {
+        if(!string.IsNullOrWhiteSpace(RuntimeIdentifier)) {
+            if(!RuntimeIdentifier.Contains('-')) {
                 errors.Add($"Runtime identifier '{RuntimeIdentifier}' appears invalid. Expected format: os-arch (e.g., win-x64).");
             }
         }

@@ -2,13 +2,11 @@ using FTPSheep.Core.Exceptions;
 
 namespace FTPSheep.Tests.Exceptions;
 
-public class ExceptionTests
-{
+public class ExceptionTests {
     #region BuildException Tests
 
     [Fact]
-    public void BuildException_DefaultConstructor_ShouldCreateException()
-    {
+    public void BuildException_DefaultConstructor_ShouldCreateException() {
         // Act
         var exception = new BuildException();
 
@@ -17,8 +15,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void BuildException_WithMessage_ShouldSetMessage()
-    {
+    public void BuildException_WithMessage_ShouldSetMessage() {
         // Act
         var exception = new BuildException("Build failed");
 
@@ -27,8 +24,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void BuildException_WithMessageAndInnerException_ShouldSetBoth()
-    {
+    public void BuildException_WithMessageAndInnerException_ShouldSetBoth() {
         // Arrange
         var innerException = new InvalidOperationException("Inner error");
 
@@ -41,8 +37,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void BuildException_WithProjectPathAndConfiguration_ShouldSetProperties()
-    {
+    public void BuildException_WithProjectPathAndConfiguration_ShouldSetProperties() {
         // Act
         var exception = new BuildException("Build failed", "/path/to/project.csproj", "Release");
 
@@ -53,8 +48,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void BuildCompilationException_WithBuildErrors_ShouldSetErrors()
-    {
+    public void BuildCompilationException_WithBuildErrors_ShouldSetErrors() {
         // Arrange
         var errors = new[] { "Error CS1001", "Error CS1002" };
 
@@ -67,8 +61,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void BuildToolNotFoundException_WithToolName_ShouldSetToolName()
-    {
+    public void BuildToolNotFoundException_WithToolName_ShouldSetToolName() {
         // Act
         var exception = new BuildToolNotFoundException("MSBuild");
 
@@ -82,8 +75,7 @@ public class ExceptionTests
     #region ConnectionException Tests
 
     [Fact]
-    public void ConnectionException_DefaultConstructor_ShouldCreateException()
-    {
+    public void ConnectionException_DefaultConstructor_ShouldCreateException() {
         // Act
         var exception = new ConnectionException();
 
@@ -92,8 +84,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void ConnectionException_WithMessage_ShouldSetMessage()
-    {
+    public void ConnectionException_WithMessage_ShouldSetMessage() {
         // Act
         var exception = new ConnectionException("Connection failed");
 
@@ -102,8 +93,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void ConnectionException_WithHostAndPort_ShouldSetProperties()
-    {
+    public void ConnectionException_WithHostAndPort_ShouldSetProperties() {
         // Act
         var exception = new ConnectionException("Connection failed", "server.com", 21, isTransient: true);
 
@@ -114,8 +104,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void ConnectionTimeoutException_WithParameters_ShouldSetAllProperties()
-    {
+    public void ConnectionTimeoutException_WithParameters_ShouldSetAllProperties() {
         // Act
         var exception = new ConnectionTimeoutException("server.com", 21, TimeSpan.FromSeconds(30));
 
@@ -129,8 +118,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void ConnectionRefusedException_WithHostAndPort_ShouldSetProperties()
-    {
+    public void ConnectionRefusedException_WithHostAndPort_ShouldSetProperties() {
         // Act
         var exception = new ConnectionRefusedException("ftp.example.com", 21);
 
@@ -143,8 +131,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void SslCertificateException_WithHostAndReason_ShouldSetProperties()
-    {
+    public void SslCertificateException_WithHostAndReason_ShouldSetProperties() {
         // Act
         var exception = new SslCertificateException("secure.server.com", "Certificate expired");
 
@@ -160,8 +147,7 @@ public class ExceptionTests
     #region AuthenticationException Tests
 
     [Fact]
-    public void AuthenticationException_DefaultConstructor_ShouldCreateException()
-    {
+    public void AuthenticationException_DefaultConstructor_ShouldCreateException() {
         // Act
         var exception = new AuthenticationException();
 
@@ -170,8 +156,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void AuthenticationException_WithMessage_ShouldSetMessage()
-    {
+    public void AuthenticationException_WithMessage_ShouldSetMessage() {
         // Act
         var exception = new AuthenticationException("Auth failed");
 
@@ -180,8 +165,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void AuthenticationException_WithUserAndHost_ShouldSetProperties()
-    {
+    public void AuthenticationException_WithUserAndHost_ShouldSetProperties() {
         // Act
         var exception = new AuthenticationException("Auth failed", "testuser", "server.com");
 
@@ -192,11 +176,9 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void AuthenticationException_ShouldAllowSettingIsCredentialError()
-    {
+    public void AuthenticationException_ShouldAllowSettingIsCredentialError() {
         // Act
-        var exception = new AuthenticationException("Auth failed")
-        {
+        var exception = new AuthenticationException("Auth failed") {
             IsCredentialError = true
         };
 
@@ -205,8 +187,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void InvalidCredentialsException_WithUserAndHost_ShouldSetProperties()
-    {
+    public void InvalidCredentialsException_WithUserAndHost_ShouldSetProperties() {
         // Act
         var exception = new InvalidCredentialsException("testuser", "server.com");
 
@@ -218,8 +199,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void InsufficientPermissionsException_WithAllParameters_ShouldSetProperties()
-    {
+    public void InsufficientPermissionsException_WithAllParameters_ShouldSetProperties() {
         // Act
         var exception = new InsufficientPermissionsException("testuser", "server.com", "WRITE");
 
@@ -235,8 +215,7 @@ public class ExceptionTests
     #region DeploymentException Tests
 
     [Fact]
-    public void DeploymentException_DefaultConstructor_ShouldCreateException()
-    {
+    public void DeploymentException_DefaultConstructor_ShouldCreateException() {
         // Act
         var exception = new DeploymentException();
 
@@ -245,8 +224,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void DeploymentException_WithMessage_ShouldSetMessage()
-    {
+    public void DeploymentException_WithMessage_ShouldSetMessage() {
         // Act
         var exception = new DeploymentException("Deploy failed");
 
@@ -255,8 +233,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void DeploymentException_WithProfileAndPhase_ShouldSetProperties()
-    {
+    public void DeploymentException_WithProfileAndPhase_ShouldSetProperties() {
         // Act
         var exception = new DeploymentException("Deploy failed", "profile1", DeploymentPhase.Upload, isRetryable: true);
 
@@ -268,8 +245,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void DeploymentException_WithInnerException_ShouldSetInnerException()
-    {
+    public void DeploymentException_WithInnerException_ShouldSetInnerException() {
         // Arrange
         var innerException = new InvalidOperationException("Inner error");
 
@@ -283,8 +259,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void DeploymentPhase_ShouldHaveExpectedValues()
-    {
+    public void DeploymentPhase_ShouldHaveExpectedValues() {
         // Assert
         Assert.Equal(0, (int)DeploymentPhase.Unknown);
         Assert.Equal(1, (int)DeploymentPhase.Initialization);
@@ -297,8 +272,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void FileTransferException_WithPaths_ShouldSetProperties()
-    {
+    public void FileTransferException_WithPaths_ShouldSetProperties() {
         // Act
         var exception = new FileTransferException("/local/file.txt", "/remote/file.txt");
 
@@ -312,8 +286,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void FileTransferException_WithInnerException_ShouldIncludeInnerMessage()
-    {
+    public void FileTransferException_WithInnerException_ShouldIncludeInnerMessage() {
         // Arrange
         var innerException = new System.IO.IOException("Disk full");
 
@@ -327,8 +300,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void InsufficientDiskSpaceException_WithSpaceValues_ShouldSetProperties()
-    {
+    public void InsufficientDiskSpaceException_WithSpaceValues_ShouldSetProperties() {
         // Arrange
         var requiredBytes = 1000L * 1024 * 1024; // 1000 MB
         var availableBytes = 500L * 1024 * 1024;  // 500 MB
@@ -350,8 +322,7 @@ public class ExceptionTests
     #region ProfileException Tests
 
     [Fact]
-    public void ProfileException_WithProfileName_ShouldSetProfileName()
-    {
+    public void ProfileException_WithProfileName_ShouldSetProfileName() {
         // Act
         var exception = new ProfileException("Error", "profile1");
 
@@ -361,8 +332,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void ProfileNotFoundException_WithProfileName_ShouldIncludeNameInMessage()
-    {
+    public void ProfileNotFoundException_WithProfileName_ShouldIncludeNameInMessage() {
         // Act
         var exception = new ProfileNotFoundException("myprofile");
 
@@ -372,8 +342,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void ProfileValidationException_WithErrors_ShouldSetValidationErrors()
-    {
+    public void ProfileValidationException_WithErrors_ShouldSetValidationErrors() {
         // Arrange
         var errors = new[] { "Error 1", "Error 2", "Error 3" };
 
@@ -387,8 +356,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void ProfileValidationException_WithSingleError_ShouldIncludeErrorMessage()
-    {
+    public void ProfileValidationException_WithSingleError_ShouldIncludeErrorMessage() {
         // Arrange
         var errors = new[] { "Single error" };
 
@@ -405,8 +373,7 @@ public class ExceptionTests
     #region ConfigurationException Tests
 
     [Fact]
-    public void ConfigurationException_DefaultConstructor_ShouldCreateException()
-    {
+    public void ConfigurationException_DefaultConstructor_ShouldCreateException() {
         // Act
         var exception = new ConfigurationException();
 
@@ -415,8 +382,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void ConfigurationException_WithMessage_ShouldSetMessage()
-    {
+    public void ConfigurationException_WithMessage_ShouldSetMessage() {
         // Act
         var exception = new ConfigurationException("Config error");
 
@@ -425,8 +391,7 @@ public class ExceptionTests
     }
 
     [Fact]
-    public void ConfigurationException_WithMessageAndInnerException_ShouldSetBoth()
-    {
+    public void ConfigurationException_WithMessageAndInnerException_ShouldSetBoth() {
         // Arrange
         var innerException = new System.Text.Json.JsonException("Invalid JSON");
 

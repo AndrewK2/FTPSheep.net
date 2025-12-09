@@ -5,8 +5,7 @@ namespace FTPSheep.Core.Interfaces;
 /// <summary>
 /// High-level service interface for managing deployment profiles with validation and credential management.
 /// </summary>
-public interface IProfileService
-{
+public interface IProfileService {
     /// <summary>
     /// Creates a new deployment profile with validation.
     /// </summary>

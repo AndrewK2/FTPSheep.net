@@ -3,21 +3,17 @@ using FTPSheep.BuildTools.Services;
 
 namespace FTPSheep.Tests.BuildTools;
 
-public class ProjectTypeClassifierTests
-{
+public class ProjectTypeClassifierTests {
     private readonly ProjectTypeClassifier _classifier;
 
-    public ProjectTypeClassifierTests()
-    {
+    public ProjectTypeClassifierTests() {
         _classifier = new ProjectTypeClassifier();
     }
 
     [Fact]
-    public void IsDotNetFramework_WithFramework472_ShouldReturnTrue()
-    {
+    public void IsDotNetFramework_WithFramework472_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "net472" }
         };
 
@@ -29,11 +25,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsDotNetFramework_WithFramework48_ShouldReturnTrue()
-    {
+    public void IsDotNetFramework_WithFramework48_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "net48" }
         };
 
@@ -45,11 +39,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsDotNetFramework_WithNet60_ShouldReturnFalse()
-    {
+    public void IsDotNetFramework_WithNet60_ShouldReturnFalse() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "net6.0" }
         };
 
@@ -61,11 +53,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsDotNetCore_WithNetCoreApp31_ShouldReturnTrue()
-    {
+    public void IsDotNetCore_WithNetCoreApp31_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "netcoreapp3.1" }
         };
 
@@ -77,11 +67,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsDotNetCore_WithNetCoreApp21_ShouldReturnTrue()
-    {
+    public void IsDotNetCore_WithNetCoreApp21_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "netcoreapp2.1" }
         };
 
@@ -93,11 +81,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsDotNet5Plus_WithNet50_ShouldReturnTrue()
-    {
+    public void IsDotNet5Plus_WithNet50_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "net5.0" }
         };
 
@@ -109,11 +95,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsDotNet5Plus_WithNet60_ShouldReturnTrue()
-    {
+    public void IsDotNet5Plus_WithNet60_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "net6.0" }
         };
 
@@ -125,11 +109,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsDotNet5Plus_WithNet80_ShouldReturnTrue()
-    {
+    public void IsDotNet5Plus_WithNet80_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "net8.0" }
         };
 
@@ -141,11 +123,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsDotNet5Plus_WithNetCoreApp31_ShouldReturnFalse()
-    {
+    public void IsDotNet5Plus_WithNetCoreApp31_ShouldReturnFalse() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "netcoreapp3.1" }
         };
 
@@ -157,11 +137,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsDotNetStandard_WithNetStandard20_ShouldReturnTrue()
-    {
+    public void IsDotNetStandard_WithNetStandard20_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             TargetFrameworks = new List<string> { "netstandard2.0" }
         };
 
@@ -173,11 +151,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsAspNet_WithAspNetCore_ShouldReturnTrue()
-    {
+    public void IsAspNet_WithAspNetCore_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.AspNetCore
         };
 
@@ -189,11 +165,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsAspNet_WithBlazor_ShouldReturnTrue()
-    {
+    public void IsAspNet_WithBlazor_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.Blazor
         };
 
@@ -205,11 +179,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsAspNet_WithRazorPages_ShouldReturnTrue()
-    {
+    public void IsAspNet_WithRazorPages_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.RazorPages
         };
 
@@ -221,11 +193,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsAspNet_WithConsole_ShouldReturnFalse()
-    {
+    public void IsAspNet_WithConsole_ShouldReturnFalse() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.Console
         };
 
@@ -237,11 +207,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsAspNetCore_WithAspNetCore_ShouldReturnTrue()
-    {
+    public void IsAspNetCore_WithAspNetCore_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.AspNetCore
         };
 
@@ -253,11 +221,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsAspNetCore_WithLegacyAspNetMvc_ShouldReturnFalse()
-    {
+    public void IsAspNetCore_WithLegacyAspNetMvc_ShouldReturnFalse() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.AspNetMvc
         };
 
@@ -269,11 +235,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsWebApplication_WithAspNetCore_ShouldReturnTrue()
-    {
+    public void IsWebApplication_WithAspNetCore_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.AspNetCore
         };
 
@@ -285,11 +249,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void IsWebApplication_WithWorkerService_ShouldReturnTrue()
-    {
+    public void IsWebApplication_WithWorkerService_ShouldReturnTrue() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.WorkerService
         };
 
@@ -301,11 +263,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void GetProjectDescription_WithAspNetCore_ShouldReturnCorrectDescription()
-    {
+    public void GetProjectDescription_WithAspNetCore_ShouldReturnCorrectDescription() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.AspNetCore,
             TargetFrameworks = new List<string> { "net8.0" }
         };
@@ -319,11 +279,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void GetProjectDescription_WithMultiTargeting_ShouldIncludeAllFrameworks()
-    {
+    public void GetProjectDescription_WithMultiTargeting_ShouldIncludeAllFrameworks() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             ProjectType = ProjectType.Library,
             TargetFrameworks = new List<string> { "net6.0", "net7.0", "net8.0" }
         };
@@ -339,11 +297,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void GetRecommendedBuildTool_WithSdkStyleProject_ShouldReturnDotnetCli()
-    {
+    public void GetRecommendedBuildTool_WithSdkStyleProject_ShouldReturnDotnetCli() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             Sdk = "Microsoft.NET.Sdk",
             Format = ProjectFormat.SdkStyle
         };
@@ -356,11 +312,9 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void GetRecommendedBuildTool_WithLegacyFrameworkProject_ShouldReturnMSBuild()
-    {
+    public void GetRecommendedBuildTool_WithLegacyFrameworkProject_ShouldReturnMSBuild() {
         // Arrange
-        var projectInfo = new ProjectInfo
-        {
+        var projectInfo = new ProjectInfo {
             Format = ProjectFormat.LegacyFramework,
             TargetFrameworks = new List<string> { "net472" }
         };
@@ -373,29 +327,25 @@ public class ProjectTypeClassifierTests
     }
 
     [Fact]
-    public void GetRecommendedBuildTool_WithNullProjectInfo_ShouldThrowArgumentNullException()
-    {
+    public void GetRecommendedBuildTool_WithNullProjectInfo_ShouldThrowArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => _classifier.GetRecommendedBuildTool(null!));
     }
 
     [Fact]
-    public void IsDotNetFramework_WithNullProjectInfo_ShouldThrowArgumentNullException()
-    {
+    public void IsDotNetFramework_WithNullProjectInfo_ShouldThrowArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => _classifier.IsDotNetFramework(null!));
     }
 
     [Fact]
-    public void IsDotNetCore_WithNullProjectInfo_ShouldThrowArgumentNullException()
-    {
+    public void IsDotNetCore_WithNullProjectInfo_ShouldThrowArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => _classifier.IsDotNetCore(null!));
     }
 
     [Fact]
-    public void IsDotNet5Plus_WithNullProjectInfo_ShouldThrowArgumentNullException()
-    {
+    public void IsDotNet5Plus_WithNullProjectInfo_ShouldThrowArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => _classifier.IsDotNet5Plus(null!));
     }

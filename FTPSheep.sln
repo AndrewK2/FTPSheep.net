@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
@@ -18,6 +18,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FTPSheep.Tests", "tests\FTPSheep.Tests\FTPSheep.Tests.csproj", "{2EA777E8-B826-4B1E-9260-11BC074C0AE2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FTPSheep.IntegrationTests", "tests\FTPSheep.IntegrationTests\FTPSheep.IntegrationTests.csproj", "{A5824996-4E5A-49E2-8F4D-6BA3FBDD76AE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E956CC68-CD42-4CDD-9ADD-95AE30DB1E3E}"
+	ProjectSection(SolutionItems) = preProject
+		docs\plan.md = docs\plan.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -112,5 +117,8 @@ Global
 		{FF4D33ED-C198-442F-8AEF-65ED4102FDDE} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{2EA777E8-B826-4B1E-9260-11BC074C0AE2} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{A5824996-4E5A-49E2-8F4D-6BA3FBDD76AE} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BBC6332F-F867-4133-88AF-5CD7CCFBCC51}
 	EndGlobalSection
 EndGlobal

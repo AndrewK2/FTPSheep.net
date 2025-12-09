@@ -5,8 +5,7 @@ namespace FTPSheep.Core.Retry;
 /// <summary>
 /// Handles retry logic for operations that may fail transiently.
 /// </summary>
-public sealed class RetryHandler
-{
+public sealed class RetryHandler {
     private readonly RetryPolicy _policy;
     private readonly ILogger? _logger;
 
@@ -15,8 +14,7 @@ public sealed class RetryHandler
     /// </summary>
     /// <param name="policy">The retry policy to use.</param>
     /// <param name="logger">Optional logger for logging retry attempts.</param>
-    public RetryHandler(RetryPolicy policy, ILogger? logger = null)
-    {
+    public RetryHandler(RetryPolicy policy, ILogger? logger = null) {
         _policy = policy ?? throw new ArgumentNullException(nameof(policy));
         _logger = logger;
     }
@@ -33,34 +31,27 @@ public sealed class RetryHandler
     public async Task<T> ExecuteAsync<T>(
         Func<Task<T>> operation,
         string operationName = "Operation",
-        CancellationToken cancellationToken = default)
-    {
-        if (operation == null)
-        {
+        CancellationToken cancellationToken = default) {
+        if(operation == null) {
             throw new ArgumentNullException(nameof(operation));
         }
 
         Exception? lastException = null;
         var attempt = 0;
 
-        while (attempt <= _policy.MaxRetryCount)
-        {
-            try
-            {
+        while(attempt <= _policy.MaxRetryCount) {
+            try {
                 _logger?.LogDebug("Executing {OperationName} (Attempt {Attempt}/{MaxAttempts})",
                     operationName, attempt + 1, _policy.MaxRetryCount + 1);
 
                 return await operation();
-            }
-            catch (Exception ex) when (attempt < _policy.MaxRetryCount)
-            {
+            } catch(Exception ex) when(attempt < _policy.MaxRetryCount) {
                 lastException = ex;
 
                 // Check if the exception is retryable
                 var isRetryable = _policy.IsRetryableException?.Invoke(ex) ?? RetryPolicy.DefaultIsRetryable(ex);
 
-                if (!isRetryable)
-                {
+                if(!isRetryable) {
                     _logger?.LogWarning("Exception is not retryable. Aborting retry attempts for {OperationName}: {ExceptionMessage}",
                         operationName, ex.Message);
                     throw;
@@ -77,9 +68,7 @@ public sealed class RetryHandler
                 await Task.Delay(delay, cancellationToken);
 
                 attempt++;
-            }
-            catch (Exception ex)
-            {
+            } catch(Exception ex) {
                 // Last attempt failed or non-retryable exception
                 lastException = ex;
                 break;
@@ -103,10 +92,8 @@ public sealed class RetryHandler
     public async Task ExecuteAsync(
         Func<Task> operation,
         string operationName = "Operation",
-        CancellationToken cancellationToken = default)
-    {
-        await ExecuteAsync(async () =>
-        {
+        CancellationToken cancellationToken = default) {
+        await ExecuteAsync(async () => {
             await operation();
             return 0; // Dummy return value
         }, operationName, cancellationToken);
@@ -123,8 +110,7 @@ public sealed class RetryHandler
     public async Task<T> ExecuteAsync<T>(
         Func<T> operation,
         string operationName = "Operation",
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         return await ExecuteAsync(() => Task.FromResult(operation()), operationName, cancellationToken);
     }
 
@@ -137,10 +123,8 @@ public sealed class RetryHandler
     public async Task ExecuteAsync(
         Action operation,
         string operationName = "Operation",
-        CancellationToken cancellationToken = default)
-    {
-        await ExecuteAsync(() =>
-        {
+        CancellationToken cancellationToken = default) {
+        await ExecuteAsync(() => {
             operation();
             return Task.CompletedTask;
         }, operationName, cancellationToken);

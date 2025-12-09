@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Represents the current state of a deployment operation.
 /// </summary>
-public class DeploymentState
-{
+public class DeploymentState {
     /// <summary>
     /// Gets or sets the unique identifier for this deployment.
     /// </summary>
@@ -103,11 +102,9 @@ public class DeploymentState
     /// <summary>
     /// Gets the overall progress percentage (0-100).
     /// </summary>
-    public double ProgressPercentage
-    {
-        get
-        {
-            if (TotalFiles == 0) return 0;
+    public double ProgressPercentage {
+        get {
+            if(TotalFiles == 0) return 0;
             return (FilesUploaded / (double)TotalFiles) * 100;
         }
     }
@@ -115,11 +112,9 @@ public class DeploymentState
     /// <summary>
     /// Gets the elapsed time since deployment started.
     /// </summary>
-    public TimeSpan? ElapsedTime
-    {
-        get
-        {
-            if (StartedAt == null) return null;
+    public TimeSpan? ElapsedTime {
+        get {
+            if(StartedAt == null) return null;
             var endTime = CompletedAt ?? DateTime.UtcNow;
             return endTime - StartedAt.Value;
         }

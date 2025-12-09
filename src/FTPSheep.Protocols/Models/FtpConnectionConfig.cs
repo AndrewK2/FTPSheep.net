@@ -5,8 +5,7 @@ namespace FTPSheep.Protocols.Models;
 /// <summary>
 /// Configuration for FTP connection.
 /// </summary>
-public class FtpConnectionConfig
-{
+public class FtpConnectionConfig {
     /// <summary>
     /// Gets or sets the FTP server hostname or IP address.
     /// </summary>

@@ -7,16 +7,14 @@ using Moq;
 
 namespace FTPSheep.Tests.Services;
 
-public class ProfileServiceTests
-{
+public class ProfileServiceTests {
     private readonly Mock<IProfileRepository> _repositoryMock;
     private readonly Mock<IConfigurationService> _configServiceMock;
     private readonly Mock<ICredentialStore> _credentialStoreMock;
     private readonly Mock<ILogger<ProfileService>> _loggerMock;
     private readonly ProfileService _profileService;
 
-    public ProfileServiceTests()
-    {
+    public ProfileServiceTests() {
         _repositoryMock = new Mock<IProfileRepository>();
         _configServiceMock = new Mock<IConfigurationService>();
         _credentialStoreMock = new Mock<ICredentialStore>();
@@ -35,8 +33,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task CreateProfileAsync_ValidProfile_Succeeds()
-    {
+    public async Task CreateProfileAsync_ValidProfile_Succeeds() {
         // Arrange
         var profile = CreateValidProfile("test-profile");
 
@@ -61,8 +58,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task CreateProfileAsync_DuplicateName_ThrowsException()
-    {
+    public async Task CreateProfileAsync_DuplicateName_ThrowsException() {
         // Arrange
         var profile = CreateValidProfile("duplicate");
 
@@ -77,11 +73,9 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task CreateProfileAsync_InvalidProfile_ThrowsValidationException()
-    {
+    public async Task CreateProfileAsync_InvalidProfile_ThrowsValidationException() {
         // Arrange
-        var profile = new DeploymentProfile
-        {
+        var profile = new DeploymentProfile {
             Name = "", // Invalid: empty name
             Connection = new ServerConnection("ftp.example.com"),
             RemotePath = "/www"
@@ -94,8 +88,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task LoadProfileAsync_ByName_LoadsWithDefaults()
-    {
+    public async Task LoadProfileAsync_ByName_LoadsWithDefaults() {
         // Arrange
         var profile = CreateValidProfile("load-test");
 
@@ -120,8 +113,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task LoadProfileAsync_ByPath_LoadsFromFile()
-    {
+    public async Task LoadProfileAsync_ByPath_LoadsFromFile() {
         // Arrange
         var filePath = @"C:\test\profile.json";
         var profile = CreateValidProfile("path-test");
@@ -146,8 +138,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task LoadProfileAsync_NonExistent_ThrowsProfileNotFoundException()
-    {
+    public async Task LoadProfileAsync_NonExistent_ThrowsProfileNotFoundException() {
         // Arrange
         _repositoryMock
             .Setup(x => x.LoadAsync("non-existent", It.IsAny<CancellationToken>()))
@@ -158,8 +149,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task UpdateProfileAsync_ValidProfile_Succeeds()
-    {
+    public async Task UpdateProfileAsync_ValidProfile_Succeeds() {
         // Arrange
         var profile = CreateValidProfile("update-test");
 
@@ -183,8 +173,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task UpdateProfileAsync_NonExistent_ThrowsProfileNotFoundException()
-    {
+    public async Task UpdateProfileAsync_NonExistent_ThrowsProfileNotFoundException() {
         // Arrange
         var profile = CreateValidProfile("non-existent");
 
@@ -199,8 +188,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task DeleteProfileAsync_ExistingProfile_ReturnsTrue()
-    {
+    public async Task DeleteProfileAsync_ExistingProfile_ReturnsTrue() {
         // Arrange
         _repositoryMock
             .Setup(x => x.DeleteAsync("delete-test", It.IsAny<CancellationToken>()))
@@ -220,8 +208,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task DeleteProfileAsync_NonExistent_ReturnsFalse()
-    {
+    public async Task DeleteProfileAsync_NonExistent_ReturnsFalse() {
         // Arrange
         _repositoryMock
             .Setup(x => x.DeleteAsync("non-existent", It.IsAny<CancellationToken>()))
@@ -236,8 +223,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public async Task ListProfilesAsync_ReturnsProfileSummaries()
-    {
+    public async Task ListProfilesAsync_ReturnsProfileSummaries() {
         // Arrange
         var profileNames = new List<string> { "profile1", "profile2" };
 
@@ -272,8 +258,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public void ValidateProfile_ValidProfile_ReturnsSuccess()
-    {
+    public void ValidateProfile_ValidProfile_ReturnsSuccess() {
         // Arrange
         var profile = CreateValidProfile("valid-test");
 
@@ -286,14 +271,11 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public void ValidateProfile_InvalidConnection_ReturnsErrors()
-    {
+    public void ValidateProfile_InvalidConnection_ReturnsErrors() {
         // Arrange
-        var profile = new DeploymentProfile
-        {
+        var profile = new DeploymentProfile {
             Name = "test",
-            Connection = new ServerConnection
-            {
+            Connection = new ServerConnection {
                 Host = "", // Invalid: empty host
                 Port = 21
             },
@@ -309,8 +291,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public void ValidateProfile_InvalidConcurrency_ReturnsErrors()
-    {
+    public void ValidateProfile_InvalidConcurrency_ReturnsErrors() {
         // Arrange
         var profile = CreateValidProfile("test");
         profile.Concurrency = 100; // Invalid: too high
@@ -324,8 +305,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public void ValidateProfile_InvalidRetryCount_ReturnsErrors()
-    {
+    public void ValidateProfile_InvalidRetryCount_ReturnsErrors() {
         // Arrange
         var profile = CreateValidProfile("test");
         profile.RetryCount = -1; // Invalid: negative
@@ -339,8 +319,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public void ValidateProfile_EmptyRemotePath_ReturnsErrors()
-    {
+    public void ValidateProfile_EmptyRemotePath_ReturnsErrors() {
         // Arrange
         var profile = CreateValidProfile("test");
         profile.RemotePath = ""; // Invalid: empty
@@ -354,8 +333,7 @@ public class ProfileServiceTests
     }
 
     [Fact]
-    public void ValidateProfile_InvalidProfileName_ReturnsErrors()
-    {
+    public void ValidateProfile_InvalidProfileName_ReturnsErrors() {
         // Arrange
         var profile = CreateValidProfile("invalid name with spaces"); // Invalid name
 
@@ -367,10 +345,8 @@ public class ProfileServiceTests
         Assert.NotEmpty(result.Errors);
     }
 
-    private static DeploymentProfile CreateValidProfile(string name)
-    {
-        return new DeploymentProfile
-        {
+    private static DeploymentProfile CreateValidProfile(string name) {
+        return new DeploymentProfile {
             Name = name,
             Connection = new ServerConnection("ftp.example.com", 21, ProtocolType.Ftp),
             Username = "testuser",

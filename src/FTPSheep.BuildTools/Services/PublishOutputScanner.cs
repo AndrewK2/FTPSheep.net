@@ -1,13 +1,12 @@
-using FTPSheep.BuildTools.Models;
 using System.Text.RegularExpressions;
+using FTPSheep.BuildTools.Models;
 
 namespace FTPSheep.BuildTools.Services;
 
 /// <summary>
 /// Scans publish output folders and collects file metadata.
 /// </summary>
-public class PublishOutputScanner
-{
+public class PublishOutputScanner {
     private readonly List<string> _defaultExclusionPatterns = new()
     {
         "*.pdb",           // Debug symbols
@@ -30,20 +29,16 @@ public class PublishOutputScanner
     public PublishOutput ScanPublishOutput(
         string publishPath,
         List<string>? exclusionPatterns = null,
-        bool validateOutput = true)
-    {
-        if (string.IsNullOrWhiteSpace(publishPath))
-        {
+        bool validateOutput = true) {
+        if(string.IsNullOrWhiteSpace(publishPath)) {
             throw new ArgumentNullException(nameof(publishPath));
         }
 
-        if (!Directory.Exists(publishPath))
-        {
+        if(!Directory.Exists(publishPath)) {
             throw new DirectoryNotFoundException($"Publish output directory not found: {publishPath}");
         }
 
-        var output = new PublishOutput
-        {
+        var output = new PublishOutput {
             RootPath = Path.GetFullPath(publishPath)
         };
 
@@ -52,19 +47,16 @@ public class PublishOutputScanner
         // Enumerate all files in the directory
         var allFiles = Directory.EnumerateFiles(publishPath, "*", SearchOption.AllDirectories);
 
-        foreach (var file in allFiles)
-        {
+        foreach(var file in allFiles) {
             var relativePath = Path.GetRelativePath(publishPath, file);
 
             // Check if file matches any exclusion pattern
-            if (IsExcluded(relativePath, patterns))
-            {
+            if(IsExcluded(relativePath, patterns)) {
                 continue;
             }
 
             var fileInfo = new FileInfo(file);
-            var metadata = new FileMetadata
-            {
+            var metadata = new FileMetadata {
                 AbsolutePath = file,
                 RelativePath = relativePath,
                 FileName = fileInfo.Name,
@@ -78,8 +70,7 @@ public class PublishOutputScanner
         }
 
         // Validate output if requested
-        if (validateOutput)
-        {
+        if(validateOutput) {
             ValidatePublishOutput(output);
         }
 
@@ -93,8 +84,7 @@ public class PublishOutputScanner
         string publishPath,
         List<string>? exclusionPatterns = null,
         bool validateOutput = true,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         return await Task.Run(() =>
             ScanPublishOutput(publishPath, exclusionPatterns, validateOutput),
             cancellationToken);
@@ -103,12 +93,9 @@ public class PublishOutputScanner
     /// <summary>
     /// Checks if a file path matches any exclusion pattern.
     /// </summary>
-    private bool IsExcluded(string relativePath, List<string> patterns)
-    {
-        foreach (var pattern in patterns)
-        {
-            if (MatchesGlobPattern(relativePath, pattern))
-            {
+    private bool IsExcluded(string relativePath, List<string> patterns) {
+        foreach(var pattern in patterns) {
+            if(MatchesGlobPattern(relativePath, pattern)) {
                 return true;
             }
         }
@@ -119,8 +106,7 @@ public class PublishOutputScanner
     /// <summary>
     /// Matches a file path against a glob pattern.
     /// </summary>
-    private bool MatchesGlobPattern(string path, string pattern)
-    {
+    private bool MatchesGlobPattern(string path, string pattern) {
         // Convert glob pattern to regex
         // Simple implementation for common patterns
         var regexPattern = "^" + Regex.Escape(pattern)
@@ -136,8 +122,7 @@ public class PublishOutputScanner
         var normalizedPattern = pattern.Replace('\\', '/');
 
         // Try direct regex match
-        if (regex.IsMatch(normalizedPath))
-        {
+        if(regex.IsMatch(normalizedPath)) {
             return true;
         }
 
@@ -155,11 +140,9 @@ public class PublishOutputScanner
     /// <summary>
     /// Validates the publish output for common issues.
     /// </summary>
-    private void ValidatePublishOutput(PublishOutput output)
-    {
+    private void ValidatePublishOutput(PublishOutput output) {
         // Check if there are any files at all
-        if (output.FileCount == 0)
-        {
+        if(output.FileCount == 0) {
             output.Errors.Add("No files found in publish output. The build may have failed.");
             return;
         }
@@ -169,15 +152,13 @@ public class PublishOutputScanner
         var hasAssemblies = output.Files.Any(f => f.IsAssembly);
 
         // If we have assemblies but no web.config, it might be a web app issue
-        if (hasAssemblies && !hasWebConfig)
-        {
+        if(hasAssemblies && !hasWebConfig) {
             // Check if any HTML files exist (suggesting it's a web app)
             var hasHtmlFiles = output.Files.Any(f =>
                 f.Extension.Equals(".html", StringComparison.OrdinalIgnoreCase) ||
                 f.Extension.Equals(".htm", StringComparison.OrdinalIgnoreCase));
 
-            if (hasHtmlFiles)
-            {
+            if(hasHtmlFiles) {
                 output.Warnings.Add(
                     "Web application detected but web.config is missing. " +
                     "This may cause deployment issues on IIS.");
@@ -186,10 +167,8 @@ public class PublishOutputScanner
 
         // Check for suspiciously large files
         var largeFiles = output.Files.Where(f => f.Size > 100 * 1024 * 1024).ToList(); // > 100 MB
-        if (largeFiles.Any())
-        {
-            foreach (var file in largeFiles)
-            {
+        if(largeFiles.Any()) {
+            foreach(var file in largeFiles) {
                 output.Warnings.Add(
                     $"Large file detected: {file.RelativePath} ({file.FormattedSize}). " +
                     "This may slow down deployment.");
@@ -202,10 +181,8 @@ public class PublishOutputScanner
             f.FileName.Equals("launchSettings.json", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        if (devFiles.Any())
-        {
-            foreach (var file in devFiles)
-            {
+        if(devFiles.Any()) {
+            foreach(var file in devFiles) {
                 output.Warnings.Add(
                     $"Development file detected: {file.RelativePath}. " +
                     "Consider excluding this from production deployments.");
@@ -213,16 +190,14 @@ public class PublishOutputScanner
         }
 
         // Check for missing assemblies (no DLL or EXE files)
-        if (!hasAssemblies)
-        {
+        if(!hasAssemblies) {
             output.Warnings.Add(
                 "No assemblies (.dll or .exe) found in publish output. " +
                 "This may not be a complete build.");
         }
 
         // Check total size
-        if (output.TotalSize == 0)
-        {
+        if(output.TotalSize == 0) {
             output.Errors.Add("Total size is 0 bytes. The publish output appears to be empty.");
         }
     }

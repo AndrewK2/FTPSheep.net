@@ -1,24 +1,21 @@
+using System.Text;
 using FTPSheep.Core.Exceptions;
 using FTPSheep.Core.Models;
-using System.Text;
 
 namespace FTPSheep.Core.Utils;
 
 /// <summary>
 /// Provides utilities for formatting user-friendly error messages with context and suggestions.
 /// </summary>
-public static class ErrorMessageFormatter
-{
+public static class ErrorMessageFormatter {
     /// <summary>
     /// Formats an exception into a user-friendly error message.
     /// </summary>
     /// <param name="exception">The exception to format.</param>
     /// <param name="verbosity">The verbosity level (affects detail level).</param>
     /// <returns>A formatted error message.</returns>
-    public static string FormatException(Exception exception, LogVerbosity verbosity = LogVerbosity.Normal)
-    {
-        if (exception == null)
-        {
+    public static string FormatException(Exception exception, LogVerbosity verbosity = LogVerbosity.Normal) {
+        if(exception == null) {
             throw new ArgumentNullException(nameof(exception));
         }
 
@@ -30,19 +27,16 @@ public static class ErrorMessageFormatter
 
         // Add specific suggestions based on exception type
         var suggestions = GetSuggestions(exception);
-        if (suggestions.Count > 0)
-        {
+        if(suggestions.Count > 0) {
             sb.AppendLine("Suggestions:");
-            foreach (var suggestion in suggestions)
-            {
+            foreach(var suggestion in suggestions) {
                 sb.AppendLine($"  • {suggestion}");
             }
             sb.AppendLine();
         }
 
         // Add technical details in verbose mode
-        if (verbosity >= LogVerbosity.Verbose)
-        {
+        if(verbosity >= LogVerbosity.Verbose) {
             AppendTechnicalDetails(sb, exception);
         }
 
@@ -54,22 +48,18 @@ public static class ErrorMessageFormatter
     /// </summary>
     /// <param name="exception">The exception to format.</param>
     /// <returns>A concise error message.</returns>
-    public static string FormatConcise(Exception exception)
-    {
-        if (exception == null)
-        {
+    public static string FormatConcise(Exception exception) {
+        if(exception == null) {
             throw new ArgumentNullException(nameof(exception));
         }
 
         return $"{exception.GetType().Name}: {exception.Message}";
     }
 
-    private static List<string> GetSuggestions(Exception exception)
-    {
+    private static List<string> GetSuggestions(Exception exception) {
         var suggestions = new List<string>();
 
-        switch (exception)
-        {
+        switch(exception) {
             case BuildToolNotFoundException buildToolEx:
                 suggestions.Add($"Install {buildToolEx.ToolName} or ensure it's in your PATH");
                 suggestions.Add("If using Visual Studio, run from Developer Command Prompt");
@@ -116,8 +106,7 @@ public static class ErrorMessageFormatter
             case AuthenticationException authEx:
                 suggestions.Add("Verify your credentials are correct");
                 suggestions.Add("Check if the authentication method (password/key) matches server requirements");
-                if (authEx.Username != null)
-                {
+                if(authEx.Username != null) {
                     suggestions.Add($"Verify user '{authEx.Username}' exists on the server");
                 }
                 break;
@@ -169,55 +158,46 @@ public static class ErrorMessageFormatter
         return suggestions;
     }
 
-    private static void AppendTechnicalDetails(StringBuilder sb, Exception exception)
-    {
+    private static void AppendTechnicalDetails(StringBuilder sb, Exception exception) {
         sb.AppendLine("Technical Details:");
         sb.AppendLine($"  Exception Type: {exception.GetType().FullName}");
 
         // Add exception-specific properties
-        switch (exception)
-        {
+        switch(exception) {
             case ProfileException profileEx when profileEx.ProfileName != null:
                 sb.AppendLine($"  Profile: {profileEx.ProfileName}");
                 break;
 
             case BuildException buildEx:
-                if (buildEx.ProjectPath != null)
-                {
+                if(buildEx.ProjectPath != null) {
                     sb.AppendLine($"  Project: {buildEx.ProjectPath}");
                 }
-                if (buildEx.BuildConfiguration != null)
-                {
+                if(buildEx.BuildConfiguration != null) {
                     sb.AppendLine($"  Configuration: {buildEx.BuildConfiguration}");
                 }
                 break;
 
             case ConnectionException connEx:
-                if (connEx.Host != null)
-                {
+                if(connEx.Host != null) {
                     sb.AppendLine($"  Host: {connEx.Host}");
                 }
-                if (connEx.Port.HasValue)
-                {
+                if(connEx.Port.HasValue) {
                     sb.AppendLine($"  Port: {connEx.Port}");
                 }
                 sb.AppendLine($"  Transient: {connEx.IsTransient}");
                 break;
 
             case AuthenticationException authEx:
-                if (authEx.Username != null)
-                {
+                if(authEx.Username != null) {
                     sb.AppendLine($"  Username: {authEx.Username}");
                 }
-                if (authEx.Host != null)
-                {
+                if(authEx.Host != null) {
                     sb.AppendLine($"  Host: {authEx.Host}");
                 }
                 break;
 
             case DeploymentException deployEx:
-                if (deployEx.ProfileName != null)
-                {
+                if(deployEx.ProfileName != null) {
                     sb.AppendLine($"  Profile: {deployEx.ProfileName}");
                 }
                 sb.AppendLine($"  Phase: {deployEx.Phase}");
@@ -226,8 +206,7 @@ public static class ErrorMessageFormatter
         }
 
         // Add stack trace in Debug verbosity
-        if (exception.InnerException != null)
-        {
+        if(exception.InnerException != null) {
             sb.AppendLine();
             sb.AppendLine($"Inner Exception: {exception.InnerException.GetType().Name}");
             sb.AppendLine($"  Message: {exception.InnerException.Message}");

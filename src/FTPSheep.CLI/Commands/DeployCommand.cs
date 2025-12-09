@@ -7,13 +7,11 @@ namespace FTPSheep.CLI.Commands;
 /// <summary>
 /// Command to deploy a .NET application to FTP server.
 /// </summary>
-internal sealed class DeployCommand : Command<DeployCommand.Settings>
-{
+internal sealed class DeployCommand : Command<DeployCommand.Settings> {
     /// <summary>
     /// Settings for the deploy command.
     /// </summary>
-    public sealed class Settings : CommandSettings
-    {
+    public sealed class Settings : CommandSettings {
         [Description("Name of the deployment profile to use")]
         [CommandOption("-p|--profile <PROFILE>")]
         public string? ProfileName { get; init; }
@@ -31,17 +29,13 @@ internal sealed class DeployCommand : Command<DeployCommand.Settings>
         public bool DryRun { get; init; }
     }
 
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
-    {
+    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken) {
         AnsiConsole.MarkupLine("[bold green]FTPSheep.NET[/] - Deployment Tool");
         AnsiConsole.WriteLine();
 
-        if (settings.ProfileName != null)
-        {
+        if(settings.ProfileName != null) {
             AnsiConsole.MarkupLine($"Using profile: [cyan]{settings.ProfileName}[/]");
-        }
-        else
-        {
+        } else {
             AnsiConsole.MarkupLine("[yellow]No profile specified. Auto-discovery will be implemented.[/]");
         }
 

@@ -1,15 +1,12 @@
-using FTPSheep.Core.Retry;
 using FTPSheep.Core.Exceptions;
+using FTPSheep.Core.Retry;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FTPSheep.Tests.Retry;
 
-public class RetryHandlerTests
-{
+public class RetryHandlerTests {
     [Fact]
-    public async Task ExecuteAsync_WithSuccessfulOperation_ShouldReturnResult()
-    {
+    public async Task ExecuteAsync_WithSuccessfulOperation_ShouldReturnResult() {
         // Arrange
         var policy = RetryPolicy.Default;
         var handler = new RetryHandler(policy);
@@ -23,8 +20,7 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithNullOperation_ShouldThrowArgumentNullException()
-    {
+    public async Task ExecuteAsync_WithNullOperation_ShouldThrowArgumentNullException() {
         // Arrange
         var policy = RetryPolicy.Default;
         var handler = new RetryHandler(policy);
@@ -35,18 +31,15 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithTransientFailureThenSuccess_ShouldRetryAndSucceed()
-    {
+    public async Task ExecuteAsync_WithTransientFailureThenSuccess_ShouldRetryAndSucceed() {
         // Arrange
         var policy = RetryPolicy.Default;
         var handler = new RetryHandler(policy);
         var attemptCount = 0;
 
-        async Task<int> Operation()
-        {
+        async Task<int> Operation() {
             attemptCount++;
-            if (attemptCount < 3)
-            {
+            if(attemptCount < 3) {
                 throw new TimeoutException("Transient error");
             }
             return 42;
@@ -61,15 +54,13 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithNonRetryableException_ShouldThrowImmediately()
-    {
+    public async Task ExecuteAsync_WithNonRetryableException_ShouldThrowImmediately() {
         // Arrange
         var policy = RetryPolicy.Default;
         var handler = new RetryHandler(policy);
         var attemptCount = 0;
 
-        async Task<int> Operation()
-        {
+        async Task<int> Operation() {
             attemptCount++;
             throw new AuthenticationException("Non-retryable error");
         }
@@ -81,15 +72,13 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithAllRetriesExhausted_ShouldThrowLastException()
-    {
+    public async Task ExecuteAsync_WithAllRetriesExhausted_ShouldThrowLastException() {
         // Arrange
         var policy = new RetryPolicy { MaxRetryCount = 2 };
         var handler = new RetryHandler(policy);
         var attemptCount = 0;
 
-        async Task<int> Operation()
-        {
+        async Task<int> Operation() {
             attemptCount++;
             throw new TimeoutException($"Transient error {attemptCount}");
         }
@@ -102,19 +91,16 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithCancellationToken_ShouldRespectCancellation()
-    {
+    public async Task ExecuteAsync_WithCancellationToken_ShouldRespectCancellation() {
         // Arrange
         var policy = new RetryPolicy { MaxRetryCount = 5, InitialDelay = TimeSpan.FromSeconds(10) };
         var handler = new RetryHandler(policy);
         var cts = new CancellationTokenSource();
         var attemptCount = 0;
 
-        async Task<int> Operation()
-        {
+        async Task<int> Operation() {
             attemptCount++;
-            if (attemptCount == 2)
-            {
+            if(attemptCount == 2) {
                 cts.Cancel(); // Cancel on second attempt
             }
             throw new TimeoutException("Transient error");
@@ -126,15 +112,13 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_VoidOperation_ShouldExecuteSuccessfully()
-    {
+    public async Task ExecuteAsync_VoidOperation_ShouldExecuteSuccessfully() {
         // Arrange
         var policy = RetryPolicy.Default;
         var handler = new RetryHandler(policy);
         var executionCount = 0;
 
-        async Task Operation()
-        {
+        async Task Operation() {
             executionCount++;
             await Task.CompletedTask;
         }
@@ -147,18 +131,15 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_VoidOperationWithRetries_ShouldRetryAndSucceed()
-    {
+    public async Task ExecuteAsync_VoidOperationWithRetries_ShouldRetryAndSucceed() {
         // Arrange
         var policy = RetryPolicy.Default;
         var handler = new RetryHandler(policy);
         var attemptCount = 0;
 
-        async Task Operation()
-        {
+        async Task Operation() {
             attemptCount++;
-            if (attemptCount < 2)
-            {
+            if(attemptCount < 2) {
                 throw new TimeoutException("Transient error");
             }
             await Task.CompletedTask;
@@ -172,8 +153,7 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_SynchronousOperation_ShouldExecuteSuccessfully()
-    {
+    public async Task ExecuteAsync_SynchronousOperation_ShouldExecuteSuccessfully() {
         // Arrange
         var policy = RetryPolicy.Default;
         var handler = new RetryHandler(policy);
@@ -186,18 +166,15 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_SynchronousOperationWithRetries_ShouldRetryAndSucceed()
-    {
+    public async Task ExecuteAsync_SynchronousOperationWithRetries_ShouldRetryAndSucceed() {
         // Arrange
         var policy = RetryPolicy.Default;
         var handler = new RetryHandler(policy);
         var attemptCount = 0;
 
-        int Operation()
-        {
+        int Operation() {
             attemptCount++;
-            if (attemptCount < 2)
-            {
+            if(attemptCount < 2) {
                 throw new TimeoutException("Transient error");
             }
             return 42;
@@ -212,15 +189,13 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_SynchronousVoidOperation_ShouldExecuteSuccessfully()
-    {
+    public async Task ExecuteAsync_SynchronousVoidOperation_ShouldExecuteSuccessfully() {
         // Arrange
         var policy = RetryPolicy.Default;
         var handler = new RetryHandler(policy);
         var executionCount = 0;
 
-        void Operation()
-        {
+        void Operation() {
             executionCount++;
         }
 
@@ -232,19 +207,16 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithLogger_ShouldLogRetryAttempts()
-    {
+    public async Task ExecuteAsync_WithLogger_ShouldLogRetryAttempts() {
         // Arrange
         var policy = new RetryPolicy { MaxRetryCount = 2, InitialDelay = TimeSpan.FromMilliseconds(1) };
         var logger = new TestLogger();
         var handler = new RetryHandler(policy, logger);
         var attemptCount = 0;
 
-        async Task<int> Operation()
-        {
+        async Task<int> Operation() {
             attemptCount++;
-            if (attemptCount < 3)
-            {
+            if(attemptCount < 3) {
                 throw new TimeoutException("Transient error");
             }
             return 42;
@@ -262,15 +234,13 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithAllRetriesExhaustedAndLogger_ShouldLogFailure()
-    {
+    public async Task ExecuteAsync_WithAllRetriesExhaustedAndLogger_ShouldLogFailure() {
         // Arrange
         var policy = new RetryPolicy { MaxRetryCount = 1, InitialDelay = TimeSpan.FromMilliseconds(1) };
         var logger = new TestLogger();
         var handler = new RetryHandler(policy, logger);
 
-        async Task<int> Operation()
-        {
+        async Task<int> Operation() {
             throw new TimeoutException("Persistent error");
         }
 
@@ -281,23 +251,20 @@ public class RetryHandlerTests
     }
 
     [Fact]
-    public void Constructor_WithNullPolicy_ShouldThrowArgumentNullException()
-    {
+    public void Constructor_WithNullPolicy_ShouldThrowArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new RetryHandler(null!));
     }
 
     // Test logger implementation
-    private class TestLogger : ILogger
-    {
+    private class TestLogger : ILogger {
         public List<string> LoggedMessages { get; } = new();
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
         public bool IsEnabled(LogLevel logLevel) => true;
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-        {
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
             LoggedMessages.Add(formatter(state, exception));
         }
     }

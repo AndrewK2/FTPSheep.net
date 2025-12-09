@@ -1,18 +1,14 @@
 using FTPSheep.Core.Models;
-using Xunit;
 
 namespace FTPSheep.Tests.Services;
 
-public class PublishProfileTests
-{
+public class PublishProfileTests {
     #region ParsePublishUrl Tests
 
     [Fact]
-    public void ParsePublishUrl_WithFullUrl_ParsesCorrectly()
-    {
+    public void ParsePublishUrl_WithFullUrl_ParsesCorrectly() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishUrl = "ftp://ftp.example.com/site/wwwroot"
         };
 
@@ -26,11 +22,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void ParsePublishUrl_WithFtpsUrl_ParsesCorrectly()
-    {
+    public void ParsePublishUrl_WithFtpsUrl_ParsesCorrectly() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishUrl = "ftps://ftp.example.com:990/path"
         };
 
@@ -44,11 +38,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void ParsePublishUrl_WithoutProtocol_AddsDefaultProtocol()
-    {
+    public void ParsePublishUrl_WithoutProtocol_AddsDefaultProtocol() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishUrl = "ftp.example.com/site"
         };
 
@@ -62,11 +54,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void ParsePublishUrl_WithCustomPort_ParsesPort()
-    {
+    public void ParsePublishUrl_WithCustomPort_ParsesPort() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishUrl = "ftp://ftp.example.com:2121/path"
         };
 
@@ -80,11 +70,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void ParsePublishUrl_WithRootPath_ReturnsEmptyPath()
-    {
+    public void ParsePublishUrl_WithRootPath_ReturnsEmptyPath() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishUrl = "ftp://ftp.example.com/"
         };
 
@@ -98,11 +86,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void ParsePublishUrl_WithEmptyUrl_ReturnsDefaults()
-    {
+    public void ParsePublishUrl_WithEmptyUrl_ReturnsDefaults() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishUrl = string.Empty
         };
 
@@ -116,11 +102,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void ParsePublishUrl_WithNullUrl_ReturnsDefaults()
-    {
+    public void ParsePublishUrl_WithNullUrl_ReturnsDefaults() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishUrl = null!
         };
 
@@ -134,11 +118,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void ParsePublishUrl_WithHostAndPort_ParsesCorrectly()
-    {
+    public void ParsePublishUrl_WithHostAndPort_ParsesCorrectly() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishUrl = "ftp.example.com:2121/site"
         };
 
@@ -156,11 +138,9 @@ public class PublishProfileTests
     #region Property Tests
 
     [Fact]
-    public void IsFtpProfile_WithFtpPublishMethod_ReturnsTrue()
-    {
+    public void IsFtpProfile_WithFtpPublishMethod_ReturnsTrue() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishMethod = "FTP"
         };
 
@@ -169,11 +149,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void IsFtpProfile_WithFtpLowerCase_ReturnsTrue()
-    {
+    public void IsFtpProfile_WithFtpLowerCase_ReturnsTrue() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishMethod = "ftp"
         };
 
@@ -182,11 +160,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void IsFtpProfile_WithMsDeployMethod_ReturnsFalse()
-    {
+    public void IsFtpProfile_WithMsDeployMethod_ReturnsFalse() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishMethod = "MSDeploy"
         };
 
@@ -195,11 +171,9 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void IsFtpProfile_WithEmptyMethod_ReturnsFalse()
-    {
+    public void IsFtpProfile_WithEmptyMethod_ReturnsFalse() {
         // Arrange
-        var profile = new PublishProfile
-        {
+        var profile = new PublishProfile {
             PublishMethod = string.Empty
         };
 
@@ -208,8 +182,7 @@ public class PublishProfileTests
     }
 
     [Fact]
-    public void PublishProfile_DefaultValues_AreSetCorrectly()
-    {
+    public void PublishProfile_DefaultValues_AreSetCorrectly() {
         // Arrange & Act
         var profile = new PublishProfile();
 

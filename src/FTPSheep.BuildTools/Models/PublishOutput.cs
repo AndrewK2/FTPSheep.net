@@ -3,8 +3,7 @@ namespace FTPSheep.BuildTools.Models;
 /// <summary>
 /// Represents the output of a publish operation with file metadata.
 /// </summary>
-public class PublishOutput
-{
+public class PublishOutput {
     /// <summary>
     /// Gets or sets the root path of the publish output.
     /// </summary>
@@ -70,14 +69,12 @@ public class PublishOutput
     /// <summary>
     /// Formats bytes into a human-readable string.
     /// </summary>
-    private static string FormatBytes(long bytes)
-    {
+    private static string FormatBytes(long bytes) {
         string[] sizes = { "B", "KB", "MB", "GB", "TB" };
         double len = bytes;
         int order = 0;
 
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
+        while(len >= 1024 && order < sizes.Length - 1) {
             order++;
             len /= 1024;
         }

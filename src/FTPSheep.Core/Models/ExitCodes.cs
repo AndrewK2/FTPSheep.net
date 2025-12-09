@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Defines exit codes for the FTPSheep application.
 /// </summary>
-public static class ExitCodes
-{
+public static class ExitCodes {
     /// <summary>
     /// Success - the operation completed successfully.
     /// </summary>
@@ -60,10 +59,8 @@ public static class ExitCodes
     /// </summary>
     /// <param name="exception">The exception that occurred.</param>
     /// <returns>The exit code corresponding to the exception type.</returns>
-    public static int FromException(Exception exception)
-    {
-        return exception switch
-        {
+    public static int FromException(Exception exception) {
+        return exception switch {
             Exceptions.BuildException => BuildFailure,
             Exceptions.ConnectionException => ConnectionFailure,
             Exceptions.AuthenticationException => AuthenticationFailure,
@@ -82,10 +79,8 @@ public static class ExitCodes
     /// </summary>
     /// <param name="exitCode">The exit code.</param>
     /// <returns>A description of the exit code.</returns>
-    public static string GetDescription(int exitCode)
-    {
-        return exitCode switch
-        {
+    public static string GetDescription(int exitCode) {
+        return exitCode switch {
             Success => "Success",
             GeneralError => "General Error",
             BuildFailure => "Build Failure",

@@ -1,21 +1,17 @@
 using System.Security.Cryptography;
 using FTPSheep.Core.Services;
-using Xunit;
 
 namespace FTPSheep.Tests.Services;
 
-public class DpapiEncryptionServiceTests
-{
+public class DpapiEncryptionServiceTests {
     private readonly DpapiEncryptionService _encryptionService;
 
-    public DpapiEncryptionServiceTests()
-    {
+    public DpapiEncryptionServiceTests() {
         _encryptionService = new DpapiEncryptionService();
     }
 
     [Fact]
-    public void Encrypt_WithValidPlainText_ReturnsBase64String()
-    {
+    public void Encrypt_WithValidPlainText_ReturnsBase64String() {
         // Arrange
         var plainText = "MySecretPassword123";
 
@@ -33,8 +29,7 @@ public class DpapiEncryptionServiceTests
     }
 
     [Fact]
-    public void Decrypt_WithValidEncryptedText_ReturnsOriginalPlainText()
-    {
+    public void Decrypt_WithValidEncryptedText_ReturnsOriginalPlainText() {
         // Arrange
         var plainText = "MySecretPassword123";
         var encrypted = _encryptionService.Encrypt(plainText);
@@ -51,8 +46,7 @@ public class DpapiEncryptionServiceTests
     [InlineData("P@ssw0rd!@#$%^&*()")]
     [InlineData("very long password with many characters 1234567890")]
     [InlineData("🔒🔑")]  // Unicode emoji
-    public void EncryptDecrypt_RoundTrip_PreservesOriginalValue(string plainText)
-    {
+    public void EncryptDecrypt_RoundTrip_PreservesOriginalValue(string plainText) {
         // Act
         var encrypted = _encryptionService.Encrypt(plainText);
         var decrypted = _encryptionService.Decrypt(encrypted);
@@ -62,40 +56,35 @@ public class DpapiEncryptionServiceTests
     }
 
     [Fact]
-    public void Encrypt_WithNullPlainText_ThrowsArgumentException()
-    {
+    public void Encrypt_WithNullPlainText_ThrowsArgumentException() {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => _encryptionService.Encrypt(null!));
         Assert.Contains("Plain text cannot be null or empty", exception.Message);
     }
 
     [Fact]
-    public void Encrypt_WithEmptyPlainText_ThrowsArgumentException()
-    {
+    public void Encrypt_WithEmptyPlainText_ThrowsArgumentException() {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => _encryptionService.Encrypt(string.Empty));
         Assert.Contains("Plain text cannot be null or empty", exception.Message);
     }
 
     [Fact]
-    public void Decrypt_WithNullEncryptedText_ThrowsArgumentException()
-    {
+    public void Decrypt_WithNullEncryptedText_ThrowsArgumentException() {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => _encryptionService.Decrypt(null!));
         Assert.Contains("Encrypted text cannot be null or empty", exception.Message);
     }
 
     [Fact]
-    public void Decrypt_WithEmptyEncryptedText_ThrowsArgumentException()
-    {
+    public void Decrypt_WithEmptyEncryptedText_ThrowsArgumentException() {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => _encryptionService.Decrypt(string.Empty));
         Assert.Contains("Encrypted text cannot be null or empty", exception.Message);
     }
 
     [Fact]
-    public void Decrypt_WithInvalidBase64_ThrowsCryptographicException()
-    {
+    public void Decrypt_WithInvalidBase64_ThrowsCryptographicException() {
         // Arrange
         var invalidBase64 = "This is not valid Base64!@#$";
 
@@ -105,8 +94,7 @@ public class DpapiEncryptionServiceTests
     }
 
     [Fact]
-    public void Decrypt_WithValidBase64ButInvalidCiphertext_ThrowsCryptographicException()
-    {
+    public void Decrypt_WithValidBase64ButInvalidCiphertext_ThrowsCryptographicException() {
         // Arrange
         // This is valid Base64 but not encrypted with DPAPI
         var invalidCiphertext = Convert.ToBase64String(new byte[] { 1, 2, 3, 4, 5 });
@@ -117,8 +105,7 @@ public class DpapiEncryptionServiceTests
     }
 
     [Fact]
-    public void Encrypt_SamePlainTextMultipleTimes_ProducesDifferentCiphertext()
-    {
+    public void Encrypt_SamePlainTextMultipleTimes_ProducesDifferentCiphertext() {
         // Arrange
         var plainText = "MySecretPassword";
 
@@ -135,8 +122,7 @@ public class DpapiEncryptionServiceTests
     }
 
     [Fact]
-    public void IsAvailable_OnWindows_ReturnsTrue()
-    {
+    public void IsAvailable_OnWindows_ReturnsTrue() {
         // Act
         var isAvailable = DpapiEncryptionService.IsAvailable();
 

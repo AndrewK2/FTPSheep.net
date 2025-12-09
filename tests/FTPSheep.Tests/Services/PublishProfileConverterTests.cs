@@ -1,34 +1,28 @@
 using FTPSheep.Core.Exceptions;
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
-using Xunit;
 
 namespace FTPSheep.Tests.Services;
 
-public class PublishProfileConverterTests
-{
+public class PublishProfileConverterTests {
     private readonly PublishProfileConverter _converter;
 
-    public PublishProfileConverterTests()
-    {
+    public PublishProfileConverterTests() {
         _converter = new PublishProfileConverter();
     }
 
     #region Convert Tests
 
     [Fact]
-    public void Convert_WithNullProfile_ThrowsArgumentNullException()
-    {
+    public void Convert_WithNullProfile_ThrowsArgumentNullException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => _converter.Convert(null!));
     }
 
     [Fact]
-    public void Convert_WithNonFtpProfile_ThrowsProfileException()
-    {
+    public void Convert_WithNonFtpProfile_ThrowsProfileException() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "MSDeploy",
             PublishUrl = "http://example.com",
             SourceFilePath = "test.pubxml"
@@ -41,11 +35,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithMissingPublishUrl_ThrowsProfileException()
-    {
+    public void Convert_WithMissingPublishUrl_ThrowsProfileException() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = string.Empty,
             SourceFilePath = "test.pubxml"
@@ -57,11 +49,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithValidFtpProfile_CreatesDeploymentProfile()
-    {
+    public void Convert_WithValidFtpProfile_CreatesDeploymentProfile() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com:21/site/wwwroot",
             UserName = "testuser",
@@ -92,11 +82,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithFtpsProtocol_SetsUseSslTrue()
-    {
+    public void Convert_WithFtpsProtocol_SetsUseSslTrue() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftps://ftp.example.com/site",
             PublishProtocol = "ftps",
@@ -111,11 +99,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithFtpProtocol_SetsUseSslFalse()
-    {
+    public void Convert_WithFtpProtocol_SetsUseSslFalse() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com/site",
             PublishProtocol = "ftp",
@@ -130,11 +116,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithFtpsUrlScheme_SetsUseSslTrue()
-    {
+    public void Convert_WithFtpsUrlScheme_SetsUseSslTrue() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftps://ftp.example.com/site",
             UserName = "testuser"
@@ -148,11 +132,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithCustomProfileName_UsesProvidedName()
-    {
+    public void Convert_WithCustomProfileName_UsesProvidedName() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com/site",
             UserName = "testuser",
@@ -167,11 +149,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithNoSourceFilePath_GeneratesNameFromHost()
-    {
+    public void Convert_WithNoSourceFilePath_GeneratesNameFromHost() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com/site",
             UserName = "testuser",
@@ -186,11 +166,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithDeleteExistingFilesFalse_SetsCleanupModeNone()
-    {
+    public void Convert_WithDeleteExistingFilesFalse_SetsCleanupModeNone() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com/site",
             UserName = "testuser",
@@ -205,11 +183,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithExcludeAppData_SetsAppOfflineEnabledTrue()
-    {
+    public void Convert_WithExcludeAppData_SetsAppOfflineEnabledTrue() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com/site",
             UserName = "testuser",
@@ -224,11 +200,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithoutExcludeAppData_SetsAppOfflineEnabledFalse()
-    {
+    public void Convert_WithoutExcludeAppData_SetsAppOfflineEnabledFalse() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com/site",
             UserName = "testuser",
@@ -243,11 +217,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithUrlWithoutPath_SetsEmptyRemotePath()
-    {
+    public void Convert_WithUrlWithoutPath_SetsEmptyRemotePath() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com",
             UserName = "testuser"
@@ -261,11 +233,9 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void Convert_WithCustomPort_UsesCustomPort()
-    {
+    public void Convert_WithCustomPort_UsesCustomPort() {
         // Arrange
-        var publishProfile = new PublishProfile
-        {
+        var publishProfile = new PublishProfile {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com:2121/site",
             UserName = "testuser"
@@ -283,14 +253,11 @@ public class PublishProfileConverterTests
     #region ValidateImportedProfile Tests
 
     [Fact]
-    public void ValidateImportedProfile_WithValidProfile_ReturnsEmptyErrors()
-    {
+    public void ValidateImportedProfile_WithValidProfile_ReturnsEmptyErrors() {
         // Arrange
-        var profile = new DeploymentProfile
-        {
+        var profile = new DeploymentProfile {
             Name = "test-profile",
-            Connection = new ServerConnection
-            {
+            Connection = new ServerConnection {
                 Host = "ftp.example.com",
                 Port = 21
             },
@@ -305,14 +272,11 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void ValidateImportedProfile_WithMissingName_ReturnsError()
-    {
+    public void ValidateImportedProfile_WithMissingName_ReturnsError() {
         // Arrange
-        var profile = new DeploymentProfile
-        {
+        var profile = new DeploymentProfile {
             Name = string.Empty,
-            Connection = new ServerConnection
-            {
+            Connection = new ServerConnection {
                 Host = "ftp.example.com",
                 Port = 21
             },
@@ -328,14 +292,11 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void ValidateImportedProfile_WithMissingHost_ReturnsError()
-    {
+    public void ValidateImportedProfile_WithMissingHost_ReturnsError() {
         // Arrange
-        var profile = new DeploymentProfile
-        {
+        var profile = new DeploymentProfile {
             Name = "test-profile",
-            Connection = new ServerConnection
-            {
+            Connection = new ServerConnection {
                 Host = string.Empty,
                 Port = 21
             },
@@ -351,14 +312,11 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void ValidateImportedProfile_WithInvalidPort_ReturnsError()
-    {
+    public void ValidateImportedProfile_WithInvalidPort_ReturnsError() {
         // Arrange
-        var profile = new DeploymentProfile
-        {
+        var profile = new DeploymentProfile {
             Name = "test-profile",
-            Connection = new ServerConnection
-            {
+            Connection = new ServerConnection {
                 Host = "ftp.example.com",
                 Port = 70000
             },
@@ -374,14 +332,11 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void ValidateImportedProfile_WithMissingUsername_ReturnsError()
-    {
+    public void ValidateImportedProfile_WithMissingUsername_ReturnsError() {
         // Arrange
-        var profile = new DeploymentProfile
-        {
+        var profile = new DeploymentProfile {
             Name = "test-profile",
-            Connection = new ServerConnection
-            {
+            Connection = new ServerConnection {
                 Host = "ftp.example.com",
                 Port = 21
             },
@@ -397,14 +352,11 @@ public class PublishProfileConverterTests
     }
 
     [Fact]
-    public void ValidateImportedProfile_WithMultipleErrors_ReturnsAllErrors()
-    {
+    public void ValidateImportedProfile_WithMultipleErrors_ReturnsAllErrors() {
         // Arrange
-        var profile = new DeploymentProfile
-        {
+        var profile = new DeploymentProfile {
             Name = string.Empty,
-            Connection = new ServerConnection
-            {
+            Connection = new ServerConnection {
                 Host = string.Empty,
                 Port = -1
             },

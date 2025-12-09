@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "FTPSheep.CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "import p:\\StroyRow\\StroyRow\\WebSite2024\\WebSite2024.Server\\Properties\\PublishProfiles\\staging24.stroyryad.com.ua-FTP.pubxml"
+    }
+  }
+}

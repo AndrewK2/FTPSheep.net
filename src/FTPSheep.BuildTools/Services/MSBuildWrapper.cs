@@ -1,21 +1,19 @@
-using FTPSheep.BuildTools.Models;
 using System.Text;
+using FTPSheep.BuildTools.Models;
 
 namespace FTPSheep.BuildTools.Services;
 
 /// <summary>
 /// Wrapper for MSBuild operations that builds command-line arguments.
 /// </summary>
-public class MSBuildWrapper
-{
+public class MSBuildWrapper {
     private readonly BuildToolLocator _toolLocator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MSBuildWrapper"/> class.
     /// </summary>
     /// <param name="toolLocator">The build tool locator.</param>
-    public MSBuildWrapper(BuildToolLocator? toolLocator = null)
-    {
+    public MSBuildWrapper(BuildToolLocator? toolLocator = null) {
         _toolLocator = toolLocator ?? new BuildToolLocator();
     }
 
@@ -23,8 +21,7 @@ public class MSBuildWrapper
     /// Gets the path to the MSBuild executable.
     /// </summary>
     /// <returns>The full path to MSBuild.exe.</returns>
-    public string GetMSBuildPath()
-    {
+    public string GetMSBuildPath() {
         return _toolLocator.LocateMSBuild();
     }
 
@@ -33,15 +30,12 @@ public class MSBuildWrapper
     /// </summary>
     /// <param name="options">The MSBuild options.</param>
     /// <returns>The command-line arguments string.</returns>
-    public string BuildArguments(MSBuildOptions options)
-    {
-        if (options == null)
-        {
+    public string BuildArguments(MSBuildOptions options) {
+        if(options == null) {
             throw new ArgumentNullException(nameof(options));
         }
 
-        if (string.IsNullOrWhiteSpace(options.ProjectPath))
-        {
+        if(string.IsNullOrWhiteSpace(options.ProjectPath)) {
             throw new ArgumentException("ProjectPath is required.", nameof(options));
         }
 
@@ -51,8 +45,7 @@ public class MSBuildWrapper
         args.Append($"\"{options.ProjectPath}\"");
 
         // Add targets
-        if (options.Targets.Count > 0)
-        {
+        if(options.Targets.Count > 0) {
             args.Append($" /t:{string.Join(";", options.Targets)}");
         }
 
@@ -60,38 +53,32 @@ public class MSBuildWrapper
         args.Append($" /p:Configuration={options.Configuration}");
 
         // Add platform if specified
-        if (!string.IsNullOrWhiteSpace(options.Platform))
-        {
+        if(!string.IsNullOrWhiteSpace(options.Platform)) {
             args.Append($" /p:Platform=\"{options.Platform}\"");
         }
 
         // Add output path if specified
-        if (!string.IsNullOrWhiteSpace(options.OutputPath))
-        {
+        if(!string.IsNullOrWhiteSpace(options.OutputPath)) {
             args.Append($" /p:OutputPath=\"{options.OutputPath}\"");
         }
 
         // Add target framework if specified
-        if (!string.IsNullOrWhiteSpace(options.TargetFramework))
-        {
+        if(!string.IsNullOrWhiteSpace(options.TargetFramework)) {
             args.Append($" /p:TargetFramework={options.TargetFramework}");
         }
 
         // Add publish profile if specified
-        if (!string.IsNullOrWhiteSpace(options.PublishProfile))
-        {
+        if(!string.IsNullOrWhiteSpace(options.PublishProfile)) {
             args.Append($" /p:PublishProfile={options.PublishProfile}");
         }
 
         // Add custom properties
-        foreach (var prop in options.Properties)
-        {
+        foreach(var prop in options.Properties) {
             args.Append($" /p:{prop.Key}={EscapePropertyValue(prop.Value)}");
         }
 
         // Add verbosity
-        var verbosity = options.Verbosity switch
-        {
+        var verbosity = options.Verbosity switch {
             MSBuildVerbosity.Quiet => "quiet",
             MSBuildVerbosity.Minimal => "minimal",
             MSBuildVerbosity.Normal => "normal",
@@ -102,25 +89,20 @@ public class MSBuildWrapper
         args.Append($" /v:{verbosity}");
 
         // Add max CPU count
-        if (options.MaxCpuCount.HasValue)
-        {
+        if(options.MaxCpuCount.HasValue) {
             args.Append($" /m:{options.MaxCpuCount.Value}");
-        }
-        else
-        {
+        } else {
             // Use parallel build by default
             args.Append(" /m");
         }
 
         // Add restore if enabled
-        if (options.RestorePackages)
-        {
+        if(options.RestorePackages) {
             args.Append(" /restore");
         }
 
         // Add warnings as errors
-        if (options.TreatWarningsAsErrors)
-        {
+        if(options.TreatWarningsAsErrors) {
             args.Append(" /p:TreatWarningsAsErrors=true");
         }
 
@@ -137,10 +119,8 @@ public class MSBuildWrapper
     /// <param name="projectPath">The path to the project file.</param>
     /// <param name="configuration">The build configuration.</param>
     /// <returns>MSBuild options configured for building.</returns>
-    public MSBuildOptions CreateBuildOptions(string projectPath, string configuration = "Release")
-    {
-        return new MSBuildOptions
-        {
+    public MSBuildOptions CreateBuildOptions(string projectPath, string configuration = "Release") {
+        return new MSBuildOptions {
             ProjectPath = projectPath,
             Configuration = configuration,
             Targets = new List<string> { "Build" },
@@ -155,10 +135,8 @@ public class MSBuildWrapper
     /// <param name="outputPath">The output path for published files.</param>
     /// <param name="configuration">The build configuration.</param>
     /// <returns>MSBuild options configured for publishing.</returns>
-    public MSBuildOptions CreatePublishOptions(string projectPath, string outputPath, string configuration = "Release")
-    {
-        return new MSBuildOptions
-        {
+    public MSBuildOptions CreatePublishOptions(string projectPath, string outputPath, string configuration = "Release") {
+        return new MSBuildOptions {
             ProjectPath = projectPath,
             Configuration = configuration,
             OutputPath = outputPath,
@@ -181,10 +159,8 @@ public class MSBuildWrapper
     /// <param name="projectPath">The path to the project file.</param>
     /// <param name="configuration">The build configuration.</param>
     /// <returns>MSBuild options configured for cleaning.</returns>
-    public MSBuildOptions CreateCleanOptions(string projectPath, string configuration = "Release")
-    {
-        return new MSBuildOptions
-        {
+    public MSBuildOptions CreateCleanOptions(string projectPath, string configuration = "Release") {
+        return new MSBuildOptions {
             ProjectPath = projectPath,
             Configuration = configuration,
             Targets = new List<string> { "Clean" },
@@ -192,11 +168,9 @@ public class MSBuildWrapper
         };
     }
 
-    private string EscapePropertyValue(string value)
-    {
+    private string EscapePropertyValue(string value) {
         // Escape special characters in property values
-        if (value.Contains(' ') || value.Contains(';') || value.Contains(','))
-        {
+        if(value.Contains(' ') || value.Contains(';') || value.Contains(',')) {
             return $"\"{value}\"";
         }
         return value;

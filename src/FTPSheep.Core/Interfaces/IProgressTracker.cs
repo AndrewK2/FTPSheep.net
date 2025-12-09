@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Interfaces;
 /// <summary>
 /// Defines the contract for tracking deployment progress.
 /// </summary>
-public interface IProgressTracker
-{
+public interface IProgressTracker {
     /// <summary>
     /// Reports overall deployment progress.
     /// </summary>
@@ -67,8 +66,7 @@ public interface IProgressTracker
 /// <summary>
 /// Defines the stages of a deployment operation.
 /// </summary>
-public enum DeploymentStage
-{
+public enum DeploymentStage {
     /// <summary>
     /// Initializing the deployment.
     /// </summary>

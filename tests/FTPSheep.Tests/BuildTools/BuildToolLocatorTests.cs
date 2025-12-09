@@ -1,20 +1,17 @@
-using FTPSheep.BuildTools.Services;
 using FTPSheep.BuildTools.Exceptions;
+using FTPSheep.BuildTools.Services;
 
 namespace FTPSheep.Tests.BuildTools;
 
-public class BuildToolLocatorTests
-{
+public class BuildToolLocatorTests {
     private readonly BuildToolLocator _locator;
 
-    public BuildToolLocatorTests()
-    {
+    public BuildToolLocatorTests() {
         _locator = new BuildToolLocator();
     }
 
     [Fact]
-    public void IsDotnetCliAvailable_ShouldReturnBoolean()
-    {
+    public void IsDotnetCliAvailable_ShouldReturnBoolean() {
         // Act
         var result = _locator.IsDotnetCliAvailable();
 
@@ -23,8 +20,7 @@ public class BuildToolLocatorTests
     }
 
     [Fact]
-    public void IsMSBuildAvailable_ShouldReturnBoolean()
-    {
+    public void IsMSBuildAvailable_ShouldReturnBoolean() {
         // Act
         var result = _locator.IsMSBuildAvailable();
 
@@ -33,11 +29,9 @@ public class BuildToolLocatorTests
     }
 
     [Fact]
-    public void LocateDotnetCli_WhenAvailable_ShouldReturnValidPath()
-    {
+    public void LocateDotnetCli_WhenAvailable_ShouldReturnValidPath() {
         // Arrange & Act
-        if (!_locator.IsDotnetCliAvailable())
-        {
+        if(!_locator.IsDotnetCliAvailable()) {
             // Skip test if dotnet CLI is not available
             return;
         }
@@ -52,11 +46,9 @@ public class BuildToolLocatorTests
     }
 
     [Fact]
-    public void LocateDotnetCli_WhenNotAvailable_ShouldThrowToolNotFoundException()
-    {
+    public void LocateDotnetCli_WhenNotAvailable_ShouldThrowToolNotFoundException() {
         // Arrange & Act
-        if (_locator.IsDotnetCliAvailable())
-        {
+        if(_locator.IsDotnetCliAvailable()) {
             // Skip test if dotnet CLI is available (can't test the negative case)
             return;
         }
@@ -67,11 +59,9 @@ public class BuildToolLocatorTests
     }
 
     [Fact]
-    public void LocateMSBuild_WhenAvailable_ShouldReturnValidPath()
-    {
+    public void LocateMSBuild_WhenAvailable_ShouldReturnValidPath() {
         // Arrange & Act
-        if (!_locator.IsMSBuildAvailable())
-        {
+        if(!_locator.IsMSBuildAvailable()) {
             // Skip test if MSBuild is not available
             return;
         }
@@ -86,11 +76,9 @@ public class BuildToolLocatorTests
     }
 
     [Fact]
-    public void LocateMSBuild_WhenNotAvailable_ShouldThrowToolNotFoundException()
-    {
+    public void LocateMSBuild_WhenNotAvailable_ShouldThrowToolNotFoundException() {
         // Arrange & Act
-        if (_locator.IsMSBuildAvailable())
-        {
+        if(_locator.IsMSBuildAvailable()) {
             // Skip test if MSBuild is available (can't test the negative case)
             return;
         }
@@ -101,11 +89,9 @@ public class BuildToolLocatorTests
     }
 
     [Fact]
-    public void GetDotnetCliVersion_WhenAvailable_ShouldReturnVersion()
-    {
+    public void GetDotnetCliVersion_WhenAvailable_ShouldReturnVersion() {
         // Arrange & Act
-        if (!_locator.IsDotnetCliAvailable())
-        {
+        if(!_locator.IsDotnetCliAvailable()) {
             // Skip test if dotnet CLI is not available
             return;
         }
@@ -120,11 +106,9 @@ public class BuildToolLocatorTests
     }
 
     [Fact]
-    public void GetDotnetCliVersion_WhenNotAvailable_ShouldReturnNull()
-    {
+    public void GetDotnetCliVersion_WhenNotAvailable_ShouldReturnNull() {
         // Arrange & Act
-        if (_locator.IsDotnetCliAvailable())
-        {
+        if(_locator.IsDotnetCliAvailable()) {
             // Skip test if dotnet CLI is available (can't test the negative case)
             return;
         }
@@ -136,40 +120,32 @@ public class BuildToolLocatorTests
     }
 
     [Fact]
-    public void IsDotnetCliAvailable_WhenDotnetExists_ShouldMatchLocateDotnetCli()
-    {
+    public void IsDotnetCliAvailable_WhenDotnetExists_ShouldMatchLocateDotnetCli() {
         // Act
         var isAvailable = _locator.IsDotnetCliAvailable();
 
         // Assert
-        if (isAvailable)
-        {
+        if(isAvailable) {
             // Should not throw
             var path = _locator.LocateDotnetCli();
             Assert.NotNull(path);
-        }
-        else
-        {
+        } else {
             // Should throw
             Assert.Throws<ToolNotFoundException>(() => _locator.LocateDotnetCli());
         }
     }
 
     [Fact]
-    public void IsMSBuildAvailable_WhenMSBuildExists_ShouldMatchLocateMSBuild()
-    {
+    public void IsMSBuildAvailable_WhenMSBuildExists_ShouldMatchLocateMSBuild() {
         // Act
         var isAvailable = _locator.IsMSBuildAvailable();
 
         // Assert
-        if (isAvailable)
-        {
+        if(isAvailable) {
             // Should not throw
             var path = _locator.LocateMSBuild();
             Assert.NotNull(path);
-        }
-        else
-        {
+        } else {
             // Should throw
             Assert.Throws<ToolNotFoundException>(() => _locator.LocateMSBuild());
         }

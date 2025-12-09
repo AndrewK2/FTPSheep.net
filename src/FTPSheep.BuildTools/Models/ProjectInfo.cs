@@ -3,8 +3,7 @@ namespace FTPSheep.BuildTools.Models;
 /// <summary>
 /// Represents information about a .NET project file.
 /// </summary>
-public class ProjectInfo
-{
+public class ProjectInfo {
     /// <summary>
     /// Gets the full path to the project file.
     /// </summary>
@@ -59,8 +58,7 @@ public class ProjectInfo
 /// <summary>
 /// Represents the format of a .NET project file.
 /// </summary>
-public enum ProjectFormat
-{
+public enum ProjectFormat {
     /// <summary>
     /// Unknown or unrecognized format.
     /// </summary>
@@ -80,8 +78,7 @@ public enum ProjectFormat
 /// <summary>
 /// Represents the type of a .NET project.
 /// </summary>
-public enum ProjectType
-{
+public enum ProjectType {
     /// <summary>
     /// Unknown or unrecognized project type.
     /// </summary>

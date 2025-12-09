@@ -1,13 +1,11 @@
-using FTPSheep.Core.Retry;
 using FTPSheep.Core.Exceptions;
+using FTPSheep.Core.Retry;
 
 namespace FTPSheep.Tests.Retry;
 
-public class RetryPolicyTests
-{
+public class RetryPolicyTests {
     [Fact]
-    public void Default_ShouldHaveExpectedConfiguration()
-    {
+    public void Default_ShouldHaveExpectedConfiguration() {
         // Arrange & Act
         var policy = RetryPolicy.Default;
 
@@ -21,8 +19,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void NoRetry_ShouldHaveZeroRetries()
-    {
+    public void NoRetry_ShouldHaveZeroRetries() {
         // Arrange & Act
         var policy = RetryPolicy.NoRetry;
 
@@ -38,11 +35,9 @@ public class RetryPolicyTests
     [InlineData(4, 16000)]     // Fifth retry: 16s
     [InlineData(5, 30000)]     // Sixth retry: 30s (capped at MaxDelay)
     [InlineData(10, 30000)]    // Large retry: still 30s (capped)
-    public void CalculateDelay_WithExponentialBackoff_ShouldReturnExpectedDelay(int retryAttempt, int expectedMilliseconds)
-    {
+    public void CalculateDelay_WithExponentialBackoff_ShouldReturnExpectedDelay(int retryAttempt, int expectedMilliseconds) {
         // Arrange
-        var policy = new RetryPolicy
-        {
+        var policy = new RetryPolicy {
             InitialDelay = TimeSpan.FromSeconds(1),
             MaxDelay = TimeSpan.FromSeconds(30),
             BackoffMultiplier = 2.0,
@@ -61,11 +56,9 @@ public class RetryPolicyTests
     [InlineData(1)]
     [InlineData(5)]
     [InlineData(10)]
-    public void CalculateDelay_WithoutExponentialBackoff_ShouldReturnConstantDelay(int retryAttempt)
-    {
+    public void CalculateDelay_WithoutExponentialBackoff_ShouldReturnConstantDelay(int retryAttempt) {
         // Arrange
-        var policy = new RetryPolicy
-        {
+        var policy = new RetryPolicy {
             InitialDelay = TimeSpan.FromSeconds(2),
             UseExponentialBackoff = false
         };
@@ -78,8 +71,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void CalculateDelay_WithNegativeAttempt_ShouldThrowArgumentOutOfRangeException()
-    {
+    public void CalculateDelay_WithNegativeAttempt_ShouldThrowArgumentOutOfRangeException() {
         // Arrange
         var policy = RetryPolicy.Default;
 
@@ -88,8 +80,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithAuthenticationException_ShouldReturnFalse()
-    {
+    public void DefaultIsRetryable_WithAuthenticationException_ShouldReturnFalse() {
         // Arrange
         var exception = new AuthenticationException("Auth failed");
 
@@ -101,8 +92,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithBuildException_ShouldReturnFalse()
-    {
+    public void DefaultIsRetryable_WithBuildException_ShouldReturnFalse() {
         // Arrange
         var exception = new BuildException("Build failed");
 
@@ -114,8 +104,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithProfileValidationException_ShouldReturnFalse()
-    {
+    public void DefaultIsRetryable_WithProfileValidationException_ShouldReturnFalse() {
         // Arrange
         var exception = new ProfileValidationException("profile1", new[] { "Error 1" });
 
@@ -127,8 +116,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithTransientConnectionException_ShouldReturnTrue()
-    {
+    public void DefaultIsRetryable_WithTransientConnectionException_ShouldReturnTrue() {
         // Arrange
         var exception = new ConnectionException("Connection failed") { IsTransient = true };
 
@@ -140,8 +128,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithNonTransientConnectionException_ShouldReturnFalse()
-    {
+    public void DefaultIsRetryable_WithNonTransientConnectionException_ShouldReturnFalse() {
         // Arrange
         var exception = new ConnectionException("Connection failed") { IsTransient = false };
 
@@ -153,8 +140,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithRetryableDeploymentException_ShouldReturnTrue()
-    {
+    public void DefaultIsRetryable_WithRetryableDeploymentException_ShouldReturnTrue() {
         // Arrange
         var exception = new DeploymentException("Deployment failed", "profile1", DeploymentPhase.Upload, isRetryable: true);
 
@@ -166,8 +152,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithNonRetryableDeploymentException_ShouldReturnFalse()
-    {
+    public void DefaultIsRetryable_WithNonRetryableDeploymentException_ShouldReturnFalse() {
         // Arrange
         var exception = new DeploymentException("Deployment failed", "profile1", DeploymentPhase.Build, isRetryable: false);
 
@@ -179,8 +164,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithTimeoutException_ShouldReturnTrue()
-    {
+    public void DefaultIsRetryable_WithTimeoutException_ShouldReturnTrue() {
         // Arrange
         var exception = new TimeoutException("Operation timed out");
 
@@ -192,8 +176,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithIOException_ShouldReturnTrue()
-    {
+    public void DefaultIsRetryable_WithIOException_ShouldReturnTrue() {
         // Arrange
         var exception = new System.IO.IOException("I/O error");
 
@@ -205,8 +188,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithSocketException_ShouldReturnTrue()
-    {
+    public void DefaultIsRetryable_WithSocketException_ShouldReturnTrue() {
         // Arrange
         var exception = new System.Net.Sockets.SocketException();
 
@@ -218,8 +200,7 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void DefaultIsRetryable_WithUnknownException_ShouldReturnFalse()
-    {
+    public void DefaultIsRetryable_WithUnknownException_ShouldReturnFalse() {
         // Arrange
         var exception = new InvalidOperationException("Unknown error");
 
@@ -231,11 +212,9 @@ public class RetryPolicyTests
     }
 
     [Fact]
-    public void CustomPolicy_WithCustomRetryableCheck_ShouldUseCustomLogic()
-    {
+    public void CustomPolicy_WithCustomRetryableCheck_ShouldUseCustomLogic() {
         // Arrange
-        var policy = new RetryPolicy
-        {
+        var policy = new RetryPolicy {
             MaxRetryCount = 5,
             IsRetryableException = ex => ex is InvalidOperationException
         };

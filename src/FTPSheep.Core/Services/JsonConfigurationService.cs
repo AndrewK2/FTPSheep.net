@@ -11,8 +11,7 @@ namespace FTPSheep.Core.Services;
 /// <summary>
 /// JSON-based implementation of the configuration service.
 /// </summary>
-public sealed class JsonConfigurationService : IConfigurationService
-{
+public sealed class JsonConfigurationService : IConfigurationService {
     private readonly ILogger<JsonConfigurationService> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
 
@@ -20,11 +19,9 @@ public sealed class JsonConfigurationService : IConfigurationService
     /// Initializes a new instance of the <see cref="JsonConfigurationService"/> class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
-    public JsonConfigurationService(ILogger<JsonConfigurationService> logger)
-    {
+    public JsonConfigurationService(ILogger<JsonConfigurationService> logger) {
         _logger = logger;
-        _jsonOptions = new JsonSerializerOptions
-        {
+        _jsonOptions = new JsonSerializerOptions {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -33,51 +30,41 @@ public sealed class JsonConfigurationService : IConfigurationService
     }
 
     /// <inheritdoc/>
-    public async Task<GlobalConfiguration> LoadConfigurationAsync(CancellationToken cancellationToken = default)
-    {
+    public async Task<GlobalConfiguration> LoadConfigurationAsync(CancellationToken cancellationToken = default) {
         var configPath = PathResolver.GetGlobalConfigPath();
 
-        if (!File.Exists(configPath))
-        {
+        if(!File.Exists(configPath)) {
             _logger.LogInformation("Global configuration not found, creating default configuration");
             var defaultConfig = GlobalConfiguration.CreateDefault();
             await SaveConfigurationAsync(defaultConfig, cancellationToken);
             return defaultConfig;
         }
 
-        try
-        {
+        try {
             _logger.LogDebug("Loading global configuration from {ConfigPath}", configPath);
 
             var json = await File.ReadAllTextAsync(configPath, cancellationToken);
             var config = JsonSerializer.Deserialize<GlobalConfiguration>(json, _jsonOptions);
 
-            if (config == null)
-            {
+            if(config == null) {
                 _logger.LogWarning("Deserialized configuration was null, creating default");
                 return GlobalConfiguration.CreateDefault();
             }
 
             _logger.LogInformation("Successfully loaded global configuration");
             return config;
-        }
-        catch (JsonException ex)
-        {
+        } catch(JsonException ex) {
             _logger.LogError(ex, "Failed to deserialize global configuration, using default");
             throw new ConfigurationException("Global configuration file is corrupted or invalid.", ex);
-        }
-        catch (IOException ex)
-        {
+        } catch(IOException ex) {
             _logger.LogError(ex, "I/O error while loading global configuration");
             throw new ConfigurationException("Failed to load global configuration due to I/O error.", ex);
         }
     }
 
     /// <inheritdoc/>
-    public async Task SaveConfigurationAsync(GlobalConfiguration configuration, CancellationToken cancellationToken = default)
-    {
-        try
-        {
+    public async Task SaveConfigurationAsync(GlobalConfiguration configuration, CancellationToken cancellationToken = default) {
+        try {
             PathResolver.EnsureDirectoriesExist();
 
             var configPath = PathResolver.GetGlobalConfigPath();
@@ -93,58 +80,48 @@ public sealed class JsonConfigurationService : IConfigurationService
             File.Move(tempPath, configPath, overwrite: true);
 
             _logger.LogInformation("Successfully saved global configuration");
-        }
-        catch (JsonException ex)
-        {
+        } catch(JsonException ex) {
             _logger.LogError(ex, "Failed to serialize global configuration");
             throw new ConfigurationException("Failed to serialize global configuration.", ex);
-        }
-        catch (IOException ex)
-        {
+        } catch(IOException ex) {
             _logger.LogError(ex, "I/O error while saving global configuration");
             throw new ConfigurationException("Failed to save global configuration due to I/O error.", ex);
         }
     }
 
     /// <inheritdoc/>
-    public async Task ApplyDefaultsAsync(DeploymentProfile profile, CancellationToken cancellationToken = default)
-    {
+    public async Task ApplyDefaultsAsync(DeploymentProfile profile, CancellationToken cancellationToken = default) {
         var config = await LoadConfigurationAsync(cancellationToken);
 
         _logger.LogDebug("Applying global defaults to profile '{ProfileName}'", profile.Name);
 
         // Apply numeric defaults (0 means "use default from global config")
-        if (profile.Concurrency == 0 || profile.Concurrency == 4) // 4 is the hardcoded default
+        if(profile.Concurrency == 0 || profile.Concurrency == 4) // 4 is the hardcoded default
         {
             profile.Concurrency = config.DefaultConcurrency;
         }
 
-        if (profile.RetryCount == 0 || profile.RetryCount == 3) // 3 is the hardcoded default
+        if(profile.RetryCount == 0 || profile.RetryCount == 3) // 3 is the hardcoded default
         {
             profile.RetryCount = config.DefaultRetryCount;
         }
 
-        if (profile.Connection.TimeoutSeconds == 0 || profile.Connection.TimeoutSeconds == 30) // 30 is the hardcoded default
+        if(profile.Connection.TimeoutSeconds == 0 || profile.Connection.TimeoutSeconds == 30) // 30 is the hardcoded default
         {
             profile.Connection.TimeoutSeconds = config.DefaultTimeoutSeconds;
         }
 
         // Apply build configuration default
-        if (string.IsNullOrWhiteSpace(profile.Build.Configuration) || profile.Build.Configuration == "Release")
-        {
-            if (!string.IsNullOrWhiteSpace(config.DefaultBuildConfiguration))
-            {
+        if(string.IsNullOrWhiteSpace(profile.Build.Configuration) || profile.Build.Configuration == "Release") {
+            if(!string.IsNullOrWhiteSpace(config.DefaultBuildConfiguration)) {
                 profile.Build.Configuration = config.DefaultBuildConfiguration;
             }
         }
 
         // Merge exclusion patterns (additive - add global patterns that aren't already in the profile)
-        if (config.DefaultExclusionPatterns.Count > 0)
-        {
-            foreach (var pattern in config.DefaultExclusionPatterns)
-            {
-                if (!profile.ExclusionPatterns.Contains(pattern))
-                {
+        if(config.DefaultExclusionPatterns.Count > 0) {
+            foreach(var pattern in config.DefaultExclusionPatterns) {
+                if(!profile.ExclusionPatterns.Contains(pattern)) {
                     profile.ExclusionPatterns.Add(pattern);
                 }
             }

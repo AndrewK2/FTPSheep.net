@@ -5,8 +5,7 @@ namespace FTPSheep.Core.Interfaces;
 /// <summary>
 /// Repository interface for managing deployment profile persistence.
 /// </summary>
-public interface IProfileRepository
-{
+public interface IProfileRepository {
     /// <summary>
     /// Saves a deployment profile to storage.
     /// </summary>

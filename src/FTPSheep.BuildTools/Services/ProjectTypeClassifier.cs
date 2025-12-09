@@ -5,17 +5,14 @@ namespace FTPSheep.BuildTools.Services;
 /// <summary>
 /// Classifies .NET projects based on their characteristics.
 /// </summary>
-public class ProjectTypeClassifier
-{
+public class ProjectTypeClassifier {
     /// <summary>
     /// Determines if a project is a .NET Framework (4.x) project.
     /// </summary>
     /// <param name="projectInfo">The project information.</param>
     /// <returns>True if the project targets .NET Framework 4.x.</returns>
-    public bool IsDotNetFramework(ProjectInfo projectInfo)
-    {
-        if (projectInfo == null)
-        {
+    public bool IsDotNetFramework(ProjectInfo projectInfo) {
+        if(projectInfo == null) {
             throw new ArgumentNullException(nameof(projectInfo));
         }
 
@@ -29,10 +26,8 @@ public class ProjectTypeClassifier
     /// </summary>
     /// <param name="projectInfo">The project information.</param>
     /// <returns>True if the project targets .NET Core.</returns>
-    public bool IsDotNetCore(ProjectInfo projectInfo)
-    {
-        if (projectInfo == null)
-        {
+    public bool IsDotNetCore(ProjectInfo projectInfo) {
+        if(projectInfo == null) {
             throw new ArgumentNullException(nameof(projectInfo));
         }
 
@@ -45,21 +40,16 @@ public class ProjectTypeClassifier
     /// </summary>
     /// <param name="projectInfo">The project information.</param>
     /// <returns>True if the project targets .NET 5 or later.</returns>
-    public bool IsDotNet5Plus(ProjectInfo projectInfo)
-    {
-        if (projectInfo == null)
-        {
+    public bool IsDotNet5Plus(ProjectInfo projectInfo) {
+        if(projectInfo == null) {
             throw new ArgumentNullException(nameof(projectInfo));
         }
 
-        return projectInfo.TargetFrameworks.Any(tfm =>
-        {
+        return projectInfo.TargetFrameworks.Any(tfm => {
             // Match patterns like "net5.0", "net6.0", "net7.0", "net8.0", etc.
-            if (tfm.StartsWith("net", StringComparison.OrdinalIgnoreCase) && tfm.Contains('.'))
-            {
+            if(tfm.StartsWith("net", StringComparison.OrdinalIgnoreCase) && tfm.Contains('.')) {
                 var versionPart = tfm.Substring(3, tfm.IndexOf('.') - 3);
-                if (int.TryParse(versionPart, out var version))
-                {
+                if(int.TryParse(versionPart, out var version)) {
                     return version >= 5;
                 }
             }
@@ -72,10 +62,8 @@ public class ProjectTypeClassifier
     /// </summary>
     /// <param name="projectInfo">The project information.</param>
     /// <returns>True if the project targets .NET Standard.</returns>
-    public bool IsDotNetStandard(ProjectInfo projectInfo)
-    {
-        if (projectInfo == null)
-        {
+    public bool IsDotNetStandard(ProjectInfo projectInfo) {
+        if(projectInfo == null) {
             throw new ArgumentNullException(nameof(projectInfo));
         }
 
@@ -88,10 +76,8 @@ public class ProjectTypeClassifier
     /// </summary>
     /// <param name="projectInfo">The project information.</param>
     /// <returns>True if the project is an ASP.NET project.</returns>
-    public bool IsAspNet(ProjectInfo projectInfo)
-    {
-        if (projectInfo == null)
-        {
+    public bool IsAspNet(ProjectInfo projectInfo) {
+        if(projectInfo == null) {
             throw new ArgumentNullException(nameof(projectInfo));
         }
 
@@ -109,10 +95,8 @@ public class ProjectTypeClassifier
     /// </summary>
     /// <param name="projectInfo">The project information.</param>
     /// <returns>True if the project is an ASP.NET Core project.</returns>
-    public bool IsAspNetCore(ProjectInfo projectInfo)
-    {
-        if (projectInfo == null)
-        {
+    public bool IsAspNetCore(ProjectInfo projectInfo) {
+        if(projectInfo == null) {
             throw new ArgumentNullException(nameof(projectInfo));
         }
 
@@ -127,10 +111,8 @@ public class ProjectTypeClassifier
     /// </summary>
     /// <param name="projectInfo">The project information.</param>
     /// <returns>True if the project is a web application.</returns>
-    public bool IsWebApplication(ProjectInfo projectInfo)
-    {
-        if (projectInfo == null)
-        {
+    public bool IsWebApplication(ProjectInfo projectInfo) {
+        if(projectInfo == null) {
             throw new ArgumentNullException(nameof(projectInfo));
         }
 
@@ -142,15 +124,12 @@ public class ProjectTypeClassifier
     /// </summary>
     /// <param name="projectInfo">The project information.</param>
     /// <returns>A description of the project type and target framework.</returns>
-    public string GetProjectDescription(ProjectInfo projectInfo)
-    {
-        if (projectInfo == null)
-        {
+    public string GetProjectDescription(ProjectInfo projectInfo) {
+        if(projectInfo == null) {
             throw new ArgumentNullException(nameof(projectInfo));
         }
 
-        var typeDescription = projectInfo.ProjectType switch
-        {
+        var typeDescription = projectInfo.ProjectType switch {
             ProjectType.Library => "Class Library",
             ProjectType.Console => "Console Application",
             ProjectType.WindowsApp => "Windows Application",
@@ -175,22 +154,18 @@ public class ProjectTypeClassifier
     /// </summary>
     /// <param name="projectInfo">The project information.</param>
     /// <returns>The recommended build tool.</returns>
-    public BuildTool GetRecommendedBuildTool(ProjectInfo projectInfo)
-    {
-        if (projectInfo == null)
-        {
+    public BuildTool GetRecommendedBuildTool(ProjectInfo projectInfo) {
+        if(projectInfo == null) {
             throw new ArgumentNullException(nameof(projectInfo));
         }
 
         // SDK-style projects should use dotnet CLI
-        if (projectInfo.IsSdkStyle)
-        {
+        if(projectInfo.IsSdkStyle) {
             return BuildTool.DotnetCli;
         }
 
         // Legacy .NET Framework projects should use MSBuild
-        if (IsDotNetFramework(projectInfo))
-        {
+        if(IsDotNetFramework(projectInfo)) {
             return BuildTool.MSBuild;
         }
 
@@ -202,8 +177,7 @@ public class ProjectTypeClassifier
 /// <summary>
 /// Represents the build tool to use for a project.
 /// </summary>
-public enum BuildTool
-{
+public enum BuildTool {
     /// <summary>
     /// Unknown or unspecified build tool.
     /// </summary>

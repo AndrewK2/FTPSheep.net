@@ -5,8 +5,7 @@ namespace FTPSheep.Core.Interfaces;
 /// <summary>
 /// Service interface for managing global configuration settings.
 /// </summary>
-public interface IConfigurationService
-{
+public interface IConfigurationService {
     /// <summary>
     /// Loads the global configuration, creating a default one if it doesn't exist.
     /// </summary>

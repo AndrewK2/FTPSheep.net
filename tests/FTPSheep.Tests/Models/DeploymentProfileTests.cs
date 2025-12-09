@@ -1,13 +1,11 @@
-using FTPSheep.Core.Models;
 using System.Text.Json;
+using FTPSheep.Core.Models;
 
 namespace FTPSheep.Tests.Models;
 
-public class DeploymentProfileTests
-{
+public class DeploymentProfileTests {
     [Fact]
-    public void Constructor_Default_SetsDefaultValues()
-    {
+    public void Constructor_Default_SetsDefaultValues() {
         // Act
         var profile = new DeploymentProfile();
 
@@ -23,8 +21,7 @@ public class DeploymentProfileTests
     }
 
     [Fact]
-    public void ObsoleteProperty_Server_DelegatesToConnectionHost()
-    {
+    public void ObsoleteProperty_Server_DelegatesToConnectionHost() {
         // Arrange
         var profile = new DeploymentProfile();
 
@@ -41,8 +38,7 @@ public class DeploymentProfileTests
     }
 
     [Fact]
-    public void ObsoleteProperty_Port_DelegatesToConnectionPort()
-    {
+    public void ObsoleteProperty_Port_DelegatesToConnectionPort() {
         // Arrange
         var profile = new DeploymentProfile();
 
@@ -59,8 +55,7 @@ public class DeploymentProfileTests
     }
 
     [Fact]
-    public void ObsoleteProperty_Protocol_DelegatesToConnectionProtocol()
-    {
+    public void ObsoleteProperty_Protocol_DelegatesToConnectionProtocol() {
         // Arrange
         var profile = new DeploymentProfile();
 
@@ -77,8 +72,7 @@ public class DeploymentProfileTests
     }
 
     [Fact]
-    public void ObsoleteProperty_TimeoutSeconds_DelegatesToConnectionTimeoutSeconds()
-    {
+    public void ObsoleteProperty_TimeoutSeconds_DelegatesToConnectionTimeoutSeconds() {
         // Arrange
         var profile = new DeploymentProfile();
 
@@ -95,8 +89,7 @@ public class DeploymentProfileTests
     }
 
     [Fact]
-    public void ObsoleteProperty_BuildConfiguration_DelegatesToBuildConfiguration()
-    {
+    public void ObsoleteProperty_BuildConfiguration_DelegatesToBuildConfiguration() {
         // Arrange
         var profile = new DeploymentProfile();
 
@@ -113,8 +106,7 @@ public class DeploymentProfileTests
     }
 
     [Fact]
-    public void ObsoleteProperty_TargetFramework_DelegatesToBuildTargetFramework()
-    {
+    public void ObsoleteProperty_TargetFramework_DelegatesToBuildTargetFramework() {
         // Arrange
         var profile = new DeploymentProfile();
 
@@ -131,8 +123,7 @@ public class DeploymentProfileTests
     }
 
     [Fact]
-    public void ObsoleteProperty_RuntimeIdentifier_DelegatesToBuildRuntimeIdentifier()
-    {
+    public void ObsoleteProperty_RuntimeIdentifier_DelegatesToBuildRuntimeIdentifier() {
         // Arrange
         var profile = new DeploymentProfile();
 
@@ -149,21 +140,17 @@ public class DeploymentProfileTests
     }
 
     [Fact]
-    public void Serialization_NewFormat_SerializesAndDeserializesCorrectly()
-    {
+    public void Serialization_NewFormat_SerializesAndDeserializesCorrectly() {
         // Arrange
-        var profile = new DeploymentProfile
-        {
+        var profile = new DeploymentProfile {
             Name = "Test Profile",
-            Connection = new ServerConnection
-            {
+            Connection = new ServerConnection {
                 Host = "ftp.example.com",
                 Port = 21,
                 Protocol = ProtocolType.Ftp,
                 TimeoutSeconds = 30
             },
-            Build = new BuildConfiguration
-            {
+            Build = new BuildConfiguration {
                 Configuration = "Release",
                 TargetFramework = "net8.0"
             },
@@ -188,8 +175,7 @@ public class DeploymentProfileTests
     // but JSON deserialization focuses on the new nested format.
 
     [Fact]
-    public void NewProperties_DirectAccess_WorksCorrectly()
-    {
+    public void NewProperties_DirectAccess_WorksCorrectly() {
         // Arrange
         var profile = new DeploymentProfile();
 

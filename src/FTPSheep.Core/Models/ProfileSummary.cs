@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Summary information about a deployment profile for display in listings.
 /// </summary>
-public sealed class ProfileSummary
-{
+public sealed class ProfileSummary {
     /// <summary>
     /// Gets or sets the profile name.
     /// </summary>

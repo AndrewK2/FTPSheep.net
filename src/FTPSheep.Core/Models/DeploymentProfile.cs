@@ -5,8 +5,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Represents a deployment profile configuration.
 /// </summary>
-public sealed class DeploymentProfile
-{
+public sealed class DeploymentProfile {
     /// <summary>
     /// Gets or sets the unique name of the deployment profile.
     /// </summary>
@@ -81,8 +80,7 @@ public sealed class DeploymentProfile
     /// </summary>
     [Obsolete("Use Connection.Host instead. This property will be removed in V2.0.")]
     [JsonIgnore]
-    public string Server
-    {
+    public string Server {
         get => Connection.Host;
         set => Connection.Host = value;
     }
@@ -92,8 +90,7 @@ public sealed class DeploymentProfile
     /// </summary>
     [Obsolete("Use Connection.Port instead. This property will be removed in V2.0.")]
     [JsonIgnore]
-    public int Port
-    {
+    public int Port {
         get => Connection.Port;
         set => Connection.Port = value;
     }
@@ -103,8 +100,7 @@ public sealed class DeploymentProfile
     /// </summary>
     [Obsolete("Use Connection.Protocol instead. This property will be removed in V2.0.")]
     [JsonIgnore]
-    public ProtocolType Protocol
-    {
+    public ProtocolType Protocol {
         get => Connection.Protocol;
         set => Connection.Protocol = value;
     }
@@ -114,8 +110,7 @@ public sealed class DeploymentProfile
     /// </summary>
     [Obsolete("Use Connection.TimeoutSeconds instead. This property will be removed in V2.0.")]
     [JsonIgnore]
-    public int TimeoutSeconds
-    {
+    public int TimeoutSeconds {
         get => Connection.TimeoutSeconds;
         set => Connection.TimeoutSeconds = value;
     }
@@ -125,8 +120,7 @@ public sealed class DeploymentProfile
     /// </summary>
     [Obsolete("Use Build.Configuration instead. This property will be removed in V2.0.")]
     [JsonIgnore]
-    public string BuildConfiguration
-    {
+    public string BuildConfiguration {
         get => Build.Configuration;
         set => Build.Configuration = value;
     }
@@ -136,8 +130,7 @@ public sealed class DeploymentProfile
     /// </summary>
     [Obsolete("Use Build.TargetFramework instead. This property will be removed in V2.0.")]
     [JsonIgnore]
-    public string? TargetFramework
-    {
+    public string? TargetFramework {
         get => Build.TargetFramework;
         set => Build.TargetFramework = value;
     }
@@ -147,8 +140,7 @@ public sealed class DeploymentProfile
     /// </summary>
     [Obsolete("Use Build.RuntimeIdentifier instead. This property will be removed in V2.0.")]
     [JsonIgnore]
-    public string? RuntimeIdentifier
-    {
+    public string? RuntimeIdentifier {
         get => Build.RuntimeIdentifier;
         set => Build.RuntimeIdentifier = value;
     }
@@ -157,8 +149,7 @@ public sealed class DeploymentProfile
 /// <summary>
 /// Defines the supported FTP protocol types.
 /// </summary>
-public enum ProtocolType
-{
+public enum ProtocolType {
     /// <summary>
     /// File Transfer Protocol.
     /// </summary>
@@ -173,8 +164,7 @@ public enum ProtocolType
 /// <summary>
 /// Defines cleanup modes for obsolete files on the server.
 /// </summary>
-public enum CleanupMode
-{
+public enum CleanupMode {
     /// <summary>
     /// Do not delete any files.
     /// </summary>

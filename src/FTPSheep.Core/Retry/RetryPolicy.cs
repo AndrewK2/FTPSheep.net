@@ -1,12 +1,9 @@
-using Microsoft.Extensions.Logging;
-
 namespace FTPSheep.Core.Retry;
 
 /// <summary>
 /// Defines a retry policy for handling transient failures.
 /// </summary>
-public sealed class RetryPolicy
-{
+public sealed class RetryPolicy {
     /// <summary>
     /// Gets the maximum number of retry attempts.
     /// </summary>
@@ -41,8 +38,7 @@ public sealed class RetryPolicy
     /// <summary>
     /// Gets the default retry policy with exponential backoff.
     /// </summary>
-    public static RetryPolicy Default => new()
-    {
+    public static RetryPolicy Default => new() {
         MaxRetryCount = 3,
         InitialDelay = TimeSpan.FromSeconds(1),
         MaxDelay = TimeSpan.FromSeconds(30),
@@ -54,8 +50,7 @@ public sealed class RetryPolicy
     /// <summary>
     /// Gets a retry policy with no retries.
     /// </summary>
-    public static RetryPolicy NoRetry => new()
-    {
+    public static RetryPolicy NoRetry => new() {
         MaxRetryCount = 0
     };
 
@@ -64,15 +59,12 @@ public sealed class RetryPolicy
     /// </summary>
     /// <param name="retryAttempt">The retry attempt number (0-based).</param>
     /// <returns>The delay to wait before retrying.</returns>
-    public TimeSpan CalculateDelay(int retryAttempt)
-    {
-        if (retryAttempt < 0)
-        {
+    public TimeSpan CalculateDelay(int retryAttempt) {
+        if(retryAttempt < 0) {
             throw new ArgumentOutOfRangeException(nameof(retryAttempt), "Retry attempt must be non-negative.");
         }
 
-        if (!UseExponentialBackoff)
-        {
+        if(!UseExponentialBackoff) {
             return InitialDelay;
         }
 
@@ -86,40 +78,33 @@ public sealed class RetryPolicy
     /// </summary>
     /// <param name="exception">The exception to check.</param>
     /// <returns>True if the exception should be retried, false otherwise.</returns>
-    public static bool DefaultIsRetryable(Exception exception)
-    {
+    public static bool DefaultIsRetryable(Exception exception) {
         // Don't retry these specific exceptions - they indicate permanent errors
-        if (exception is Exceptions.AuthenticationException)
-        {
+        if(exception is Exceptions.AuthenticationException) {
             return false; // Authentication failures are typically not transient
         }
 
-        if (exception is Exceptions.BuildException)
-        {
+        if(exception is Exceptions.BuildException) {
             return false; // Build failures are typically not transient
         }
 
-        if (exception is Exceptions.ProfileValidationException)
-        {
+        if(exception is Exceptions.ProfileValidationException) {
             return false; // Validation errors won't fix themselves
         }
 
         // Check if the exception explicitly indicates it's retryable
-        if (exception is Exceptions.ConnectionException connectionEx)
-        {
+        if(exception is Exceptions.ConnectionException connectionEx) {
             return connectionEx.IsTransient;
         }
 
-        if (exception is Exceptions.DeploymentException deploymentEx)
-        {
+        if(exception is Exceptions.DeploymentException deploymentEx) {
             return deploymentEx.IsRetryable;
         }
 
         // Common transient exception types
-        if (exception is TimeoutException or
+        if(exception is TimeoutException or
             System.IO.IOException or
-            System.Net.Sockets.SocketException)
-        {
+            System.Net.Sockets.SocketException) {
             return true;
         }
 

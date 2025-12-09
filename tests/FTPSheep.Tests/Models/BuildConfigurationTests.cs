@@ -2,11 +2,9 @@ using FTPSheep.Core.Models;
 
 namespace FTPSheep.Tests.Models;
 
-public class BuildConfigurationTests
-{
+public class BuildConfigurationTests {
     [Fact]
-    public void Constructor_Default_SetsConfigurationToRelease()
-    {
+    public void Constructor_Default_SetsConfigurationToRelease() {
         // Act
         var config = new BuildConfiguration();
 
@@ -20,8 +18,7 @@ public class BuildConfigurationTests
     }
 
     [Fact]
-    public void Constructor_WithConfiguration_SetsConfiguration()
-    {
+    public void Constructor_WithConfiguration_SetsConfiguration() {
         // Act
         var config = new BuildConfiguration("Debug");
 
@@ -30,8 +27,7 @@ public class BuildConfigurationTests
     }
 
     [Fact]
-    public void Constructor_WithNullConfiguration_SetsToRelease()
-    {
+    public void Constructor_WithNullConfiguration_SetsToRelease() {
         // Act
         var config = new BuildConfiguration(null!);
 
@@ -40,11 +36,9 @@ public class BuildConfigurationTests
     }
 
     [Fact]
-    public void Validate_ValidConfiguration_ReturnsTrue()
-    {
+    public void Validate_ValidConfiguration_ReturnsTrue() {
         // Arrange
-        var config = new BuildConfiguration
-        {
+        var config = new BuildConfiguration {
             Configuration = "Release",
             TargetFramework = "net8.0",
             RuntimeIdentifier = "win-x64"
@@ -59,8 +53,7 @@ public class BuildConfigurationTests
     }
 
     [Fact]
-    public void Validate_EmptyConfiguration_ReturnsFalse()
-    {
+    public void Validate_EmptyConfiguration_ReturnsFalse() {
         // Arrange
         var config = new BuildConfiguration { Configuration = "" };
 
@@ -73,11 +66,9 @@ public class BuildConfigurationTests
     }
 
     [Fact]
-    public void Validate_InvalidRuntimeIdentifier_ReturnsFalse()
-    {
+    public void Validate_InvalidRuntimeIdentifier_ReturnsFalse() {
         // Arrange
-        var config = new BuildConfiguration
-        {
+        var config = new BuildConfiguration {
             Configuration = "Release",
             RuntimeIdentifier = "invalid"
         };
@@ -91,11 +82,9 @@ public class BuildConfigurationTests
     }
 
     [Fact]
-    public void Validate_ValidRuntimeIdentifier_ReturnsTrue()
-    {
+    public void Validate_ValidRuntimeIdentifier_ReturnsTrue() {
         // Arrange
-        var config = new BuildConfiguration
-        {
+        var config = new BuildConfiguration {
             Configuration = "Release",
             RuntimeIdentifier = "win-x64"
         };
@@ -109,8 +98,7 @@ public class BuildConfigurationTests
     }
 
     [Fact]
-    public void AdditionalProperties_CanAddAndRetrieve()
-    {
+    public void AdditionalProperties_CanAddAndRetrieve() {
         // Arrange
         var config = new BuildConfiguration();
 

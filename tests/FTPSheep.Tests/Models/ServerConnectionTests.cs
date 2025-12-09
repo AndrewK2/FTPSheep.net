@@ -2,11 +2,9 @@ using FTPSheep.Core.Models;
 
 namespace FTPSheep.Tests.Models;
 
-public class ServerConnectionTests
-{
+public class ServerConnectionTests {
     [Fact]
-    public void Constructor_Default_SetsDefaultValues()
-    {
+    public void Constructor_Default_SetsDefaultValues() {
         // Act
         var connection = new ServerConnection();
 
@@ -21,8 +19,7 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void Constructor_WithHost_SetsHost()
-    {
+    public void Constructor_WithHost_SetsHost() {
         // Act
         var connection = new ServerConnection("ftp.example.com");
 
@@ -32,8 +29,7 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void Constructor_WithHostPortProtocol_SetsAllValues()
-    {
+    public void Constructor_WithHostPortProtocol_SetsAllValues() {
         // Act
         var connection = new ServerConnection("sftp.example.com", 22, ProtocolType.Sftp);
 
@@ -44,8 +40,7 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void GetConnectionString_Ftp_ReturnsCorrectFormat()
-    {
+    public void GetConnectionString_Ftp_ReturnsCorrectFormat() {
         // Arrange
         var connection = new ServerConnection("ftp.example.com", 21, ProtocolType.Ftp);
 
@@ -57,11 +52,9 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void GetConnectionString_Ftps_ReturnsCorrectFormat()
-    {
+    public void GetConnectionString_Ftps_ReturnsCorrectFormat() {
         // Arrange
-        var connection = new ServerConnection("ftp.example.com", 21, ProtocolType.Ftp)
-        {
+        var connection = new ServerConnection("ftp.example.com", 21, ProtocolType.Ftp) {
             UseSsl = true
         };
 
@@ -73,8 +66,7 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void GetConnectionString_Sftp_ReturnsCorrectFormat()
-    {
+    public void GetConnectionString_Sftp_ReturnsCorrectFormat() {
         // Arrange
         var connection = new ServerConnection("sftp.example.com", 22, ProtocolType.Sftp);
 
@@ -86,8 +78,7 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void Validate_ValidConnection_ReturnsTrue()
-    {
+    public void Validate_ValidConnection_ReturnsTrue() {
         // Arrange
         var connection = new ServerConnection("ftp.example.com", 21, ProtocolType.Ftp);
 
@@ -100,8 +91,7 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void Validate_EmptyHost_ReturnsFalse()
-    {
+    public void Validate_EmptyHost_ReturnsFalse() {
         // Arrange
         var connection = new ServerConnection { Host = "" };
 
@@ -114,8 +104,7 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void Validate_InvalidPort_ReturnsFalse()
-    {
+    public void Validate_InvalidPort_ReturnsFalse() {
         // Arrange
         var connection = new ServerConnection { Host = "ftp.example.com", Port = 0 };
 
@@ -128,8 +117,7 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void Validate_InvalidTimeout_ReturnsFalse()
-    {
+    public void Validate_InvalidTimeout_ReturnsFalse() {
         // Arrange
         var connection = new ServerConnection { Host = "ftp.example.com", TimeoutSeconds = -1 };
 
@@ -142,11 +130,9 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void Validate_FtpWithPort22_ReturnsWarning()
-    {
+    public void Validate_FtpWithPort22_ReturnsWarning() {
         // Arrange
-        var connection = new ServerConnection
-        {
+        var connection = new ServerConnection {
             Host = "ftp.example.com",
             Port = 22,
             Protocol = ProtocolType.Ftp
@@ -161,11 +147,9 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void Validate_SftpWithPort21_ReturnsWarning()
-    {
+    public void Validate_SftpWithPort21_ReturnsWarning() {
         // Arrange
-        var connection = new ServerConnection
-        {
+        var connection = new ServerConnection {
             Host = "sftp.example.com",
             Port = 21,
             Protocol = ProtocolType.Sftp
@@ -180,11 +164,9 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void Validate_SftpWithSsl_ReturnsWarning()
-    {
+    public void Validate_SftpWithSsl_ReturnsWarning() {
         // Arrange
-        var connection = new ServerConnection
-        {
+        var connection = new ServerConnection {
             Host = "sftp.example.com",
             Port = 22,
             Protocol = ProtocolType.Sftp,
@@ -200,11 +182,9 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void NormalizePort_SftpWithPort21_SetsTo22()
-    {
+    public void NormalizePort_SftpWithPort21_SetsTo22() {
         // Arrange
-        var connection = new ServerConnection
-        {
+        var connection = new ServerConnection {
             Protocol = ProtocolType.Sftp,
             Port = 21
         };
@@ -217,11 +197,9 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void NormalizePort_FtpWithPort22_SetsTo21()
-    {
+    public void NormalizePort_FtpWithPort22_SetsTo21() {
         // Arrange
-        var connection = new ServerConnection
-        {
+        var connection = new ServerConnection {
             Protocol = ProtocolType.Ftp,
             Port = 22
         };
@@ -234,11 +212,9 @@ public class ServerConnectionTests
     }
 
     [Fact]
-    public void NormalizePort_CustomPort_DoesNotChange()
-    {
+    public void NormalizePort_CustomPort_DoesNotChange() {
         // Arrange
-        var connection = new ServerConnection
-        {
+        var connection = new ServerConnection {
             Protocol = ProtocolType.Ftp,
             Port = 2121
         };

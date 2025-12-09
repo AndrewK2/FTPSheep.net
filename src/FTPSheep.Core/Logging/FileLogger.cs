@@ -1,13 +1,12 @@
-using Microsoft.Extensions.Logging;
 using FTPSheep.Core.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace FTPSheep.Core.Logging;
 
 /// <summary>
 /// A file logger that supports log rotation by size and date.
 /// </summary>
-public sealed class FileLogger : ILogger, IDisposable
-{
+public sealed class FileLogger : ILogger, IDisposable {
     private readonly string _categoryName;
     private readonly string _logDirectory;
     private readonly long _maxFileSizeBytes;
@@ -29,8 +28,7 @@ public sealed class FileLogger : ILogger, IDisposable
         string? logDirectory = null,
         int maxFileSizeMB = 10,
         int maxFileCount = 5,
-        LogLevel minLevel = LogLevel.Information)
-    {
+        LogLevel minLevel = LogLevel.Information) {
         _categoryName = categoryName;
         _logDirectory = logDirectory ?? Path.Combine(PathResolver.GetApplicationDataPath(), "logs");
         _maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
@@ -41,14 +39,12 @@ public sealed class FileLogger : ILogger, IDisposable
     }
 
     /// <inheritdoc />
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
-    {
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull {
         return null;
     }
 
     /// <inheritdoc />
-    public bool IsEnabled(LogLevel logLevel)
-    {
+    public bool IsEnabled(LogLevel logLevel) {
         return logLevel >= _minLevel;
     }
 
@@ -58,16 +54,13 @@ public sealed class FileLogger : ILogger, IDisposable
         EventId eventId,
         TState state,
         Exception? exception,
-        Func<TState, Exception?, string> formatter)
-    {
-        if (!IsEnabled(logLevel))
-        {
+        Func<TState, Exception?, string> formatter) {
+        if(!IsEnabled(logLevel)) {
             return;
         }
 
         var message = formatter(state, exception);
-        if (string.IsNullOrEmpty(message) && exception == null)
-        {
+        if(string.IsNullOrEmpty(message) && exception == null) {
             return;
         }
 
@@ -75,8 +68,7 @@ public sealed class FileLogger : ILogger, IDisposable
         var logLevelString = GetLogLevelString(logLevel);
         var logLine = $"[{timestamp}] [{logLevelString}] {_categoryName}: {message}";
 
-        if (exception != null)
-        {
+        if(exception != null) {
             logLine += Environment.NewLine + exception.ToString();
         }
 
@@ -85,40 +77,30 @@ public sealed class FileLogger : ILogger, IDisposable
         WriteToFile(logLine);
     }
 
-    private void WriteToFile(string logLine)
-    {
+    private void WriteToFile(string logLine) {
         _writeLock.Wait();
-        try
-        {
+        try {
             var logFile = GetCurrentLogFile();
 
             // Check if rotation is needed
-            if (File.Exists(logFile))
-            {
+            if(File.Exists(logFile)) {
                 var fileInfo = new FileInfo(logFile);
-                if (fileInfo.Length >= _maxFileSizeBytes)
-                {
+                if(fileInfo.Length >= _maxFileSizeBytes) {
                     RotateLogFiles();
                     logFile = GetCurrentLogFile();
                 }
             }
 
             File.AppendAllText(logFile, logLine);
-        }
-        catch
-        {
+        } catch {
             // Swallow exceptions to prevent logging from breaking the application
-        }
-        finally
-        {
+        } finally {
             _writeLock.Release();
         }
     }
 
-    private string GetCurrentLogFile()
-    {
-        if (_currentLogFile == null)
-        {
+    private string GetCurrentLogFile() {
+        if(_currentLogFile == null) {
             var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
             _currentLogFile = Path.Combine(_logDirectory, $"ftpsheep-{today}.log");
         }
@@ -126,8 +108,7 @@ public sealed class FileLogger : ILogger, IDisposable
         return _currentLogFile;
     }
 
-    private void RotateLogFiles()
-    {
+    private void RotateLogFiles() {
         // Get all log files sorted by creation time
         var logFiles = Directory.GetFiles(_logDirectory, "ftpsheep-*.log")
             .Select(f => new FileInfo(f))
@@ -135,16 +116,11 @@ public sealed class FileLogger : ILogger, IDisposable
             .ToList();
 
         // Delete old files beyond the max count
-        if (logFiles.Count >= _maxFileCount)
-        {
-            foreach (var file in logFiles.Skip(_maxFileCount - 1))
-            {
-                try
-                {
+        if(logFiles.Count >= _maxFileCount) {
+            foreach(var file in logFiles.Skip(_maxFileCount - 1)) {
+                try {
                     file.Delete();
-                }
-                catch
-                {
+                } catch {
                     // Ignore deletion errors
                 }
             }
@@ -155,18 +131,14 @@ public sealed class FileLogger : ILogger, IDisposable
         _currentLogFile = Path.Combine(_logDirectory, $"ftpsheep-{timestamp}.log");
     }
 
-    private void EnsureLogDirectoryExists()
-    {
-        if (!Directory.Exists(_logDirectory))
-        {
+    private void EnsureLogDirectoryExists() {
+        if(!Directory.Exists(_logDirectory)) {
             Directory.CreateDirectory(_logDirectory);
         }
     }
 
-    private static string GetLogLevelString(LogLevel logLevel)
-    {
-        return logLevel switch
-        {
+    private static string GetLogLevelString(LogLevel logLevel) {
+        return logLevel switch {
             LogLevel.Trace => "TRACE",
             LogLevel.Debug => "DEBUG",
             LogLevel.Information => "INFO ",
@@ -178,8 +150,7 @@ public sealed class FileLogger : ILogger, IDisposable
     }
 
     /// <inheritdoc />
-    public void Dispose()
-    {
+    public void Dispose() {
         _writeLock?.Dispose();
     }
 }

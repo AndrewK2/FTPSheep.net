@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Interfaces;
 /// <summary>
 /// Defines the contract for secure credential storage and retrieval.
 /// </summary>
-public interface ICredentialStore
-{
+public interface ICredentialStore {
     /// <summary>
     /// Saves credentials securely with encryption.
     /// </summary>
@@ -67,8 +66,7 @@ public interface ICredentialStore
 /// <summary>
 /// Represents a set of credentials.
 /// </summary>
-public sealed class Credentials
-{
+public sealed class Credentials {
     /// <summary>
     /// Gets or sets the username.
     /// </summary>
@@ -82,8 +80,7 @@ public sealed class Credentials
     /// <summary>
     /// Initializes a new instance of the <see cref="Credentials"/> class.
     /// </summary>
-    public Credentials()
-    {
+    public Credentials() {
     }
 
     /// <summary>
@@ -91,8 +88,7 @@ public sealed class Credentials
     /// </summary>
     /// <param name="username">The username.</param>
     /// <param name="password">The password.</param>
-    public Credentials(string username, string password)
-    {
+    public Credentials(string username, string password) {
         Username = username;
         Password = password;
     }
@@ -100,8 +96,7 @@ public sealed class Credentials
     /// <summary>
     /// Clears the password from memory.
     /// </summary>
-    public void Clear()
-    {
+    public void Clear() {
         Password = string.Empty;
     }
 }

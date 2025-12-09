@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Exceptions;
 /// <summary>
 /// Base exception for all build-related errors.
 /// </summary>
-public class BuildException : Exception
-{
+public class BuildException : Exception {
     /// <summary>
     /// Gets the project path associated with this exception, if applicable.
     /// </summary>
@@ -18,16 +17,14 @@ public class BuildException : Exception
     /// <summary>
     /// Initializes a new instance of the <see cref="BuildException"/> class.
     /// </summary>
-    public BuildException()
-    {
+    public BuildException() {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BuildException"/> class with a specified error message.
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
-    public BuildException(string message) : base(message)
-    {
+    public BuildException(string message) : base(message) {
     }
 
     /// <summary>
@@ -35,8 +32,7 @@ public class BuildException : Exception
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public BuildException(string message, Exception innerException) : base(message, innerException)
-    {
+    public BuildException(string message, Exception innerException) : base(message, innerException) {
     }
 
     /// <summary>
@@ -46,8 +42,7 @@ public class BuildException : Exception
     /// <param name="projectPath">The project path associated with this exception.</param>
     /// <param name="buildConfiguration">The build configuration associated with this exception.</param>
     public BuildException(string message, string projectPath, string? buildConfiguration = null)
-        : base(message)
-    {
+        : base(message) {
         ProjectPath = projectPath;
         BuildConfiguration = buildConfiguration;
     }
@@ -60,8 +55,7 @@ public class BuildException : Exception
     /// <param name="buildConfiguration">The build configuration associated with this exception.</param>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
     public BuildException(string message, string projectPath, string? buildConfiguration, Exception innerException)
-        : base(message, innerException)
-    {
+        : base(message, innerException) {
         ProjectPath = projectPath;
         BuildConfiguration = buildConfiguration;
     }
@@ -70,8 +64,7 @@ public class BuildException : Exception
 /// <summary>
 /// Exception thrown when a build compilation fails.
 /// </summary>
-public class BuildCompilationException : BuildException
-{
+public class BuildCompilationException : BuildException {
     /// <summary>
     /// Gets the build output/error messages.
     /// </summary>
@@ -80,8 +73,7 @@ public class BuildCompilationException : BuildException
     /// <summary>
     /// Initializes a new instance of the <see cref="BuildCompilationException"/> class.
     /// </summary>
-    public BuildCompilationException()
-    {
+    public BuildCompilationException() {
         BuildErrors = new List<string>();
     }
 
@@ -90,8 +82,7 @@ public class BuildCompilationException : BuildException
     /// </summary>
     /// <param name="errors">The build errors that occurred.</param>
     public BuildCompilationException(IEnumerable<string> errors)
-        : base($"Build compilation failed with {errors.Count()} error(s).")
-    {
+        : base($"Build compilation failed with {errors.Count()} error(s).") {
         BuildErrors = errors.ToList();
     }
 
@@ -101,8 +92,7 @@ public class BuildCompilationException : BuildException
     /// <param name="projectPath">The project path.</param>
     /// <param name="errors">The build errors that occurred.</param>
     public BuildCompilationException(string projectPath, IEnumerable<string> errors)
-        : base($"Build compilation failed for '{projectPath}' with {errors.Count()} error(s).", projectPath)
-    {
+        : base($"Build compilation failed for '{projectPath}' with {errors.Count()} error(s).", projectPath) {
         BuildErrors = errors.ToList();
     }
 }
@@ -110,8 +100,7 @@ public class BuildCompilationException : BuildException
 /// <summary>
 /// Exception thrown when the build tools (MSBuild, dotnet CLI) cannot be found.
 /// </summary>
-public class BuildToolNotFoundException : BuildException
-{
+public class BuildToolNotFoundException : BuildException {
     /// <summary>
     /// Gets the name of the build tool that was not found.
     /// </summary>
@@ -120,8 +109,7 @@ public class BuildToolNotFoundException : BuildException
     /// <summary>
     /// Initializes a new instance of the <see cref="BuildToolNotFoundException"/> class.
     /// </summary>
-    public BuildToolNotFoundException()
-    {
+    public BuildToolNotFoundException() {
     }
 
     /// <summary>
@@ -129,8 +117,7 @@ public class BuildToolNotFoundException : BuildException
     /// </summary>
     /// <param name="toolName">The name of the build tool that was not found.</param>
     public BuildToolNotFoundException(string toolName)
-        : base($"Build tool '{toolName}' was not found. Please ensure it is installed and available in PATH.")
-    {
+        : base($"Build tool '{toolName}' was not found. Please ensure it is installed and available in PATH.") {
         ToolName = toolName;
     }
 
@@ -140,8 +127,7 @@ public class BuildToolNotFoundException : BuildException
     /// <param name="toolName">The name of the build tool that was not found.</param>
     /// <param name="suggestion">A suggestion for resolving the issue.</param>
     public BuildToolNotFoundException(string toolName, string suggestion)
-        : base($"Build tool '{toolName}' was not found. {suggestion}")
-    {
+        : base($"Build tool '{toolName}' was not found. {suggestion}") {
         ToolName = toolName;
     }
 }

@@ -3,8 +3,7 @@ namespace FTPSheep.Core.Models;
 /// <summary>
 /// Represents a single deployment history entry.
 /// </summary>
-public sealed class DeploymentHistoryEntry
-{
+public sealed class DeploymentHistoryEntry {
     /// <summary>
     /// Gets or sets the unique identifier for this deployment.
     /// </summary>
@@ -68,8 +67,7 @@ public sealed class DeploymentHistoryEntry
     /// <summary>
     /// Initializes a new instance of the <see cref="DeploymentHistoryEntry"/> class.
     /// </summary>
-    public DeploymentHistoryEntry()
-    {
+    public DeploymentHistoryEntry() {
     }
 
     /// <summary>
@@ -84,10 +82,8 @@ public sealed class DeploymentHistoryEntry
         string profileName,
         string serverHost,
         DeploymentResult result,
-        string? buildConfiguration = null)
-    {
-        return new DeploymentHistoryEntry
-        {
+        string? buildConfiguration = null) {
+        return new DeploymentHistoryEntry {
             Timestamp = result.StartTime,
             ProfileName = profileName,
             ServerHost = serverHost,

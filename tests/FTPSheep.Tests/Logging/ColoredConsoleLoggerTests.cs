@@ -1,14 +1,11 @@
 using FTPSheep.Core.Logging;
 using Microsoft.Extensions.Logging;
-using Xunit;
 
 namespace FTPSheep.Tests.Logging;
 
-public class ColoredConsoleLoggerTests
-{
+public class ColoredConsoleLoggerTests {
     [Fact]
-    public void Constructor_SetsProperties()
-    {
+    public void Constructor_SetsProperties() {
         // Act
         var logger = new ColoredConsoleLogger("TestCategory", enableColors: true, minLevel: LogLevel.Information);
 
@@ -19,8 +16,7 @@ public class ColoredConsoleLoggerTests
     }
 
     [Fact]
-    public void IsEnabled_RespectsMinLevel()
-    {
+    public void IsEnabled_RespectsMinLevel() {
         // Arrange
         var logger = new ColoredConsoleLogger("TestCategory", minLevel: LogLevel.Warning);
 
@@ -34,16 +30,14 @@ public class ColoredConsoleLoggerTests
     }
 
     [Fact]
-    public void Log_WithBelowMinLevel_DoesNotWrite()
-    {
+    public void Log_WithBelowMinLevel_DoesNotWrite() {
         // Arrange
         var logger = new ColoredConsoleLogger("TestCategory", minLevel: LogLevel.Warning);
         var originalOut = Console.Out;
         using var writer = new StringWriter();
         Console.SetOut(writer);
 
-        try
-        {
+        try {
             // Act
             logger.LogDebug("This should not be logged");
             logger.LogInformation("This should also not be logged");
@@ -51,24 +45,20 @@ public class ColoredConsoleLoggerTests
             // Assert
             var output = writer.ToString();
             Assert.Empty(output);
-        }
-        finally
-        {
+        } finally {
             Console.SetOut(originalOut);
         }
     }
 
     [Fact]
-    public void Log_WithValidLevel_WritesToConsole()
-    {
+    public void Log_WithValidLevel_WritesToConsole() {
         // Arrange
         var logger = new ColoredConsoleLogger("TestCategory", enableColors: false, minLevel: LogLevel.Information);
         var originalOut = Console.Out;
         using var writer = new StringWriter();
         Console.SetOut(writer);
 
-        try
-        {
+        try {
             // Act
             logger.LogInformation("Test message");
 
@@ -76,24 +66,20 @@ public class ColoredConsoleLoggerTests
             var output = writer.ToString();
             Assert.Contains("INFO", output);
             Assert.Contains("Test message", output);
-        }
-        finally
-        {
+        } finally {
             Console.SetOut(originalOut);
         }
     }
 
     [Fact]
-    public void Log_WithException_IncludesExceptionDetails()
-    {
+    public void Log_WithException_IncludesExceptionDetails() {
         // Arrange
         var logger = new ColoredConsoleLogger("TestCategory", enableColors: false);
         var originalOut = Console.Out;
         using var writer = new StringWriter();
         Console.SetOut(writer);
 
-        try
-        {
+        try {
             // Act
             var exception = new InvalidOperationException("Test exception");
             logger.LogError(exception, "An error occurred");
@@ -102,24 +88,20 @@ public class ColoredConsoleLoggerTests
             var output = writer.ToString();
             Assert.Contains("An error occurred", output);
             Assert.Contains("Test exception", output);
-        }
-        finally
-        {
+        } finally {
             Console.SetOut(originalOut);
         }
     }
 
     [Fact]
-    public void Log_IncludesTimestamp()
-    {
+    public void Log_IncludesTimestamp() {
         // Arrange
         var logger = new ColoredConsoleLogger("TestCategory", enableColors: false);
         var originalOut = Console.Out;
         using var writer = new StringWriter();
         Console.SetOut(writer);
 
-        try
-        {
+        try {
             // Act
             logger.LogInformation("Test message");
 
@@ -127,16 +109,13 @@ public class ColoredConsoleLoggerTests
             var output = writer.ToString();
             // Check for timestamp pattern [HH:mm:ss]
             Assert.Matches(@"\[\d{2}:\d{2}:\d{2}\]", output);
-        }
-        finally
-        {
+        } finally {
             Console.SetOut(originalOut);
         }
     }
 
     [Fact]
-    public void BeginScope_ReturnsNull()
-    {
+    public void BeginScope_ReturnsNull() {
         // Arrange
         var logger = new ColoredConsoleLogger("TestCategory");
 
@@ -154,16 +133,14 @@ public class ColoredConsoleLoggerTests
     [InlineData(LogLevel.Warning)]
     [InlineData(LogLevel.Error)]
     [InlineData(LogLevel.Critical)]
-    public void Log_AllLogLevels_WritesCorrectPrefix(LogLevel logLevel)
-    {
+    public void Log_AllLogLevels_WritesCorrectPrefix(LogLevel logLevel) {
         // Arrange
         var logger = new ColoredConsoleLogger("TestCategory", enableColors: false, minLevel: LogLevel.Trace);
         var originalOut = Console.Out;
         using var writer = new StringWriter();
         Console.SetOut(writer);
 
-        try
-        {
+        try {
             // Act
             logger.Log(logLevel, "Test message for {Level}", logLevel);
 
@@ -171,9 +148,7 @@ public class ColoredConsoleLoggerTests
             var output = writer.ToString();
             Assert.NotEmpty(output);
             Assert.Contains("Test message", output);
-        }
-        finally
-        {
+        } finally {
             Console.SetOut(originalOut);
         }
     }

@@ -1,15 +1,14 @@
-using FTPSheep.BuildTools.Models;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
+using FTPSheep.BuildTools.Models;
 
 namespace FTPSheep.BuildTools.Services;
 
 /// <summary>
 /// Executes dotnet CLI operations and captures build output.
 /// </summary>
-public class DotnetCliExecutor
-{
+public class DotnetCliExecutor {
     private readonly BuildToolLocator _toolLocator;
     private static readonly Regex ErrorPattern = new(@"error\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex WarningPattern = new(@"warning\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -18,8 +17,7 @@ public class DotnetCliExecutor
     /// Initializes a new instance of the <see cref="DotnetCliExecutor"/> class.
     /// </summary>
     /// <param name="toolLocator">The build tool locator.</param>
-    public DotnetCliExecutor(BuildToolLocator? toolLocator = null)
-    {
+    public DotnetCliExecutor(BuildToolLocator? toolLocator = null) {
         _toolLocator = toolLocator ?? new BuildToolLocator();
     }
 
@@ -35,13 +33,11 @@ public class DotnetCliExecutor
         string projectPath,
         string configuration = "Release",
         string? outputPath = null,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         var args = new StringBuilder($"build \"{projectPath}\"");
         args.Append($" --configuration {configuration}");
 
-        if (!string.IsNullOrWhiteSpace(outputPath))
-        {
+        if(!string.IsNullOrWhiteSpace(outputPath)) {
             args.Append($" --output \"{outputPath}\"");
         }
 
@@ -66,19 +62,16 @@ public class DotnetCliExecutor
         string configuration = "Release",
         string? runtime = null,
         bool? selfContained = null,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         var args = new StringBuilder($"publish \"{projectPath}\"");
         args.Append($" --configuration {configuration}");
         args.Append($" --output \"{outputPath}\"");
 
-        if (!string.IsNullOrWhiteSpace(runtime))
-        {
+        if(!string.IsNullOrWhiteSpace(runtime)) {
             args.Append($" --runtime {runtime}");
         }
 
-        if (selfContained.HasValue)
-        {
+        if(selfContained.HasValue) {
             args.Append($" --self-contained {selfContained.Value.ToString().ToLowerInvariant()}");
         }
 
@@ -97,8 +90,7 @@ public class DotnetCliExecutor
     public async Task<BuildResult> CleanAsync(
         string projectPath,
         string configuration = "Release",
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         var args = $"clean \"{projectPath}\" --configuration {configuration} --nologo";
         return await ExecuteAsync(args, projectPath, null, cancellationToken);
     }
@@ -111,8 +103,7 @@ public class DotnetCliExecutor
     /// <returns>The build result.</returns>
     public async Task<BuildResult> RestoreAsync(
         string projectPath,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) {
         var args = $"restore \"{projectPath}\" --nologo";
         return await ExecuteAsync(args, projectPath, null, cancellationToken);
     }
@@ -129,16 +120,14 @@ public class DotnetCliExecutor
         string arguments,
         string projectPath,
         string? outputPath,
-        CancellationToken cancellationToken)
-    {
+        CancellationToken cancellationToken) {
         var dotnetPath = _toolLocator.LocateDotnetCli();
 
         var startTime = DateTime.UtcNow;
         var outputBuilder = new StringBuilder();
         var errorBuilder = new StringBuilder();
 
-        var processStartInfo = new ProcessStartInfo
-        {
+        var processStartInfo = new ProcessStartInfo {
             FileName = dotnetPath,
             Arguments = arguments,
             UseShellExecute = false,
@@ -151,18 +140,14 @@ public class DotnetCliExecutor
         using var process = new Process { StartInfo = processStartInfo };
 
         // Capture output and error streams
-        process.OutputDataReceived += (sender, e) =>
-        {
-            if (e.Data != null)
-            {
+        process.OutputDataReceived += (sender, e) => {
+            if(e.Data != null) {
                 outputBuilder.AppendLine(e.Data);
             }
         };
 
-        process.ErrorDataReceived += (sender, e) =>
-        {
-            if (e.Data != null)
-            {
+        process.ErrorDataReceived += (sender, e) => {
+            if(e.Data != null) {
                 errorBuilder.AppendLine(e.Data);
             }
         };
@@ -182,12 +167,9 @@ public class DotnetCliExecutor
         var errors = ParseErrors(output + errorOutput);
         var warnings = ParseWarnings(output);
 
-        if (process.ExitCode == 0 && errors.Count == 0)
-        {
+        if(process.ExitCode == 0 && errors.Count == 0) {
             return BuildResult.Successful(output, duration, outputPath);
-        }
-        else
-        {
+        } else {
             return BuildResult.Failed(process.ExitCode, output, errorOutput, errors, duration);
         }
     }
@@ -195,18 +177,12 @@ public class DotnetCliExecutor
     /// <summary>
     /// Waits for a process to exit asynchronously.
     /// </summary>
-    private static async Task WaitForExitAsync(Process process, CancellationToken cancellationToken)
-    {
-        while (!process.HasExited)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
+    private static async Task WaitForExitAsync(Process process, CancellationToken cancellationToken) {
+        while(!process.HasExited) {
+            if(cancellationToken.IsCancellationRequested) {
+                try {
                     process.Kill();
-                }
-                catch
-                {
+                } catch {
                     // Process may have already exited
                 }
                 cancellationToken.ThrowIfCancellationRequested();
@@ -219,15 +195,12 @@ public class DotnetCliExecutor
     /// <summary>
     /// Parses error messages from dotnet CLI output.
     /// </summary>
-    private static List<string> ParseErrors(string output)
-    {
+    private static List<string> ParseErrors(string output) {
         var errors = new List<string>();
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (var line in lines)
-        {
-            if (ErrorPattern.IsMatch(line))
-            {
+        foreach(var line in lines) {
+            if(ErrorPattern.IsMatch(line)) {
                 errors.Add(line.Trim());
             }
         }
@@ -238,15 +211,12 @@ public class DotnetCliExecutor
     /// <summary>
     /// Parses warning messages from dotnet CLI output.
     /// </summary>
-    private static List<string> ParseWarnings(string output)
-    {
+    private static List<string> ParseWarnings(string output) {
         var warnings = new List<string>();
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (var line in lines)
-        {
-            if (WarningPattern.IsMatch(line))
-            {
+        foreach(var line in lines) {
+            if(WarningPattern.IsMatch(line)) {
                 warnings.Add(line.Trim());
             }
         }

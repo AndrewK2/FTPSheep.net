@@ -3,8 +3,7 @@ namespace FTPSheep.BuildTools.Models;
 /// <summary>
 /// Represents the result of a build operation.
 /// </summary>
-public class BuildResult
-{
+public class BuildResult {
     /// <summary>
     /// Gets or sets a value indicating whether the build was successful.
     /// </summary>
@@ -58,10 +57,8 @@ public class BuildResult
     /// <summary>
     /// Creates a successful build result.
     /// </summary>
-    public static BuildResult Successful(string output, TimeSpan duration, string? outputPath = null)
-    {
-        return new BuildResult
-        {
+    public static BuildResult Successful(string output, TimeSpan duration, string? outputPath = null) {
+        return new BuildResult {
             Success = true,
             ExitCode = 0,
             Output = output,
@@ -73,10 +70,8 @@ public class BuildResult
     /// <summary>
     /// Creates a failed build result.
     /// </summary>
-    public static BuildResult Failed(int exitCode, string output, string errorOutput, List<string> errors, TimeSpan duration)
-    {
-        return new BuildResult
-        {
+    public static BuildResult Failed(int exitCode, string output, string errorOutput, List<string> errors, TimeSpan duration) {
+        return new BuildResult {
             Success = false,
             ExitCode = exitCode,
             Output = output,
