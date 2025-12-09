@@ -1,7 +1,8 @@
 using System.ComponentModel;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FTPSheep.Core.Services;
 using Microsoft.Extensions.Logging;
-using NLog.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -10,7 +11,7 @@ namespace FTPSheep.CLI.Commands;
 /// <summary>
 /// Command to import Visual Studio publish profile.
 /// </summary>
-internal sealed class ImportCommand : Command<ImportCommand.Settings> {
+internal sealed class ImportCommand(ILogger<ImportCommand> logger) : Command<ImportCommand.Settings> {
     /// <summary>
     /// Settings for the import command.
     /// </summary>
@@ -26,11 +27,11 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings> {
 
         try {
             // Create service instances
-            var loggerFactory = LoggerFactory.Create(builder => builder.AddNLog());
             var parser = new PublishProfileParser();
             var converter = new PublishProfileConverter();
-            var repository = new JsonProfileRepository(loggerFactory.CreateLogger<JsonProfileRepository>());
             var encryption = new DpapiEncryptionService();
+
+            logger.LogDebug("Importing PUBXML: {0}", settings.ProfilePath);
 
             // Determine which .pubxml file to import
             string pubxmlPath;
@@ -119,15 +120,6 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings> {
             var defaultName = Path.GetFileNameWithoutExtension(pubxmlPath);
             var profileName = AnsiConsole.Ask("Enter profile name:", defaultName);
 
-            // Check if profile already exists
-            if(repository.ExistsAsync(profileName, cancellationToken).Result) {
-                var overwrite = AnsiConsole.Confirm($"Profile '{profileName}' already exists. Overwrite?", false);
-                if(!overwrite) {
-                    AnsiConsole.MarkupLine("[yellow]Import cancelled.[/]");
-                    return 0;
-                }
-            }
-
             // Update profile name
             convertedProfile.Name = profileName;
 
@@ -155,14 +147,51 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings> {
                 convertedProfile.ProjectPath = projectPath;
             }
 
-            // Save the profile
-            repository.SaveAsync(convertedProfile, cancellationToken).Wait();
+            // Prompt for save directory
+            var defaultSaveDir = Path.GetDirectoryName(pubxmlPath);
+            if(string.IsNullOrWhiteSpace(defaultSaveDir)) {
+                defaultSaveDir = Directory.GetCurrentDirectory();
+            }
+            var saveDirectory = AnsiConsole.Ask("Enter directory to save profile:", defaultSaveDir);
+
+            // Ensure directory exists
+            if(!Directory.Exists(saveDirectory)) {
+                Directory.CreateDirectory(saveDirectory);
+            }
+
+            // Build the full save path
+            var profileFileName = $"{profileName}.json";
+            var profileSavePath = Path.Combine(saveDirectory, profileFileName);
+
+            // Check if file already exists at the custom location
+            if(File.Exists(profileSavePath)) {
+                var overwriteFile = AnsiConsole.Confirm($"File '{profileFileName}' already exists in this directory. Overwrite?", false);
+                if(!overwriteFile) {
+                    AnsiConsole.MarkupLine("[yellow]Import cancelled.[/]");
+                    return 0;
+                }
+            }
+
+            // Serialize and save the profile to the custom location
+            var jsonOptions = new JsonSerializerOptions {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                Converters = { new JsonStringEnumConverter() }
+            };
+
+            var json = JsonSerializer.Serialize(convertedProfile, jsonOptions);
+
+            logger.LogTrace("Profile JSON:\n{p}", json);
+            logger.LogDebug("Writing profile to: {p}", profileSavePath);
+
+            File.WriteAllText(profileSavePath, json);
 
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine("[green]✓[/] Profile imported successfully!");
-            AnsiConsole.MarkupLine($"Profile saved to: [cyan]{repository.GetProfilePath(profileName)}[/]");
+            AnsiConsole.MarkupLine($"Profile saved to: [cyan]{profileSavePath}[/]");
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine($"You can now deploy using: [cyan]ftpsheep deploy --profile {profileName}[/]");
+            AnsiConsole.MarkupLine($"You can now deploy using: [cyan]ftpsheep deploy --profile {profileName}[/] or [cyan]ftpsheep deploy --file \"{profileSavePath}\"[/]");
 
             return 0;
         } catch(Exception ex) {
