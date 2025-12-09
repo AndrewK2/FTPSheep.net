@@ -64,7 +64,7 @@ public sealed class BuildConfiguration {
     /// <param name="errors">A list of validation error messages.</param>
     /// <returns>True if valid, otherwise false.</returns>
     public bool Validate(out List<string> errors) {
-        errors = new List<string>();
+        errors = [];
 
         if(string.IsNullOrWhiteSpace(Configuration)) {
             errors.Add("Configuration name cannot be empty.");

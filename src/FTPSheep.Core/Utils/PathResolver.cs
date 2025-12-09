@@ -12,11 +12,11 @@ public static partial class PathResolver {
     private const string ConfigFileName = "config.json";
     private const int MaxProfileNameLength = 100;
 
-    private static readonly string[] reservedWindowsNames = {
+    private static readonly string[] reservedWindowsNames = [
         "CON", "PRN", "AUX", "NUL",
         "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
         "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
-    };
+    ];
 
     /// <summary>
     /// Gets the application data directory path (%APPDATA%\.ftpsheep).
@@ -88,7 +88,7 @@ public static partial class PathResolver {
     /// <param name="errors">When this method returns, contains any validation errors.</param>
     /// <returns><c>true</c> if the profile name is valid; otherwise, <c>false</c>.</returns>
     public static bool ValidateProfileName(string profileName, out List<string> errors) {
-        errors = new List<string>();
+        errors = [];
 
         if(string.IsNullOrWhiteSpace(profileName)) {
             errors.Add("Profile name cannot be empty.");

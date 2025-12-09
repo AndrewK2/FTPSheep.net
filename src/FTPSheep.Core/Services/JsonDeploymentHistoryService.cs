@@ -104,7 +104,7 @@ public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
 
     private async Task<List<DeploymentHistoryEntry>> LoadEntriesAsync(CancellationToken cancellationToken) {
         if(!File.Exists(historyFilePath)) {
-            return new List<DeploymentHistoryEntry>();
+            return [];
         }
 
         try {
@@ -113,10 +113,10 @@ public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
             var entries = JsonSerializer.Deserialize<List<DeploymentHistoryEntry>>(json, options);
-            return entries ?? new List<DeploymentHistoryEntry>();
+            return entries ?? [];
         } catch(JsonException) {
             // If file is corrupted, return empty list
-            return new List<DeploymentHistoryEntry>();
+            return [];
         }
     }
 

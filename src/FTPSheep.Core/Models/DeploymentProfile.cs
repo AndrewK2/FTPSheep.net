@@ -60,7 +60,7 @@ public sealed class DeploymentProfile {
     /// <summary>
     /// Gets or sets the file exclusion patterns (glob patterns).
     /// </summary>
-    public List<string> ExclusionPatterns { get; set; } = new();
+    public List<string> ExclusionPatterns { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the cleanup mode for obsolete files.

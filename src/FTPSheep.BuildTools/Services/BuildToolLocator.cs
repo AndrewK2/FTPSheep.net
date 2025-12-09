@@ -7,14 +7,12 @@ namespace FTPSheep.BuildTools.Services;
 /// Locates build tools (MSBuild, dotnet CLI) on the system.
 /// </summary>
 public class BuildToolLocator {
-    private readonly string[] dotnetSearchPaths = new[]
-    {
+    private readonly string[] dotnetSearchPaths = [
         @"C:\Program Files\dotnet\dotnet.exe",
         @"C:\Program Files (x86)\dotnet\dotnet.exe"
-    };
+    ];
 
-    private readonly string[] msbuildSearchPaths = new[]
-    {
+    private readonly string[] msbuildSearchPaths = [
         // Visual Studio 2022
         @"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe",
         @"C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe",
@@ -25,8 +23,8 @@ public class BuildToolLocator {
         @"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe",
         // Build Tools
         @"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe",
-        @"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe",
-    };
+        @"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
+    ];
 
     /// <summary>
     /// Locates the dotnet CLI executable on the system.
@@ -184,7 +182,7 @@ public class BuildToolLocator {
             process.WaitForExit();
 
             if(process.ExitCode == 0 && !string.IsNullOrEmpty(output)) {
-                var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
                 var msbuildPath = lines.FirstOrDefault(line => File.Exists(line));
                 return msbuildPath;
             }

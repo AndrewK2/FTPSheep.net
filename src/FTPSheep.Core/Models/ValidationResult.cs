@@ -12,12 +12,12 @@ public sealed class ValidationResult {
     /// <summary>
     /// Gets the list of validation errors.
     /// </summary>
-    public List<string> Errors { get; } = new();
+    public List<string> Errors { get; } = [];
 
     /// <summary>
     /// Gets the list of validation warnings.
     /// </summary>
-    public List<string> Warnings { get; } = new();
+    public List<string> Warnings { get; } = [];
 
     /// <summary>
     /// Creates a successful validation result with no errors or warnings.

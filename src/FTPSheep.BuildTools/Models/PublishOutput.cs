@@ -12,17 +12,17 @@ public class PublishOutput {
     /// <summary>
     /// Gets or sets the list of files in the publish output.
     /// </summary>
-    public List<FileMetadata> Files { get; set; } = new();
+    public List<FileMetadata> Files { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of validation warnings.
     /// </summary>
-    public List<string> Warnings { get; set; } = new();
+    public List<string> Warnings { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of validation errors.
     /// </summary>
-    public List<string> Errors { get; set; } = new();
+    public List<string> Errors { get; set; } = [];
 
     /// <summary>
     /// Gets the total number of files.
@@ -70,9 +70,9 @@ public class PublishOutput {
     /// Formats bytes into a human-readable string.
     /// </summary>
     private static string FormatBytes(long bytes) {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        string[] sizes = ["B", "KB", "MB", "GB", "TB"];
         double len = bytes;
-        int order = 0;
+        var order = 0;
 
         while(len >= 1024 && order < sizes.Length - 1) {
             order++;

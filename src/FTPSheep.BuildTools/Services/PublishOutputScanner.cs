@@ -7,17 +7,16 @@ namespace FTPSheep.BuildTools.Services;
 /// Scans publish output folders and collects file metadata.
 /// </summary>
 public class PublishOutputScanner {
-    private readonly List<string> defaultExclusionPatterns = new()
-    {
-        "*.pdb",           // Debug symbols
-        "*.xml",           // XML documentation files
-        "*.map",           // Source maps
-        ".git/**",         // Git repository
-        ".vs/**",          // Visual Studio cache
-        "obj/**",          // Build intermediate files
-        "*.vshost.*",      // VS hosting process
-        "*.manifest"       // Application manifest (usually not needed)
-    };
+    private readonly List<string> defaultExclusionPatterns = [
+        "*.pdb", // Debug symbols
+        "*.xml", // XML documentation files
+        "*.map", // Source maps
+        ".git/**", // Git repository
+        ".vs/**", // Visual Studio cache
+        "obj/**", // Build intermediate files
+        "*.vshost.*", // VS hosting process
+        "*.manifest"
+    ];
 
     /// <summary>
     /// Scans a publish output folder and collects file metadata.

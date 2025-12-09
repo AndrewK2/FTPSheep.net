@@ -92,7 +92,7 @@ public sealed class ServerConnection {
     /// <param name="errors">A list of validation error messages.</param>
     /// <returns>True if valid, otherwise false.</returns>
     public bool Validate(out List<string> errors) {
-        errors = new List<string>();
+        errors = [];
 
         if(string.IsNullOrWhiteSpace(Host)) {
             errors.Add("Server host cannot be empty.");

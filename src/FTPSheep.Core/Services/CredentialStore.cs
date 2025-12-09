@@ -223,8 +223,8 @@ public sealed class CredentialStore : ICredentialStore {
     /// Internal model for credential data storage.
     /// </summary>
     private sealed class CredentialData {
-        public string Username { get; set; } = string.Empty;
-        public string EncryptedPassword { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
+        public string Username { get; init; } = string.Empty;
+        public string EncryptedPassword { get; init; } = string.Empty;
+        public DateTime CreatedAt { get; init; }
     }
 }

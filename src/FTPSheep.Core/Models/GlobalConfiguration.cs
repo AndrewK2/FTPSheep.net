@@ -22,8 +22,7 @@ public sealed class GlobalConfiguration {
     /// <summary>
     /// Gets or sets the default file exclusion patterns applied to all deployments.
     /// </summary>
-    public List<string> DefaultExclusionPatterns { get; set; } = new()
-    {
+    public List<string> DefaultExclusionPatterns { get; set; } = [
         "**/.git/**",
         "**/.vs/**",
         "**/.vscode/**",
@@ -31,7 +30,7 @@ public sealed class GlobalConfiguration {
         "**/bin/Debug/**",
         "**/*.user",
         "**/*.suo"
-    };
+    ];
 
     /// <summary>
     /// Gets or sets the default build configuration.

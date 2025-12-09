@@ -44,7 +44,7 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
     [Fact]
     public async Task GetRecentEntriesAsync_MultipleEntries_ReturnsInDescendingOrder() {
         // Arrange
-        for(int i = 0; i < 5; i++) {
+        for(var i = 0; i < 5; i++) {
             var entry = new DeploymentHistoryEntry {
                 ProfileName = $"profile-{i}",
                 ServerHost = "ftp.example.com",
@@ -66,7 +66,7 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
     [Fact]
     public async Task GetRecentEntriesAsync_WithCount_ReturnsLimitedEntries() {
         // Arrange
-        for(int i = 0; i < 10; i++) {
+        for(var i = 0; i < 10; i++) {
             var entry = new DeploymentHistoryEntry {
                 ProfileName = $"profile-{i}",
                 ServerHost = "ftp.example.com",
@@ -179,8 +179,8 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
             FilesUploaded = 5,
             TotalBytes = 2048,
             SizeUploaded = 2048,
-            ErrorMessages = new List<string> { "Error 1" },
-            WarningMessages = new List<string> { "Warning 1" }
+            ErrorMessages = ["Error 1"],
+            WarningMessages = ["Warning 1"]
         };
 
         // Act

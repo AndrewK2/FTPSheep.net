@@ -75,9 +75,9 @@ public class FileMetadata {
     /// Formats bytes into a human-readable string.
     /// </summary>
     private static string FormatBytes(long bytes) {
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        string[] sizes = ["B", "KB", "MB", "GB", "TB"];
         double len = bytes;
-        int order = 0;
+        var order = 0;
 
         while(len >= 1024 && order < sizes.Length - 1) {
             order++;

@@ -34,7 +34,7 @@ public class ExitCodesTests {
     [Fact]
     public void FromException_WithBuildCompilationException_ShouldReturnBuildFailure() {
         // Arrange
-        var exception = new BuildCompilationException(new[] { "Error 1", "Error 2" });
+        var exception = new BuildCompilationException(["Error 1", "Error 2"]);
 
         // Act
         var exitCode = ExitCodes.FromException(exception);
@@ -142,7 +142,7 @@ public class ExitCodesTests {
     [Fact]
     public void FromException_WithProfileValidationException_ShouldReturnConfigurationError() {
         // Arrange
-        var exception = new ProfileValidationException("profile1", new[] { "Error 1" });
+        var exception = new ProfileValidationException("profile1", ["Error 1"]);
 
         // Act
         var exitCode = ExitCodes.FromException(exception);

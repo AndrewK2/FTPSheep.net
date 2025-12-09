@@ -52,12 +52,12 @@ public sealed class DeploymentHistoryEntry {
     /// <summary>
     /// Gets or sets error messages if the deployment failed.
     /// </summary>
-    public List<string> ErrorMessages { get; set; } = new();
+    public List<string> ErrorMessages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets warning messages.
     /// </summary>
-    public List<string> WarningMessages { get; set; } = new();
+    public List<string> WarningMessages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the build configuration used (e.g., Release, Debug).

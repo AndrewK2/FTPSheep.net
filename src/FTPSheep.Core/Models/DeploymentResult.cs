@@ -96,17 +96,17 @@ public sealed class DeploymentResult {
     /// <summary>
     /// Gets or sets the list of error messages encountered during deployment.
     /// </summary>
-    public List<string> ErrorMessages { get; set; } = new();
+    public List<string> ErrorMessages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of warning messages encountered during deployment.
     /// </summary>
-    public List<string> WarningMessages { get; set; } = new();
+    public List<string> WarningMessages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets a list of files that failed to upload.
     /// </summary>
-    public List<string> FailedFiles { get; set; } = new();
+    public List<string> FailedFiles { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the profile name used for this deployment.
@@ -202,7 +202,7 @@ public sealed class DeploymentResult {
             TotalBytes = state.TotalSize,
             SizeUploaded = state.SizeUploaded,
             ObsoleteFilesDeleted = state.ObsoleteFilesDeleted,
-            ErrorMessages = new List<string> { errorMessage }
+            ErrorMessages = [errorMessage]
         };
     }
 
@@ -226,7 +226,7 @@ public sealed class DeploymentResult {
             TotalBytes = state.TotalSize,
             SizeUploaded = state.SizeUploaded,
             ObsoleteFilesDeleted = state.ObsoleteFilesDeleted,
-            ErrorMessages = new List<string> { "Deployment was cancelled by user" }
+            ErrorMessages = ["Deployment was cancelled by user"]
         };
     }
 }

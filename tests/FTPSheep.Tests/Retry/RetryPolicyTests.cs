@@ -106,7 +106,7 @@ public class RetryPolicyTests {
     [Fact]
     public void DefaultIsRetryable_WithProfileValidationException_ShouldReturnFalse() {
         // Arrange
-        var exception = new ProfileValidationException("profile1", new[] { "Error 1" });
+        var exception = new ProfileValidationException("profile1", ["Error 1"]);
 
         // Act
         var isRetryable = RetryPolicy.DefaultIsRetryable(exception);

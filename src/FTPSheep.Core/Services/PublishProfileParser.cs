@@ -72,7 +72,7 @@ public class PublishProfileParser {
         }
 
         if(!Directory.Exists(searchPath)) {
-            return new List<string>();
+            return [];
         }
 
         var profiles = new List<string>();

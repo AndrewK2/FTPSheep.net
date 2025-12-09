@@ -76,17 +76,17 @@ public sealed class BuildResult {
     /// <summary>
     /// Gets or sets the build output messages.
     /// </summary>
-    public List<string> OutputMessages { get; set; } = new();
+    public List<string> OutputMessages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the build error messages.
     /// </summary>
-    public List<string> ErrorMessages { get; set; } = new();
+    public List<string> ErrorMessages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the build warning messages.
     /// </summary>
-    public List<string> WarningMessages { get; set; } = new();
+    public List<string> WarningMessages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the build duration.
@@ -116,7 +116,7 @@ public sealed class ProjectInfo {
     /// <summary>
     /// Gets or sets the target framework(s).
     /// </summary>
-    public List<string> TargetFrameworks { get; set; } = new();
+    public List<string> TargetFrameworks { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the output type (Exe, Library, etc.).

@@ -126,7 +126,7 @@ public class MsBuildWrapperTests {
         var options = new MsBuildOptions {
             ProjectPath = @"C:\Projects\MyApp\MyApp.csproj",
             Configuration = "Release",
-            Targets = new List<string> { "Clean", "Build", "Publish" }
+            Targets = ["Clean", "Build", "Publish"]
         };
 
         // Act

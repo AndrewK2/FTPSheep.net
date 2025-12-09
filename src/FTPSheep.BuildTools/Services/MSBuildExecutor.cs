@@ -167,7 +167,7 @@ public class MsBuildExecutor {
     /// </summary>
     private static List<string> ParseErrors(string output) {
         var errors = new List<string>();
-        var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
         foreach(var line in lines) {
             if(errorPattern.IsMatch(line)) {
@@ -183,7 +183,7 @@ public class MsBuildExecutor {
     /// </summary>
     private static List<string> ParseWarnings(string output) {
         var warnings = new List<string>();
-        var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
         foreach(var line in lines) {
             if(warningPattern.IsMatch(line)) {

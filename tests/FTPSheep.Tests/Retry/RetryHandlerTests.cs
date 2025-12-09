@@ -258,7 +258,7 @@ public class RetryHandlerTests {
 
     // Test logger implementation
     private class TestLogger : ILogger {
-        public List<string> LoggedMessages { get; } = new();
+        public List<string> LoggedMessages { get; } = [];
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 

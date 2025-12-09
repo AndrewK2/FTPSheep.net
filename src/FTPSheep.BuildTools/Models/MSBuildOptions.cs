@@ -37,7 +37,7 @@ public class MsBuildOptions {
     /// <summary>
     /// Gets or sets the MSBuild targets to execute (Build, Rebuild, Clean, Publish, etc.).
     /// </summary>
-    public List<string> Targets { get; set; } = new() { "Build" };
+    public List<string> Targets { get; set; } = ["Build"];
 
     /// <summary>
     /// Gets or sets the MSBuild verbosity level.

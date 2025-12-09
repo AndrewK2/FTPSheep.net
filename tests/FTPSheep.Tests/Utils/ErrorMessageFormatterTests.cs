@@ -58,7 +58,7 @@ public class ErrorMessageFormatterTests {
     [Fact]
     public void FormatException_WithBuildCompilationException_ShouldIncludeSuggestions() {
         // Arrange
-        var exception = new BuildCompilationException(new[] { "Error CS1001" });
+        var exception = new BuildCompilationException(["Error CS1001"]);
 
         // Act
         var formatted = ErrorMessageFormatter.FormatException(exception);
@@ -213,7 +213,7 @@ public class ErrorMessageFormatterTests {
     [Fact]
     public void FormatException_WithProfileValidationException_ShouldIncludeSuggestions() {
         // Arrange
-        var exception = new ProfileValidationException("profile1", new[] { "Error 1" });
+        var exception = new ProfileValidationException("profile1", ["Error 1"]);
 
         // Act
         var formatted = ErrorMessageFormatter.FormatException(exception);

@@ -27,12 +27,12 @@ public class BuildResult {
     /// <summary>
     /// Gets or sets the list of build errors parsed from the output.
     /// </summary>
-    public List<string> Errors { get; set; } = new();
+    public List<string> Errors { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of build warnings parsed from the output.
     /// </summary>
-    public List<string> Warnings { get; set; } = new();
+    public List<string> Warnings { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the duration of the build operation.

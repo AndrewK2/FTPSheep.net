@@ -124,7 +124,7 @@ public class MsBuildWrapper {
         return new MsBuildOptions {
             ProjectPath = projectPath,
             Configuration = configuration,
-            Targets = new List<string> { "Build" },
+            Targets = ["Build"],
             RestorePackages = true
         };
     }
@@ -141,7 +141,7 @@ public class MsBuildWrapper {
             ProjectPath = projectPath,
             Configuration = configuration,
             OutputPath = outputPath,
-            Targets = new List<string> { "Build", "Publish" },
+            Targets = ["Build", "Publish"],
             RestorePackages = true,
             Properties = new Dictionary<string, string>
             {
@@ -164,7 +164,7 @@ public class MsBuildWrapper {
         return new MsBuildOptions {
             ProjectPath = projectPath,
             Configuration = configuration,
-            Targets = new List<string> { "Clean" },
+            Targets = ["Clean"],
             RestorePackages = false
         };
     }
