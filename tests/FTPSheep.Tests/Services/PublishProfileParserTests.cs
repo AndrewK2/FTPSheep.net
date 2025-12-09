@@ -4,18 +4,18 @@ using FTPSheep.Core.Services;
 namespace FTPSheep.Tests.Services;
 
 public class PublishProfileParserTests : IDisposable {
-    private readonly string _testDirectory;
-    private readonly PublishProfileParser _parser;
+    private readonly string testDirectory;
+    private readonly PublishProfileParser parser;
 
     public PublishProfileParserTests() {
-        _testDirectory = Path.Combine(Path.GetTempPath(), $"ftpsheep-test-{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-        _parser = new PublishProfileParser();
+        testDirectory = Path.Combine(Path.GetTempPath(), $"ftpsheep-test-{Guid.NewGuid()}");
+        Directory.CreateDirectory(testDirectory);
+        parser = new PublishProfileParser();
     }
 
     public void Dispose() {
-        if(Directory.Exists(_testDirectory)) {
-            Directory.Delete(_testDirectory, recursive: true);
+        if(Directory.Exists(testDirectory)) {
+            Directory.Delete(testDirectory, recursive: true);
         }
     }
 
@@ -24,28 +24,28 @@ public class PublishProfileParserTests : IDisposable {
     [Fact]
     public void ParseProfile_WithNullPath_ThrowsArgumentException() {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => _parser.ParseProfile(null!));
+        Assert.Throws<ArgumentException>(() => parser.ParseProfile(null!));
     }
 
     [Fact]
     public void ParseProfile_WithEmptyPath_ThrowsArgumentException() {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => _parser.ParseProfile(string.Empty));
+        Assert.Throws<ArgumentException>(() => parser.ParseProfile(string.Empty));
     }
 
     [Fact]
     public void ParseProfile_WithNonExistentFile_ThrowsFileNotFoundException() {
         // Arrange
-        var path = Path.Combine(_testDirectory, "nonexistent.pubxml");
+        var path = Path.Combine(testDirectory, "nonexistent.pubxml");
 
         // Act & Assert
-        Assert.Throws<FileNotFoundException>(() => _parser.ParseProfile(path));
+        Assert.Throws<FileNotFoundException>(() => parser.ParseProfile(path));
     }
 
     [Fact]
     public void ParseProfile_WithValidFtpProfile_ParsesCorrectly() {
         // Arrange
-        var pubxmlPath = Path.Combine(_testDirectory, "test.pubxml");
+        var pubxmlPath = Path.Combine(testDirectory, "test.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <PropertyGroup>
@@ -62,7 +62,7 @@ public class PublishProfileParserTests : IDisposable {
         File.WriteAllText(pubxmlPath, xml);
 
         // Act
-        var profile = _parser.ParseProfile(pubxmlPath);
+        var profile = parser.ParseProfile(pubxmlPath);
 
         // Assert
         Assert.Equal("FTP", profile.PublishMethod);
@@ -79,7 +79,7 @@ public class PublishProfileParserTests : IDisposable {
     [Fact]
     public void ParseProfile_WithPublishMethodElement_ParsesCorrectly() {
         // Arrange
-        var pubxmlPath = Path.Combine(_testDirectory, "test2.pubxml");
+        var pubxmlPath = Path.Combine(testDirectory, "test2.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <PropertyGroup>
@@ -90,7 +90,7 @@ public class PublishProfileParserTests : IDisposable {
         File.WriteAllText(pubxmlPath, xml);
 
         // Act
-        var profile = _parser.ParseProfile(pubxmlPath);
+        var profile = parser.ParseProfile(pubxmlPath);
 
         // Assert
         Assert.Equal("FTP", profile.PublishMethod);
@@ -100,7 +100,7 @@ public class PublishProfileParserTests : IDisposable {
     [Fact]
     public void ParseProfile_WithSavePWDTrue_ParsesCorrectly() {
         // Arrange
-        var pubxmlPath = Path.Combine(_testDirectory, "test3.pubxml");
+        var pubxmlPath = Path.Combine(testDirectory, "test3.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <PropertyGroup>
@@ -112,16 +112,16 @@ public class PublishProfileParserTests : IDisposable {
         File.WriteAllText(pubxmlPath, xml);
 
         // Act
-        var profile = _parser.ParseProfile(pubxmlPath);
+        var profile = parser.ParseProfile(pubxmlPath);
 
         // Assert
-        Assert.True(profile.SavePWD);
+        Assert.True(profile.SavePwd);
     }
 
     [Fact]
     public void ParseProfile_WithAdditionalProperties_CapturesProperties() {
         // Arrange
-        var pubxmlPath = Path.Combine(_testDirectory, "test4.pubxml");
+        var pubxmlPath = Path.Combine(testDirectory, "test4.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <PropertyGroup>
@@ -134,7 +134,7 @@ public class PublishProfileParserTests : IDisposable {
         File.WriteAllText(pubxmlPath, xml);
 
         // Act
-        var profile = _parser.ParseProfile(pubxmlPath);
+        var profile = parser.ParseProfile(pubxmlPath);
 
         // Assert
         Assert.Equal(2, profile.AdditionalProperties.Count);
@@ -145,31 +145,31 @@ public class PublishProfileParserTests : IDisposable {
     [Fact]
     public void ParseProfile_WithInvalidXml_ThrowsProfileException() {
         // Arrange
-        var pubxmlPath = Path.Combine(_testDirectory, "invalid.pubxml");
+        var pubxmlPath = Path.Combine(testDirectory, "invalid.pubxml");
         File.WriteAllText(pubxmlPath, "invalid xml content <><");
 
         // Act & Assert
-        var ex = Assert.Throws<ProfileException>(() => _parser.ParseProfile(pubxmlPath));
+        var ex = Assert.Throws<ProfileException>(() => parser.ParseProfile(pubxmlPath));
         Assert.Contains(pubxmlPath, ex.Message);
     }
 
     [Fact]
     public void ParseProfile_WithoutPropertyGroup_ThrowsProfileException() {
         // Arrange
-        var pubxmlPath = Path.Combine(_testDirectory, "no-propgroup.pubxml");
+        var pubxmlPath = Path.Combine(testDirectory, "no-propgroup.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
 </Project>";
         File.WriteAllText(pubxmlPath, xml);
 
         // Act & Assert
-        Assert.Throws<ProfileException>(() => _parser.ParseProfile(pubxmlPath));
+        Assert.Throws<ProfileException>(() => parser.ParseProfile(pubxmlPath));
     }
 
     [Fact]
     public async Task ParseProfileAsync_WithValidProfile_ParsesCorrectly() {
         // Arrange
-        var pubxmlPath = Path.Combine(_testDirectory, "async-test.pubxml");
+        var pubxmlPath = Path.Combine(testDirectory, "async-test.pubxml");
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <PropertyGroup>
@@ -181,7 +181,7 @@ public class PublishProfileParserTests : IDisposable {
         await File.WriteAllTextAsync(pubxmlPath, xml);
 
         // Act
-        var profile = await _parser.ParseProfileAsync(pubxmlPath);
+        var profile = await parser.ParseProfileAsync(pubxmlPath);
 
         // Assert
         Assert.Equal("FTP", profile.PublishMethod);
@@ -197,7 +197,7 @@ public class PublishProfileParserTests : IDisposable {
     [Fact]
     public void DiscoverProfiles_WithStandardLocation_FindsProfiles() {
         // Arrange
-        var propertiesDir = Path.Combine(_testDirectory, "Properties", "PublishProfiles");
+        var propertiesDir = Path.Combine(testDirectory, "Properties", "PublishProfiles");
         Directory.CreateDirectory(propertiesDir);
         var profile1 = Path.Combine(propertiesDir, "Profile1.pubxml");
         var profile2 = Path.Combine(propertiesDir, "Profile2.pubxml");
@@ -205,7 +205,7 @@ public class PublishProfileParserTests : IDisposable {
         File.WriteAllText(profile2, "<Project />");
 
         // Act
-        var profiles = _parser.DiscoverProfiles(_testDirectory);
+        var profiles = parser.DiscoverProfiles(testDirectory);
 
         // Assert
         Assert.Equal(2, profiles.Count);
@@ -216,13 +216,13 @@ public class PublishProfileParserTests : IDisposable {
     [Fact]
     public void DiscoverProfiles_WithNonStandardLocation_FindsProfiles() {
         // Arrange
-        var subDir = Path.Combine(_testDirectory, "SubDir");
+        var subDir = Path.Combine(testDirectory, "SubDir");
         Directory.CreateDirectory(subDir);
         var profile = Path.Combine(subDir, "Profile.pubxml");
         File.WriteAllText(profile, "<Project />");
 
         // Act
-        var profiles = _parser.DiscoverProfiles(_testDirectory);
+        var profiles = parser.DiscoverProfiles(testDirectory);
 
         // Assert
         Assert.Single(profiles);
@@ -232,7 +232,7 @@ public class PublishProfileParserTests : IDisposable {
     [Fact]
     public void DiscoverProfiles_WithNoProfiles_ReturnsEmptyList() {
         // Act
-        var profiles = _parser.DiscoverProfiles(_testDirectory);
+        var profiles = parser.DiscoverProfiles(testDirectory);
 
         // Assert
         Assert.Empty(profiles);
@@ -241,7 +241,7 @@ public class PublishProfileParserTests : IDisposable {
     [Fact]
     public void DiscoverProfiles_WithNullPath_UsesCurrentDirectory() {
         // Act
-        var profiles = _parser.DiscoverProfiles(null!);
+        var profiles = parser.DiscoverProfiles(null!);
 
         // Assert - should not throw and returns a list
         Assert.NotNull(profiles);
@@ -250,10 +250,10 @@ public class PublishProfileParserTests : IDisposable {
     [Fact]
     public void DiscoverProfiles_WithNonExistentDirectory_ReturnsEmptyList() {
         // Arrange
-        var nonExistentPath = Path.Combine(_testDirectory, "nonexistent");
+        var nonExistentPath = Path.Combine(testDirectory, "nonexistent");
 
         // Act
-        var profiles = _parser.DiscoverProfiles(nonExistentPath);
+        var profiles = parser.DiscoverProfiles(nonExistentPath);
 
         // Assert
         Assert.Empty(profiles);
@@ -263,19 +263,19 @@ public class PublishProfileParserTests : IDisposable {
     public void DiscoverProfiles_PrefersStandardLocation_OverRecursiveSearch() {
         // Arrange
         // Create profile in standard location
-        var propertiesDir = Path.Combine(_testDirectory, "Properties", "PublishProfiles");
+        var propertiesDir = Path.Combine(testDirectory, "Properties", "PublishProfiles");
         Directory.CreateDirectory(propertiesDir);
         var standardProfile = Path.Combine(propertiesDir, "Standard.pubxml");
         File.WriteAllText(standardProfile, "<Project />");
 
         // Create profile in non-standard location
-        var otherDir = Path.Combine(_testDirectory, "OtherDir");
+        var otherDir = Path.Combine(testDirectory, "OtherDir");
         Directory.CreateDirectory(otherDir);
         var otherProfile = Path.Combine(otherDir, "Other.pubxml");
         File.WriteAllText(otherProfile, "<Project />");
 
         // Act
-        var profiles = _parser.DiscoverProfiles(_testDirectory);
+        var profiles = parser.DiscoverProfiles(testDirectory);
 
         // Assert - should only find the standard location profile
         Assert.Single(profiles);

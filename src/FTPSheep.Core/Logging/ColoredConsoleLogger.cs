@@ -6,9 +6,9 @@ namespace FTPSheep.Core.Logging;
 /// A console logger that supports colored output based on log level.
 /// </summary>
 public sealed class ColoredConsoleLogger : ILogger {
-    private readonly string _categoryName;
-    private readonly bool _enableColors;
-    private readonly LogLevel _minLevel;
+    private readonly string categoryName;
+    private readonly bool enableColors;
+    private readonly LogLevel minLevel;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ColoredConsoleLogger"/> class.
@@ -17,9 +17,9 @@ public sealed class ColoredConsoleLogger : ILogger {
     /// <param name="enableColors">Whether to enable colored output.</param>
     /// <param name="minLevel">The minimum log level to output.</param>
     public ColoredConsoleLogger(string categoryName, bool enableColors = true, LogLevel minLevel = LogLevel.Information) {
-        _categoryName = categoryName;
-        _enableColors = enableColors && !Console.IsOutputRedirected;
-        _minLevel = minLevel;
+        this.categoryName = categoryName;
+        this.enableColors = enableColors && !Console.IsOutputRedirected;
+        this.minLevel = minLevel;
     }
 
     /// <inheritdoc />
@@ -29,7 +29,7 @@ public sealed class ColoredConsoleLogger : ILogger {
 
     /// <inheritdoc />
     public bool IsEnabled(LogLevel logLevel) {
-        return logLevel >= _minLevel;
+        return logLevel >= minLevel;
     }
 
     /// <inheritdoc />
@@ -51,7 +51,7 @@ public sealed class ColoredConsoleLogger : ILogger {
         var timestamp = DateTime.Now.ToString("HH:mm:ss");
         var logLevelString = GetLogLevelString(logLevel);
 
-        if(_enableColors) {
+        if(enableColors) {
             WriteColoredMessage(timestamp, logLevelString, message, exception, logLevel);
         } else {
             WriteMessage(timestamp, logLevelString, message, exception);

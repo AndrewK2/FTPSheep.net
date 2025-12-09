@@ -4,10 +4,10 @@ using FTPSheep.BuildTools.Services;
 namespace FTPSheep.Tests.BuildTools;
 
 public class ProjectTypeClassifierTests {
-    private readonly ProjectTypeClassifier _classifier;
+    private readonly ProjectTypeClassifier classifier;
 
     public ProjectTypeClassifierTests() {
-        _classifier = new ProjectTypeClassifier();
+        classifier = new ProjectTypeClassifier();
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNetFramework(projectInfo);
+        var result = classifier.IsDotNetFramework(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -32,7 +32,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNetFramework(projectInfo);
+        var result = classifier.IsDotNetFramework(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -46,7 +46,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNetFramework(projectInfo);
+        var result = classifier.IsDotNetFramework(projectInfo);
 
         // Assert
         Assert.False(result);
@@ -60,7 +60,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNetCore(projectInfo);
+        var result = classifier.IsDotNetCore(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -74,7 +74,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNetCore(projectInfo);
+        var result = classifier.IsDotNetCore(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -88,7 +88,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNet5Plus(projectInfo);
+        var result = classifier.IsDotNet5Plus(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -102,7 +102,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNet5Plus(projectInfo);
+        var result = classifier.IsDotNet5Plus(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -116,7 +116,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNet5Plus(projectInfo);
+        var result = classifier.IsDotNet5Plus(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -130,7 +130,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNet5Plus(projectInfo);
+        var result = classifier.IsDotNet5Plus(projectInfo);
 
         // Assert
         Assert.False(result);
@@ -144,7 +144,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsDotNetStandard(projectInfo);
+        var result = classifier.IsDotNetStandard(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -158,7 +158,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsAspNet(projectInfo);
+        var result = classifier.IsAspNet(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -172,7 +172,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsAspNet(projectInfo);
+        var result = classifier.IsAspNet(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -186,7 +186,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsAspNet(projectInfo);
+        var result = classifier.IsAspNet(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -200,7 +200,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsAspNet(projectInfo);
+        var result = classifier.IsAspNet(projectInfo);
 
         // Assert
         Assert.False(result);
@@ -214,7 +214,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsAspNetCore(projectInfo);
+        var result = classifier.IsAspNetCore(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -228,7 +228,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsAspNetCore(projectInfo);
+        var result = classifier.IsAspNetCore(projectInfo);
 
         // Assert
         Assert.False(result);
@@ -242,7 +242,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsWebApplication(projectInfo);
+        var result = classifier.IsWebApplication(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -256,7 +256,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var result = _classifier.IsWebApplication(projectInfo);
+        var result = classifier.IsWebApplication(projectInfo);
 
         // Assert
         Assert.True(result);
@@ -271,7 +271,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var description = _classifier.GetProjectDescription(projectInfo);
+        var description = classifier.GetProjectDescription(projectInfo);
 
         // Assert
         Assert.Contains("ASP.NET Core Web Application", description);
@@ -287,7 +287,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var description = _classifier.GetProjectDescription(projectInfo);
+        var description = classifier.GetProjectDescription(projectInfo);
 
         // Assert
         Assert.Contains("multi-targeting", description);
@@ -305,7 +305,7 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var buildTool = _classifier.GetRecommendedBuildTool(projectInfo);
+        var buildTool = classifier.GetRecommendedBuildTool(projectInfo);
 
         // Assert
         Assert.Equal(BuildTool.DotnetCli, buildTool);
@@ -320,33 +320,33 @@ public class ProjectTypeClassifierTests {
         };
 
         // Act
-        var buildTool = _classifier.GetRecommendedBuildTool(projectInfo);
+        var buildTool = classifier.GetRecommendedBuildTool(projectInfo);
 
         // Assert
-        Assert.Equal(BuildTool.MSBuild, buildTool);
+        Assert.Equal(BuildTool.MsBuild, buildTool);
     }
 
     [Fact]
     public void GetRecommendedBuildTool_WithNullProjectInfo_ShouldThrowArgumentNullException() {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _classifier.GetRecommendedBuildTool(null!));
+        Assert.Throws<ArgumentNullException>(() => classifier.GetRecommendedBuildTool(null!));
     }
 
     [Fact]
     public void IsDotNetFramework_WithNullProjectInfo_ShouldThrowArgumentNullException() {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _classifier.IsDotNetFramework(null!));
+        Assert.Throws<ArgumentNullException>(() => classifier.IsDotNetFramework(null!));
     }
 
     [Fact]
     public void IsDotNetCore_WithNullProjectInfo_ShouldThrowArgumentNullException() {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _classifier.IsDotNetCore(null!));
+        Assert.Throws<ArgumentNullException>(() => classifier.IsDotNetCore(null!));
     }
 
     [Fact]
     public void IsDotNet5Plus_WithNullProjectInfo_ShouldThrowArgumentNullException() {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _classifier.IsDotNet5Plus(null!));
+        Assert.Throws<ArgumentNullException>(() => classifier.IsDotNet5Plus(null!));
     }
 }

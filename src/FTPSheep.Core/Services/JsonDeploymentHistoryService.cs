@@ -9,8 +9,8 @@ namespace FTPSheep.Core.Services;
 /// JSON file-based implementation of deployment history storage.
 /// </summary>
 public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
-    private readonly string _historyFilePath;
-    private readonly SemaphoreSlim _fileLock = new(1, 1);
+    private readonly string historyFilePath;
+    private readonly SemaphoreSlim fileLock = new(1, 1);
     private const int MaxHistoryEntries = 1000;
 
     /// <summary>
@@ -18,7 +18,7 @@ public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
     /// </summary>
     public JsonDeploymentHistoryService() {
         var appDataPath = PathResolver.GetApplicationDataPath();
-        _historyFilePath = Path.Combine(appDataPath, "deployment-history.json");
+        historyFilePath = Path.Combine(appDataPath, "deployment-history.json");
     }
 
     /// <summary>
@@ -26,7 +26,7 @@ public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
     /// </summary>
     /// <param name="historyFilePath">Custom path for the history file.</param>
     public JsonDeploymentHistoryService(string historyFilePath) {
-        _historyFilePath = historyFilePath;
+        this.historyFilePath = historyFilePath;
     }
 
     /// <inheritdoc />
@@ -35,7 +35,7 @@ public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
             throw new ArgumentNullException(nameof(entry));
         }
 
-        await _fileLock.WaitAsync(cancellationToken);
+        await fileLock.WaitAsync(cancellationToken);
         try {
             var entries = await LoadEntriesAsync(cancellationToken);
             entries.Insert(0, entry); // Add to beginning (most recent first)
@@ -47,7 +47,7 @@ public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
 
             await SaveEntriesAsync(entries, cancellationToken);
         } finally {
-            _fileLock.Release();
+            fileLock.Release();
         }
     }
 
@@ -92,23 +92,23 @@ public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
 
     /// <inheritdoc />
     public async Task ClearHistoryAsync(CancellationToken cancellationToken = default) {
-        await _fileLock.WaitAsync(cancellationToken);
+        await fileLock.WaitAsync(cancellationToken);
         try {
-            if(File.Exists(_historyFilePath)) {
-                File.Delete(_historyFilePath);
+            if(File.Exists(historyFilePath)) {
+                File.Delete(historyFilePath);
             }
         } finally {
-            _fileLock.Release();
+            fileLock.Release();
         }
     }
 
     private async Task<List<DeploymentHistoryEntry>> LoadEntriesAsync(CancellationToken cancellationToken) {
-        if(!File.Exists(_historyFilePath)) {
+        if(!File.Exists(historyFilePath)) {
             return new List<DeploymentHistoryEntry>();
         }
 
         try {
-            var json = await File.ReadAllTextAsync(_historyFilePath, cancellationToken);
+            var json = await File.ReadAllTextAsync(historyFilePath, cancellationToken);
             var options = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
@@ -121,7 +121,7 @@ public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
     }
 
     private async Task SaveEntriesAsync(List<DeploymentHistoryEntry> entries, CancellationToken cancellationToken) {
-        var directory = Path.GetDirectoryName(_historyFilePath);
+        var directory = Path.GetDirectoryName(historyFilePath);
         if(!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
             Directory.CreateDirectory(directory);
         }
@@ -134,8 +134,8 @@ public sealed class JsonDeploymentHistoryService : IDeploymentHistoryService {
         var json = JsonSerializer.Serialize(entries, options);
 
         // Atomic write using temp file
-        var tempFile = _historyFilePath + ".tmp";
+        var tempFile = historyFilePath + ".tmp";
         await File.WriteAllTextAsync(tempFile, json, cancellationToken);
-        File.Move(tempFile, _historyFilePath, true);
+        File.Move(tempFile, historyFilePath, true);
     }
 }

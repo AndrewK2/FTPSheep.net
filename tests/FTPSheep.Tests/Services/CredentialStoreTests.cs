@@ -5,12 +5,12 @@ using FTPSheep.Core.Utils;
 namespace FTPSheep.Tests.Services;
 
 public class CredentialStoreTests : IDisposable {
-    private readonly CredentialStore _credentialStore;
-    private readonly string _testProfileName;
+    private readonly CredentialStore credentialStore;
+    private readonly string testProfileName;
 
     public CredentialStoreTests() {
-        _credentialStore = new CredentialStore();
-        _testProfileName = "test-profile";
+        credentialStore = new CredentialStore();
+        testProfileName = "test-profile";
     }
 
     public void Dispose() {
@@ -32,7 +32,7 @@ public class CredentialStoreTests : IDisposable {
 
     private string GetTestCredentialFilePath() {
         var credentialsDirectory = PathResolver.GetCredentialsDirectoryPath();
-        return Path.Combine(credentialsDirectory, $"{_testProfileName}.cred.json");
+        return Path.Combine(credentialsDirectory, $"{testProfileName}.cred.json");
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public class CredentialStoreTests : IDisposable {
 
         try {
             // Act
-            await _credentialStore.SaveCredentialsAsync(_testProfileName, username, password);
+            await credentialStore.SaveCredentialsAsync(testProfileName, username, password);
 
             // Assert
             var credentialFile = GetTestCredentialFilePath();
@@ -59,7 +59,7 @@ public class CredentialStoreTests : IDisposable {
             Assert.Contains(username, fileContent);
             Assert.DoesNotContain(password, fileContent); // Password should be encrypted, not plain text
         } finally {
-            await _credentialStore.DeleteCredentialsAsync(_testProfileName);
+            await credentialStore.DeleteCredentialsAsync(testProfileName);
         }
     }
 
@@ -67,21 +67,21 @@ public class CredentialStoreTests : IDisposable {
     public async Task SaveCredentialsAsync_WithNullProfileName_ThrowsArgumentException() {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _credentialStore.SaveCredentialsAsync(null!, "user", "pass"));
+            credentialStore.SaveCredentialsAsync(null!, "user", "pass"));
     }
 
     [Fact]
     public async Task SaveCredentialsAsync_WithEmptyUsername_ThrowsArgumentException() {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _credentialStore.SaveCredentialsAsync(_testProfileName, "", "pass"));
+            credentialStore.SaveCredentialsAsync(testProfileName, "", "pass"));
     }
 
     [Fact]
     public async Task SaveCredentialsAsync_WithEmptyPassword_ThrowsArgumentException() {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _credentialStore.SaveCredentialsAsync(_testProfileName, "user", ""));
+            credentialStore.SaveCredentialsAsync(testProfileName, "user", ""));
     }
 
     [Fact]
@@ -95,17 +95,17 @@ public class CredentialStoreTests : IDisposable {
         }
 
         try {
-            await _credentialStore.SaveCredentialsAsync(_testProfileName, username, password);
+            await credentialStore.SaveCredentialsAsync(testProfileName, username, password);
 
             // Act
-            var credentials = await _credentialStore.LoadCredentialsAsync(_testProfileName);
+            var credentials = await credentialStore.LoadCredentialsAsync(testProfileName);
 
             // Assert
             Assert.NotNull(credentials);
             Assert.Equal(username, credentials.Username);
             Assert.Equal(password, credentials.Password);
         } finally {
-            await _credentialStore.DeleteCredentialsAsync(_testProfileName);
+            await credentialStore.DeleteCredentialsAsync(testProfileName);
         }
     }
 
@@ -115,7 +115,7 @@ public class CredentialStoreTests : IDisposable {
         var nonExistentProfile = "non-existent-profile";
 
         // Act
-        var credentials = await _credentialStore.LoadCredentialsAsync(nonExistentProfile);
+        var credentials = await credentialStore.LoadCredentialsAsync(nonExistentProfile);
 
         // Assert
         Assert.Null(credentials);
@@ -132,7 +132,7 @@ public class CredentialStoreTests : IDisposable {
 
         try {
             // Act
-            var credentials = await _credentialStore.LoadCredentialsAsync(_testProfileName);
+            var credentials = await credentialStore.LoadCredentialsAsync(testProfileName);
 
             // Assert
             Assert.NotNull(credentials);
@@ -159,21 +159,21 @@ public class CredentialStoreTests : IDisposable {
 
         try {
             // Save credentials to file
-            await _credentialStore.SaveCredentialsAsync(_testProfileName, storedUsername, storedPassword);
+            await credentialStore.SaveCredentialsAsync(testProfileName, storedUsername, storedPassword);
 
             // Set environment variables
             Environment.SetEnvironmentVariable("FTP_USERNAME", envUsername);
             Environment.SetEnvironmentVariable("FTP_PASSWORD", envPassword);
 
             // Act
-            var credentials = await _credentialStore.LoadCredentialsAsync(_testProfileName);
+            var credentials = await credentialStore.LoadCredentialsAsync(testProfileName);
 
             // Assert - Environment variables should take precedence
             Assert.NotNull(credentials);
             Assert.Equal(envUsername, credentials.Username);
             Assert.Equal(envPassword, credentials.Password);
         } finally {
-            await _credentialStore.DeleteCredentialsAsync(_testProfileName);
+            await credentialStore.DeleteCredentialsAsync(testProfileName);
             Environment.SetEnvironmentVariable("FTP_USERNAME", null);
             Environment.SetEnvironmentVariable("FTP_PASSWORD", null);
         }
@@ -186,12 +186,12 @@ public class CredentialStoreTests : IDisposable {
             return; // Skip test on non-Windows platforms
         }
 
-        await _credentialStore.SaveCredentialsAsync(_testProfileName, "user", "pass");
+        await credentialStore.SaveCredentialsAsync(testProfileName, "user", "pass");
         var credentialFile = GetTestCredentialFilePath();
         Assert.True(File.Exists(credentialFile));
 
         // Act
-        await _credentialStore.DeleteCredentialsAsync(_testProfileName);
+        await credentialStore.DeleteCredentialsAsync(testProfileName);
 
         // Assert
         Assert.False(File.Exists(credentialFile));
@@ -203,7 +203,7 @@ public class CredentialStoreTests : IDisposable {
         var nonExistentProfile = "non-existent-profile";
 
         // Act & Assert - Should not throw
-        await _credentialStore.DeleteCredentialsAsync(nonExistentProfile);
+        await credentialStore.DeleteCredentialsAsync(nonExistentProfile);
     }
 
     [Fact]
@@ -214,15 +214,15 @@ public class CredentialStoreTests : IDisposable {
         }
 
         try {
-            await _credentialStore.SaveCredentialsAsync(_testProfileName, "user", "pass");
+            await credentialStore.SaveCredentialsAsync(testProfileName, "user", "pass");
 
             // Act
-            var hasCredentials = await _credentialStore.HasCredentialsAsync(_testProfileName);
+            var hasCredentials = await credentialStore.HasCredentialsAsync(testProfileName);
 
             // Assert
             Assert.True(hasCredentials);
         } finally {
-            await _credentialStore.DeleteCredentialsAsync(_testProfileName);
+            await credentialStore.DeleteCredentialsAsync(testProfileName);
         }
     }
 
@@ -232,7 +232,7 @@ public class CredentialStoreTests : IDisposable {
         var nonExistentProfile = "non-existent-profile";
 
         // Act
-        var hasCredentials = await _credentialStore.HasCredentialsAsync(nonExistentProfile);
+        var hasCredentials = await credentialStore.HasCredentialsAsync(nonExistentProfile);
 
         // Assert
         Assert.False(hasCredentials);
@@ -246,7 +246,7 @@ public class CredentialStoreTests : IDisposable {
 
         try {
             // Act
-            var hasCredentials = await _credentialStore.HasCredentialsAsync(_testProfileName);
+            var hasCredentials = await credentialStore.HasCredentialsAsync(testProfileName);
 
             // Assert
             Assert.True(hasCredentials);
@@ -266,7 +266,7 @@ public class CredentialStoreTests : IDisposable {
         var plainText = "password123";
 
         // Act
-        var encrypted = _credentialStore.EncryptPassword(plainText);
+        var encrypted = credentialStore.EncryptPassword(plainText);
 
         // Assert
         Assert.NotNull(encrypted);
@@ -281,10 +281,10 @@ public class CredentialStoreTests : IDisposable {
         }
 
         var plainText = "password123";
-        var encrypted = _credentialStore.EncryptPassword(plainText);
+        var encrypted = credentialStore.EncryptPassword(plainText);
 
         // Act
-        var decrypted = _credentialStore.DecryptPassword(encrypted);
+        var decrypted = credentialStore.DecryptPassword(encrypted);
 
         // Assert
         Assert.Equal(plainText, decrypted);
@@ -315,15 +315,15 @@ public class CredentialStoreTests : IDisposable {
 
         try {
             // Act
-            await _credentialStore.SaveCredentialsAsync(_testProfileName, username, password);
-            var credentials = await _credentialStore.LoadCredentialsAsync(_testProfileName);
+            await credentialStore.SaveCredentialsAsync(testProfileName, username, password);
+            var credentials = await credentialStore.LoadCredentialsAsync(testProfileName);
 
             // Assert
             Assert.NotNull(credentials);
             Assert.Equal(username, credentials.Username);
             Assert.Equal(password, credentials.Password);
         } finally {
-            await _credentialStore.DeleteCredentialsAsync(_testProfileName);
+            await credentialStore.DeleteCredentialsAsync(testProfileName);
         }
     }
 
@@ -339,15 +339,15 @@ public class CredentialStoreTests : IDisposable {
 
         try {
             // Act
-            await _credentialStore.SaveCredentialsAsync(_testProfileName, username, password);
-            var credentials = await _credentialStore.LoadCredentialsAsync(_testProfileName);
+            await credentialStore.SaveCredentialsAsync(testProfileName, username, password);
+            var credentials = await credentialStore.LoadCredentialsAsync(testProfileName);
 
             // Assert
             Assert.NotNull(credentials);
             Assert.Equal(username, credentials.Username);
             Assert.Equal(password, credentials.Password);
         } finally {
-            await _credentialStore.DeleteCredentialsAsync(_testProfileName);
+            await credentialStore.DeleteCredentialsAsync(testProfileName);
         }
     }
 }

@@ -10,10 +10,10 @@ namespace FTPSheep.Core.Services;
 /// High-level service for managing deployment profiles with validation and credential management.
 /// </summary>
 public sealed class ProfileService : IProfileService {
-    private readonly IProfileRepository _repository;
-    private readonly IConfigurationService _configService;
-    private readonly ICredentialStore _credentialStore;
-    private readonly ILogger<ProfileService> _logger;
+    private readonly IProfileRepository repository;
+    private readonly IConfigurationService configService;
+    private readonly ICredentialStore credentialStore;
+    private readonly ILogger<ProfileService> logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProfileService"/> class.
@@ -27,15 +27,15 @@ public sealed class ProfileService : IProfileService {
         IConfigurationService configService,
         ICredentialStore credentialStore,
         ILogger<ProfileService> logger) {
-        _repository = repository;
-        _configService = configService;
-        _credentialStore = credentialStore;
-        _logger = logger;
+        this.repository = repository;
+        this.configService = configService;
+        this.credentialStore = credentialStore;
+        this.logger = logger;
     }
 
     /// <inheritdoc/>
     public async Task CreateProfileAsync(DeploymentProfile profile, CancellationToken cancellationToken = default) {
-        _logger.LogInformation("Creating profile '{ProfileName}'", profile.Name);
+        logger.LogInformation("Creating profile '{ProfileName}'", profile.Name);
 
         // Validate the profile
         var validationResult = ValidateProfile(profile);
@@ -44,52 +44,52 @@ public sealed class ProfileService : IProfileService {
         }
 
         // Check if profile already exists
-        if(await _repository.ExistsAsync(profile.Name, cancellationToken)) {
+        if(await repository.ExistsAsync(profile.Name, cancellationToken)) {
             throw new ProfileAlreadyExistsException(profile.Name);
         }
 
         // Save the profile
-        await _repository.SaveAsync(profile, cancellationToken);
+        await repository.SaveAsync(profile, cancellationToken);
 
         // Save credentials if provided
         if(!string.IsNullOrWhiteSpace(profile.Username) && !string.IsNullOrWhiteSpace(profile.Password)) {
-            await _credentialStore.SaveCredentialsAsync(
+            await credentialStore.SaveCredentialsAsync(
                 profile.Name,
                 profile.Username,
                 profile.Password,
                 cancellationToken);
 
-            _logger.LogDebug("Saved credentials for profile '{ProfileName}'", profile.Name);
+            logger.LogDebug("Saved credentials for profile '{ProfileName}'", profile.Name);
         }
 
-        _logger.LogInformation("Successfully created profile '{ProfileName}'", profile.Name);
+        logger.LogInformation("Successfully created profile '{ProfileName}'", profile.Name);
     }
 
     /// <inheritdoc/>
     public async Task<DeploymentProfile> LoadProfileAsync(string profileNameOrPath, CancellationToken cancellationToken = default) {
-        _logger.LogInformation("Loading profile '{ProfileNameOrPath}'", profileNameOrPath);
+        logger.LogInformation("Loading profile '{ProfileNameOrPath}'", profileNameOrPath);
 
         DeploymentProfile profile;
 
         // Determine if it's a path or a name
         if(PathResolver.IsAbsolutePath(profileNameOrPath)) {
             // Load from file path
-            profile = await _repository.LoadFromPathAsync(profileNameOrPath, cancellationToken);
+            profile = await repository.LoadFromPathAsync(profileNameOrPath, cancellationToken);
         } else {
             // Load by name
-            profile = await _repository.LoadAsync(profileNameOrPath, cancellationToken)
+            profile = await repository.LoadAsync(profileNameOrPath, cancellationToken)
                 ?? throw new ProfileNotFoundException(profileNameOrPath);
         }
 
         // Apply global configuration defaults
-        await _configService.ApplyDefaultsAsync(profile, cancellationToken);
+        await configService.ApplyDefaultsAsync(profile, cancellationToken);
 
         // Load credentials if available
-        var credentials = await _credentialStore.LoadCredentialsAsync(profile.Name, cancellationToken);
+        var credentials = await credentialStore.LoadCredentialsAsync(profile.Name, cancellationToken);
         if(credentials != null) {
             profile.Username = credentials.Username;
             profile.Password = credentials.Password;
-            _logger.LogDebug("Loaded credentials for profile '{ProfileName}'", profile.Name);
+            logger.LogDebug("Loaded credentials for profile '{ProfileName}'", profile.Name);
         }
 
         // Normalize port if needed
@@ -98,22 +98,22 @@ public sealed class ProfileService : IProfileService {
         // Validate the loaded profile
         var validationResult = ValidateProfile(profile);
         if(!validationResult.IsValid) {
-            _logger.LogWarning("Loaded profile '{ProfileName}' has validation errors: {Errors}",
+            logger.LogWarning("Loaded profile '{ProfileName}' has validation errors: {Errors}",
                 profile.Name, string.Join("; ", validationResult.Errors));
         }
 
         if(validationResult.Warnings.Count > 0) {
-            _logger.LogWarning("Loaded profile '{ProfileName}' has validation warnings: {Warnings}",
+            logger.LogWarning("Loaded profile '{ProfileName}' has validation warnings: {Warnings}",
                 profile.Name, string.Join("; ", validationResult.Warnings));
         }
 
-        _logger.LogInformation("Successfully loaded profile '{ProfileName}'", profile.Name);
+        logger.LogInformation("Successfully loaded profile '{ProfileName}'", profile.Name);
         return profile;
     }
 
     /// <inheritdoc/>
     public async Task UpdateProfileAsync(DeploymentProfile profile, CancellationToken cancellationToken = default) {
-        _logger.LogInformation("Updating profile '{ProfileName}'", profile.Name);
+        logger.LogInformation("Updating profile '{ProfileName}'", profile.Name);
 
         // Validate the profile
         var validationResult = ValidateProfile(profile);
@@ -122,40 +122,40 @@ public sealed class ProfileService : IProfileService {
         }
 
         // Ensure profile exists
-        if(!await _repository.ExistsAsync(profile.Name, cancellationToken)) {
+        if(!await repository.ExistsAsync(profile.Name, cancellationToken)) {
             throw new ProfileNotFoundException(profile.Name);
         }
 
         // Save the updated profile
-        await _repository.SaveAsync(profile, cancellationToken);
+        await repository.SaveAsync(profile, cancellationToken);
 
         // Update credentials if provided
         if(!string.IsNullOrWhiteSpace(profile.Username) && !string.IsNullOrWhiteSpace(profile.Password)) {
-            await _credentialStore.SaveCredentialsAsync(
+            await credentialStore.SaveCredentialsAsync(
                 profile.Name,
                 profile.Username,
                 profile.Password,
                 cancellationToken);
 
-            _logger.LogDebug("Updated credentials for profile '{ProfileName}'", profile.Name);
+            logger.LogDebug("Updated credentials for profile '{ProfileName}'", profile.Name);
         }
 
-        _logger.LogInformation("Successfully updated profile '{ProfileName}'", profile.Name);
+        logger.LogInformation("Successfully updated profile '{ProfileName}'", profile.Name);
     }
 
     /// <inheritdoc/>
     public async Task<bool> DeleteProfileAsync(string profileName, CancellationToken cancellationToken = default) {
-        _logger.LogInformation("Deleting profile '{ProfileName}'", profileName);
+        logger.LogInformation("Deleting profile '{ProfileName}'", profileName);
 
         // Delete the profile file
-        var deleted = await _repository.DeleteAsync(profileName, cancellationToken);
+        var deleted = await repository.DeleteAsync(profileName, cancellationToken);
 
         if(deleted) {
             // Delete associated credentials
-            await _credentialStore.DeleteCredentialsAsync(profileName, cancellationToken);
-            _logger.LogInformation("Successfully deleted profile '{ProfileName}'", profileName);
+            await credentialStore.DeleteCredentialsAsync(profileName, cancellationToken);
+            logger.LogInformation("Successfully deleted profile '{ProfileName}'", profileName);
         } else {
-            _logger.LogWarning("Profile '{ProfileName}' not found for deletion", profileName);
+            logger.LogWarning("Profile '{ProfileName}' not found for deletion", profileName);
         }
 
         return deleted;
@@ -163,21 +163,21 @@ public sealed class ProfileService : IProfileService {
 
     /// <inheritdoc/>
     public async Task<List<ProfileSummary>> ListProfilesAsync(CancellationToken cancellationToken = default) {
-        _logger.LogDebug("Listing all profiles");
+        logger.LogDebug("Listing all profiles");
 
-        var profileNames = await _repository.ListProfileNamesAsync(cancellationToken);
+        var profileNames = await repository.ListProfileNamesAsync(cancellationToken);
         var summaries = new List<ProfileSummary>();
 
         foreach(var name in profileNames) {
             try {
-                var profile = await _repository.LoadAsync(name, cancellationToken);
+                var profile = await repository.LoadAsync(name, cancellationToken);
                 if(profile == null) {
                     continue;
                 }
 
-                var filePath = _repository.GetProfilePath(name);
+                var filePath = repository.GetProfilePath(name);
                 var fileInfo = new FileInfo(filePath);
-                var hasCredentials = await _credentialStore.HasCredentialsAsync(name, cancellationToken);
+                var hasCredentials = await credentialStore.HasCredentialsAsync(name, cancellationToken);
 
                 summaries.Add(new ProfileSummary {
                     Name = profile.Name,
@@ -189,11 +189,11 @@ public sealed class ProfileService : IProfileService {
                     FilePath = filePath
                 });
             } catch(Exception ex) {
-                _logger.LogWarning(ex, "Failed to load profile '{ProfileName}' for listing", name);
+                logger.LogWarning(ex, "Failed to load profile '{ProfileName}' for listing", name);
             }
         }
 
-        _logger.LogDebug("Found {Count} profiles", summaries.Count);
+        logger.LogDebug("Found {Count} profiles", summaries.Count);
         return summaries;
     }
 

@@ -5,10 +5,10 @@ using FTPSheep.Core.Services;
 namespace FTPSheep.Tests.Services;
 
 public class PublishProfileConverterTests {
-    private readonly PublishProfileConverter _converter;
+    private readonly PublishProfileConverter converter;
 
     public PublishProfileConverterTests() {
-        _converter = new PublishProfileConverter();
+        converter = new PublishProfileConverter();
     }
 
     #region Convert Tests
@@ -16,7 +16,7 @@ public class PublishProfileConverterTests {
     [Fact]
     public void Convert_WithNullProfile_ThrowsArgumentNullException() {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _converter.Convert(null!));
+        Assert.Throws<ArgumentNullException>(() => converter.Convert(null!));
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act & Assert
-        var ex = Assert.Throws<ProfileException>(() => _converter.Convert(publishProfile));
+        var ex = Assert.Throws<ProfileException>(() => converter.Convert(publishProfile));
         Assert.Contains("test.pubxml", ex.Message);
         Assert.Contains("MSDeploy", ex.Message);
     }
@@ -44,7 +44,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act & Assert
-        var ex = Assert.Throws<ProfileException>(() => _converter.Convert(publishProfile));
+        var ex = Assert.Throws<ProfileException>(() => converter.Convert(publishProfile));
         Assert.Contains("PublishUrl is missing", ex.Message);
     }
 
@@ -63,7 +63,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.Equal("FTPProfile", deploymentProfile.Name);
@@ -92,7 +92,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.True(deploymentProfile.Connection.UseSsl);
@@ -109,7 +109,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.False(deploymentProfile.Connection.UseSsl);
@@ -125,7 +125,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.True(deploymentProfile.Connection.UseSsl);
@@ -142,7 +142,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile, "CustomName");
+        var deploymentProfile = converter.Convert(publishProfile, "CustomName");
 
         // Assert
         Assert.Equal("CustomName", deploymentProfile.Name);
@@ -159,7 +159,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.Equal("ftp.example.com-import", deploymentProfile.Name);
@@ -176,7 +176,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.Equal(CleanupMode.None, deploymentProfile.CleanupMode);
@@ -189,11 +189,11 @@ public class PublishProfileConverterTests {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com/site",
             UserName = "testuser",
-            ExcludeApp_Data = true
+            ExcludeAppData = true
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.False(deploymentProfile.AppOfflineEnabled);
@@ -206,11 +206,11 @@ public class PublishProfileConverterTests {
             PublishMethod = "FTP",
             PublishUrl = "ftp://ftp.example.com/site",
             UserName = "testuser",
-            ExcludeApp_Data = false
+            ExcludeAppData = false
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.True(deploymentProfile.AppOfflineEnabled);
@@ -226,7 +226,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.Equal(string.Empty, deploymentProfile.RemotePath);
@@ -242,7 +242,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var deploymentProfile = _converter.Convert(publishProfile);
+        var deploymentProfile = converter.Convert(publishProfile);
 
         // Assert
         Assert.Equal(2121, deploymentProfile.Connection.Port);
@@ -265,7 +265,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var errors = _converter.ValidateImportedProfile(profile);
+        var errors = converter.ValidateImportedProfile(profile);
 
         // Assert
         Assert.Empty(errors);
@@ -284,7 +284,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var errors = _converter.ValidateImportedProfile(profile);
+        var errors = converter.ValidateImportedProfile(profile);
 
         // Assert
         Assert.Single(errors);
@@ -304,7 +304,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var errors = _converter.ValidateImportedProfile(profile);
+        var errors = converter.ValidateImportedProfile(profile);
 
         // Assert
         Assert.Single(errors);
@@ -324,7 +324,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var errors = _converter.ValidateImportedProfile(profile);
+        var errors = converter.ValidateImportedProfile(profile);
 
         // Assert
         Assert.Single(errors);
@@ -344,7 +344,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var errors = _converter.ValidateImportedProfile(profile);
+        var errors = converter.ValidateImportedProfile(profile);
 
         // Assert
         Assert.Single(errors);
@@ -364,7 +364,7 @@ public class PublishProfileConverterTests {
         };
 
         // Act
-        var errors = _converter.ValidateImportedProfile(profile);
+        var errors = converter.ValidateImportedProfile(profile);
 
         // Assert
         Assert.Equal(4, errors.Count);

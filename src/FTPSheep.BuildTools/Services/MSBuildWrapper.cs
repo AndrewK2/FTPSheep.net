@@ -1,28 +1,29 @@
 using System.Text;
 using FTPSheep.BuildTools.Models;
 
+
 namespace FTPSheep.BuildTools.Services;
 
 /// <summary>
 /// Wrapper for MSBuild operations that builds command-line arguments.
 /// </summary>
-public class MSBuildWrapper {
-    private readonly BuildToolLocator _toolLocator;
+public class MsBuildWrapper {
+    private readonly BuildToolLocator toolLocator;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MSBuildWrapper"/> class.
+    /// Initializes a new instance of the <see cref="MsBuildWrapper"/> class.
     /// </summary>
     /// <param name="toolLocator">The build tool locator.</param>
-    public MSBuildWrapper(BuildToolLocator? toolLocator = null) {
-        _toolLocator = toolLocator ?? new BuildToolLocator();
+    public MsBuildWrapper(BuildToolLocator? toolLocator = null) {
+        this.toolLocator = toolLocator ?? new BuildToolLocator();
     }
 
     /// <summary>
     /// Gets the path to the MSBuild executable.
     /// </summary>
     /// <returns>The full path to MSBuild.exe.</returns>
-    public string GetMSBuildPath() {
-        return _toolLocator.LocateMSBuild();
+    public string GetMsBuildPath() {
+        return toolLocator.LocateMsBuild();
     }
 
     /// <summary>
@@ -30,7 +31,7 @@ public class MSBuildWrapper {
     /// </summary>
     /// <param name="options">The MSBuild options.</param>
     /// <returns>The command-line arguments string.</returns>
-    public string BuildArguments(MSBuildOptions options) {
+    public string BuildArguments(MsBuildOptions options) {
         if(options == null) {
             throw new ArgumentNullException(nameof(options));
         }
@@ -79,11 +80,11 @@ public class MSBuildWrapper {
 
         // Add verbosity
         var verbosity = options.Verbosity switch {
-            MSBuildVerbosity.Quiet => "quiet",
-            MSBuildVerbosity.Minimal => "minimal",
-            MSBuildVerbosity.Normal => "normal",
-            MSBuildVerbosity.Detailed => "detailed",
-            MSBuildVerbosity.Diagnostic => "diagnostic",
+            MsBuildVerbosity.Quiet => "quiet",
+            MsBuildVerbosity.Minimal => "minimal",
+            MsBuildVerbosity.Normal => "normal",
+            MsBuildVerbosity.Detailed => "detailed",
+            MsBuildVerbosity.Diagnostic => "diagnostic",
             _ => "minimal"
         };
         args.Append($" /v:{verbosity}");
@@ -119,8 +120,8 @@ public class MSBuildWrapper {
     /// <param name="projectPath">The path to the project file.</param>
     /// <param name="configuration">The build configuration.</param>
     /// <returns>MSBuild options configured for building.</returns>
-    public MSBuildOptions CreateBuildOptions(string projectPath, string configuration = "Release") {
-        return new MSBuildOptions {
+    public MsBuildOptions CreateBuildOptions(string projectPath, string configuration = "Release") {
+        return new MsBuildOptions {
             ProjectPath = projectPath,
             Configuration = configuration,
             Targets = new List<string> { "Build" },
@@ -135,8 +136,8 @@ public class MSBuildWrapper {
     /// <param name="outputPath">The output path for published files.</param>
     /// <param name="configuration">The build configuration.</param>
     /// <returns>MSBuild options configured for publishing.</returns>
-    public MSBuildOptions CreatePublishOptions(string projectPath, string outputPath, string configuration = "Release") {
-        return new MSBuildOptions {
+    public MsBuildOptions CreatePublishOptions(string projectPath, string outputPath, string configuration = "Release") {
+        return new MsBuildOptions {
             ProjectPath = projectPath,
             Configuration = configuration,
             OutputPath = outputPath,
@@ -159,8 +160,8 @@ public class MSBuildWrapper {
     /// <param name="projectPath">The path to the project file.</param>
     /// <param name="configuration">The build configuration.</param>
     /// <returns>MSBuild options configured for cleaning.</returns>
-    public MSBuildOptions CreateCleanOptions(string projectPath, string configuration = "Release") {
-        return new MSBuildOptions {
+    public MsBuildOptions CreateCleanOptions(string projectPath, string configuration = "Release") {
+        return new MsBuildOptions {
             ProjectPath = projectPath,
             Configuration = configuration,
             Targets = new List<string> { "Clean" },

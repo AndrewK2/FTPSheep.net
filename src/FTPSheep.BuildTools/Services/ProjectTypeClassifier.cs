@@ -166,7 +166,7 @@ public class ProjectTypeClassifier {
 
         // Legacy .NET Framework projects should use MSBuild
         if(IsDotNetFramework(projectInfo)) {
-            return BuildTool.MSBuild;
+            return BuildTool.MsBuild;
         }
 
         // Default to dotnet CLI for modern projects
@@ -186,7 +186,7 @@ public enum BuildTool {
     /// <summary>
     /// MSBuild (msbuild.exe) - typically used for .NET Framework projects.
     /// </summary>
-    MSBuild = 1,
+    MsBuild = 1,
 
     /// <summary>
     /// .NET CLI (dotnet.exe) - used for .NET Core, .NET 5+ projects.

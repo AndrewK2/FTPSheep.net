@@ -110,12 +110,12 @@ public class PublishProfileParser {
 
         profile.PublishUrl = GetElementValue(propertyGroup, "PublishUrl") ?? string.Empty;
         profile.UserName = GetElementValue(propertyGroup, "UserName");
-        profile.SavePWD = GetElementValue(propertyGroup, "SavePWD")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
+        profile.SavePwd = GetElementValue(propertyGroup, "SavePWD")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
         profile.DeleteExistingFiles = GetElementValue(propertyGroup, "DeleteExistingFiles")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
         profile.TargetFramework = GetElementValue(propertyGroup, "TargetFramework");
         profile.RuntimeIdentifier = GetElementValue(propertyGroup, "RuntimeIdentifier");
         profile.PublishProtocol = GetElementValue(propertyGroup, "PublishProtocol");
-        profile.ExcludeApp_Data = GetElementValue(propertyGroup, "ExcludeApp_Data")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
+        profile.ExcludeAppData = GetElementValue(propertyGroup, "ExcludeApp_Data")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
 
         // Parse SelfContained
         var selfContainedValue = GetElementValue(propertyGroup, "SelfContained");

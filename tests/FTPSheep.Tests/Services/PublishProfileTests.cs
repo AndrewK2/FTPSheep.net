@@ -190,13 +190,13 @@ public class PublishProfileTests {
         Assert.Equal(string.Empty, profile.PublishMethod);
         Assert.Equal(string.Empty, profile.PublishUrl);
         Assert.Null(profile.UserName);
-        Assert.False(profile.SavePWD);
+        Assert.False(profile.SavePwd);
         Assert.False(profile.DeleteExistingFiles);
         Assert.Null(profile.TargetFramework);
         Assert.Null(profile.SelfContained);
         Assert.Null(profile.RuntimeIdentifier);
         Assert.Null(profile.PublishProtocol);
-        Assert.False(profile.ExcludeApp_Data);
+        Assert.False(profile.ExcludeAppData);
         Assert.NotNull(profile.AdditionalProperties);
         Assert.Empty(profile.AdditionalProperties);
         Assert.Null(profile.SourceFilePath);

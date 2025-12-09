@@ -7,13 +7,13 @@ namespace FTPSheep.BuildTools.Services;
 /// Locates build tools (MSBuild, dotnet CLI) on the system.
 /// </summary>
 public class BuildToolLocator {
-    private readonly string[] _dotnetSearchPaths = new[]
+    private readonly string[] dotnetSearchPaths = new[]
     {
         @"C:\Program Files\dotnet\dotnet.exe",
         @"C:\Program Files (x86)\dotnet\dotnet.exe"
     };
 
-    private readonly string[] _msbuildSearchPaths = new[]
+    private readonly string[] msbuildSearchPaths = new[]
     {
         // Visual Studio 2022
         @"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe",
@@ -41,7 +41,7 @@ public class BuildToolLocator {
         }
 
         // Try well-known locations
-        foreach(var searchPath in _dotnetSearchPaths) {
+        foreach(var searchPath in dotnetSearchPaths) {
             if(File.Exists(searchPath)) {
                 return searchPath;
             }
@@ -57,11 +57,11 @@ public class BuildToolLocator {
     /// </summary>
     /// <returns>The full path to MSBuild.exe.</returns>
     /// <exception cref="ToolNotFoundException">Thrown when MSBuild.exe cannot be found.</exception>
-    public string LocateMSBuild() {
+    public string LocateMsBuild() {
         // Try vswhere first (most reliable for VS installations)
         var vsWherePath = LocateVsWhere();
         if(vsWherePath != null) {
-            var msbuildPath = FindMSBuildUsingVsWhere(vsWherePath);
+            var msbuildPath = FindMsBuildUsingVsWhere(vsWherePath);
             if(msbuildPath != null) {
                 return msbuildPath;
             }
@@ -74,14 +74,14 @@ public class BuildToolLocator {
         }
 
         // Try well-known locations
-        foreach(var searchPath in _msbuildSearchPaths) {
+        foreach(var searchPath in msbuildSearchPaths) {
             if(File.Exists(searchPath)) {
                 return searchPath;
             }
         }
 
         // Try registry (for older versions)
-        var registryPath = FindMSBuildInRegistry();
+        var registryPath = FindMsBuildInRegistry();
         if(registryPath != null) {
             return registryPath;
         }
@@ -108,9 +108,9 @@ public class BuildToolLocator {
     /// Checks if MSBuild is available on the system.
     /// </summary>
     /// <returns>True if MSBuild is available.</returns>
-    public bool IsMSBuildAvailable() {
+    public bool IsMsBuildAvailable() {
         try {
-            LocateMSBuild();
+            LocateMsBuild();
             return true;
         } catch(ToolNotFoundException) {
             return false;
@@ -166,7 +166,7 @@ public class BuildToolLocator {
         return File.Exists(vsWherePath) ? vsWherePath : null;
     }
 
-    private string? FindMSBuildUsingVsWhere(string vsWherePath) {
+    private string? FindMsBuildUsingVsWhere(string vsWherePath) {
         try {
             var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
                 FileName = vsWherePath,
@@ -195,7 +195,7 @@ public class BuildToolLocator {
         return null;
     }
 
-    private string? FindMSBuildInRegistry() {
+    private string? FindMsBuildInRegistry() {
         try {
             // Try to find MSBuild in registry (for .NET Framework 4.x)
             using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0");

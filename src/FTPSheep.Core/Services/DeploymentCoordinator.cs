@@ -6,8 +6,8 @@ namespace FTPSheep.Core.Services;
 /// Coordinates the entire deployment workflow from build to upload to finalization.
 /// </summary>
 public class DeploymentCoordinator {
-    private readonly DeploymentState _state;
-    private CancellationTokenSource? _cancellationTokenSource;
+    private readonly DeploymentState state;
+    private CancellationTokenSource? cancellationTokenSource;
 
     /// <summary>
     /// Event raised when the deployment stage changes.
@@ -23,13 +23,13 @@ public class DeploymentCoordinator {
     /// Initializes a new instance of the <see cref="DeploymentCoordinator"/> class.
     /// </summary>
     public DeploymentCoordinator() {
-        _state = new DeploymentState();
+        state = new DeploymentState();
     }
 
     /// <summary>
     /// Gets the current deployment state.
     /// </summary>
-    public DeploymentState State => _state;
+    public DeploymentState State => state;
 
     /// <summary>
     /// Executes the complete deployment workflow.
@@ -45,8 +45,8 @@ public class DeploymentCoordinator {
         }
 
         // Create linked cancellation token
-        _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var token = _cancellationTokenSource.Token;
+        cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var token = cancellationTokenSource.Token;
 
         try {
             // Initialize deployment state
@@ -96,17 +96,17 @@ public class DeploymentCoordinator {
 
             // Complete successfully
             CompleteDeployment(DeploymentStage.Completed);
-            return DeploymentResult.FromSuccess(_state);
+            return DeploymentResult.FromSuccess(state);
         } catch(OperationCanceledException) {
             CompleteDeployment(DeploymentStage.Cancelled);
-            return DeploymentResult.FromCancellation(_state);
+            return DeploymentResult.FromCancellation(state);
         } catch(Exception ex) {
-            var errorMessage = $"Deployment failed at stage {_state.CurrentStage}: {ex.Message}";
+            var errorMessage = $"Deployment failed at stage {state.CurrentStage}: {ex.Message}";
             CompleteDeployment(DeploymentStage.Failed, errorMessage, ex);
-            return DeploymentResult.FromFailure(_state, errorMessage, ex);
+            return DeploymentResult.FromFailure(state, errorMessage, ex);
         } finally {
-            _cancellationTokenSource?.Dispose();
-            _cancellationTokenSource = null;
+            cancellationTokenSource?.Dispose();
+            cancellationTokenSource = null;
         }
     }
 
@@ -114,9 +114,9 @@ public class DeploymentCoordinator {
     /// Cancels the deployment if it's currently in progress.
     /// </summary>
     public void CancelDeployment() {
-        if(_state.IsInProgress && _state.CanCancel) {
-            _state.CancellationRequested = true;
-            _cancellationTokenSource?.Cancel();
+        if(state.IsInProgress && state.CanCancel) {
+            state.CancellationRequested = true;
+            cancellationTokenSource?.Cancel();
         }
     }
 
@@ -124,11 +124,11 @@ public class DeploymentCoordinator {
     /// Initializes the deployment state.
     /// </summary>
     private void InitializeDeployment(DeploymentOptions options) {
-        _state.StartedAt = DateTime.UtcNow;
-        _state.CurrentStage = DeploymentStage.NotStarted;
-        _state.ProfileName = options.ProfileName;
-        _state.ProjectPath = options.ProjectPath;
-        _state.TargetHost = options.TargetHost;
+        state.StartedAt = DateTime.UtcNow;
+        state.CurrentStage = DeploymentStage.NotStarted;
+        state.ProfileName = options.ProfileName;
+        state.ProjectPath = options.ProjectPath;
+        state.TargetHost = options.TargetHost;
     }
 
     /// <summary>
@@ -141,8 +141,8 @@ public class DeploymentCoordinator {
         cancellationToken.ThrowIfCancellationRequested();
 
         // Update stage
-        _state.CurrentStage = stage;
-        _state.CurrentStageStartedAt = DateTime.UtcNow;
+        state.CurrentStage = stage;
+        state.CurrentStageStartedAt = DateTime.UtcNow;
         OnStageChanged(stage);
 
         // Execute stage
@@ -234,10 +234,10 @@ public class DeploymentCoordinator {
     /// Completes the deployment.
     /// </summary>
     private void CompleteDeployment(DeploymentStage finalStage, string? errorMessage = null, Exception? exception = null) {
-        _state.CurrentStage = finalStage;
-        _state.CompletedAt = DateTime.UtcNow;
-        _state.ErrorMessage = errorMessage;
-        _state.Exception = exception;
+        state.CurrentStage = finalStage;
+        state.CompletedAt = DateTime.UtcNow;
+        state.ErrorMessage = errorMessage;
+        state.Exception = exception;
         OnStageChanged(finalStage);
     }
 
@@ -245,14 +245,14 @@ public class DeploymentCoordinator {
     /// Raises the StageChanged event.
     /// </summary>
     private void OnStageChanged(DeploymentStage stage) {
-        StageChanged?.Invoke(this, new DeploymentStageChangedEventArgs(stage, _state));
+        StageChanged?.Invoke(this, new DeploymentStageChangedEventArgs(stage, state));
     }
 
     /// <summary>
     /// Raises the ProgressUpdated event.
     /// </summary>
     private void OnProgressUpdated() {
-        ProgressUpdated?.Invoke(this, new DeploymentProgressEventArgs(_state));
+        ProgressUpdated?.Invoke(this, new DeploymentProgressEventArgs(state));
     }
 }
 

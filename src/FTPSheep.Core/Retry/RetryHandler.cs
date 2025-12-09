@@ -6,8 +6,8 @@ namespace FTPSheep.Core.Retry;
 /// Handles retry logic for operations that may fail transiently.
 /// </summary>
 public sealed class RetryHandler {
-    private readonly RetryPolicy _policy;
-    private readonly ILogger? _logger;
+    private readonly RetryPolicy policy;
+    private readonly ILogger? logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RetryHandler"/> class.
@@ -15,8 +15,8 @@ public sealed class RetryHandler {
     /// <param name="policy">The retry policy to use.</param>
     /// <param name="logger">Optional logger for logging retry attempts.</param>
     public RetryHandler(RetryPolicy policy, ILogger? logger = null) {
-        _policy = policy ?? throw new ArgumentNullException(nameof(policy));
-        _logger = logger;
+        this.policy = policy ?? throw new ArgumentNullException(nameof(policy));
+        this.logger = logger;
     }
 
     /// <summary>
@@ -39,30 +39,30 @@ public sealed class RetryHandler {
         Exception? lastException = null;
         var attempt = 0;
 
-        while(attempt <= _policy.MaxRetryCount) {
+        while(attempt <= policy.MaxRetryCount) {
             try {
-                _logger?.LogDebug("Executing {OperationName} (Attempt {Attempt}/{MaxAttempts})",
-                    operationName, attempt + 1, _policy.MaxRetryCount + 1);
+                logger?.LogDebug("Executing {OperationName} (Attempt {Attempt}/{MaxAttempts})",
+                    operationName, attempt + 1, policy.MaxRetryCount + 1);
 
                 return await operation();
-            } catch(Exception ex) when(attempt < _policy.MaxRetryCount) {
+            } catch(Exception ex) when(attempt < policy.MaxRetryCount) {
                 lastException = ex;
 
                 // Check if the exception is retryable
-                var isRetryable = _policy.IsRetryableException?.Invoke(ex) ?? RetryPolicy.DefaultIsRetryable(ex);
+                var isRetryable = policy.IsRetryableException?.Invoke(ex) ?? RetryPolicy.DefaultIsRetryable(ex);
 
                 if(!isRetryable) {
-                    _logger?.LogWarning("Exception is not retryable. Aborting retry attempts for {OperationName}: {ExceptionMessage}",
+                    logger?.LogWarning("Exception is not retryable. Aborting retry attempts for {OperationName}: {ExceptionMessage}",
                         operationName, ex.Message);
                     throw;
                 }
 
                 // Calculate delay for this retry attempt
-                var delay = _policy.CalculateDelay(attempt);
+                var delay = policy.CalculateDelay(attempt);
 
-                _logger?.LogWarning("Transient error on attempt {Attempt}/{MaxAttempts} for {OperationName}. " +
+                logger?.LogWarning("Transient error on attempt {Attempt}/{MaxAttempts} for {OperationName}. " +
                     "Retrying in {DelaySeconds:F1}s. Error: {ExceptionMessage}",
-                    attempt + 1, _policy.MaxRetryCount + 1, operationName, delay.TotalSeconds, ex.Message);
+                    attempt + 1, policy.MaxRetryCount + 1, operationName, delay.TotalSeconds, ex.Message);
 
                 // Wait before retrying
                 await Task.Delay(delay, cancellationToken);
@@ -76,8 +76,8 @@ public sealed class RetryHandler {
         }
 
         // All retries exhausted
-        _logger?.LogError("All {MaxRetryCount} retry attempts exhausted for {OperationName}. Last error: {ExceptionMessage}",
-            _policy.MaxRetryCount, operationName, lastException?.Message);
+        logger?.LogError("All {MaxRetryCount} retry attempts exhausted for {OperationName}. Last error: {ExceptionMessage}",
+            policy.MaxRetryCount, operationName, lastException?.Message);
 
         throw lastException ?? new InvalidOperationException($"Operation '{operationName}' failed with no exception captured.");
     }

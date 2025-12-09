@@ -6,13 +6,13 @@ namespace FTPSheep.Tests.BuildTools;
 /// Tests for the BuildService class.
 /// </summary>
 public class BuildServiceTests {
-    private readonly BuildService _buildService;
+    private readonly BuildService buildService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BuildServiceTests"/> class.
     /// </summary>
     public BuildServiceTests() {
-        _buildService = new BuildService();
+        buildService = new BuildService();
     }
 
     /// <summary>
@@ -24,7 +24,7 @@ public class BuildServiceTests {
         var projectPath = Path.Combine(Path.GetTempPath(), "NonExistent.csproj");
 
         // Act & Assert
-        Assert.Throws<FileNotFoundException>(() => _buildService.GetProjectInfo(projectPath));
+        Assert.Throws<FileNotFoundException>(() => buildService.GetProjectInfo(projectPath));
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public class BuildServiceTests {
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                await _buildService.PublishDotNetCoreAsync(projectPath, outputPath));
+                await buildService.PublishDotNetCoreAsync(projectPath, outputPath));
         } finally {
             if(File.Exists(projectPath)) {
                 File.Delete(projectPath);
@@ -78,7 +78,7 @@ public class BuildServiceTests {
 </Project>");
 
             // Act
-            var info = _buildService.GetProjectInfo(projectPath);
+            var info = buildService.GetProjectInfo(projectPath);
 
             // Assert
             Assert.True(info.IsSdkStyle);
@@ -109,7 +109,7 @@ public class BuildServiceTests {
 </Project>");
 
             // Act
-            var description = _buildService.GetProjectDescription(projectPath);
+            var description = buildService.GetProjectDescription(projectPath);
 
             // Assert
             Assert.NotNull(description);

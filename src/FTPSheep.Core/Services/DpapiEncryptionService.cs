@@ -12,7 +12,7 @@ namespace FTPSheep.Core.Services;
 /// This is Windows-specific and provides user-scoped encryption.
 /// </remarks>
 public sealed class DpapiEncryptionService {
-    private static readonly byte[] s_entropy = "FTPSheep.Credential.Salt.V1"u8.ToArray();
+    private static readonly byte[] sEntropy = "FTPSheep.Credential.Salt.V1"u8.ToArray();
 
     /// <summary>
     /// Encrypts a plain text string using DPAPI.
@@ -32,7 +32,7 @@ public sealed class DpapiEncryptionService {
 
             // Encrypt using DPAPI with CurrentUser scope
             var encryptedBytes = ProtectedData.Protect(plainBytes,
-                s_entropy,
+                sEntropy,
                 DataProtectionScope.CurrentUser);
 
             // Convert to Base64 for storage
@@ -60,7 +60,7 @@ public sealed class DpapiEncryptionService {
 
             // Decrypt using DPAPI with CurrentUser scope
             var decryptedBytes = ProtectedData.Unprotect(encryptedBytes,
-                s_entropy,
+                sEntropy,
                 DataProtectionScope.CurrentUser);
 
             // Convert back to string

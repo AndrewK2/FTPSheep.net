@@ -12,16 +12,16 @@ namespace FTPSheep.Core.Services;
 /// JSON-based implementation of the profile repository.
 /// </summary>
 public sealed class JsonProfileRepository : IProfileRepository {
-    private readonly ILogger<JsonProfileRepository> _logger;
-    private readonly JsonSerializerOptions _jsonOptions;
+    private readonly ILogger<JsonProfileRepository> logger;
+    private readonly JsonSerializerOptions jsonOptions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonProfileRepository"/> class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
     public JsonProfileRepository(ILogger<JsonProfileRepository> logger) {
-        _logger = logger;
-        _jsonOptions = new JsonSerializerOptions {
+        this.logger = logger;
+        jsonOptions = new JsonSerializerOptions {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -45,21 +45,21 @@ public sealed class JsonProfileRepository : IProfileRepository {
             var filePath = PathResolver.GetProfileFilePath(profile.Name);
             var tempPath = filePath + ".tmp";
 
-            _logger.LogDebug("Saving profile '{ProfileName}' to {FilePath}", profile.Name, filePath);
+            logger.LogDebug("Saving profile '{ProfileName}' to {FilePath}", profile.Name, filePath);
 
             // Write to temp file first (atomic write)
-            var json = JsonSerializer.Serialize(profile, _jsonOptions);
+            var json = JsonSerializer.Serialize(profile, jsonOptions);
             await File.WriteAllTextAsync(tempPath, json, cancellationToken);
 
             // Move temp file to final location
             File.Move(tempPath, filePath, overwrite: true);
 
-            _logger.LogInformation("Successfully saved profile '{ProfileName}'", profile.Name);
+            logger.LogInformation("Successfully saved profile '{ProfileName}'", profile.Name);
         } catch(JsonException ex) {
-            _logger.LogError(ex, "Failed to serialize profile '{ProfileName}'", profile.Name);
+            logger.LogError(ex, "Failed to serialize profile '{ProfileName}'", profile.Name);
             throw new ProfileStorageException($"Failed to serialize profile '{profile.Name}'.", profile.Name, ex);
         } catch(IOException ex) {
-            _logger.LogError(ex, "I/O error while saving profile '{ProfileName}'", profile.Name);
+            logger.LogError(ex, "I/O error while saving profile '{ProfileName}'", profile.Name);
             throw new ProfileStorageException($"Failed to save profile '{profile.Name}' due to I/O error.", profile.Name, ex);
         }
     }
@@ -69,27 +69,27 @@ public sealed class JsonProfileRepository : IProfileRepository {
         var filePath = PathResolver.GetProfileFilePath(profileName);
 
         if(!File.Exists(filePath)) {
-            _logger.LogDebug("Profile '{ProfileName}' not found at {FilePath}", profileName, filePath);
+            logger.LogDebug("Profile '{ProfileName}' not found at {FilePath}", profileName, filePath);
             return null;
         }
 
         try {
-            _logger.LogDebug("Loading profile '{ProfileName}' from {FilePath}", profileName, filePath);
+            logger.LogDebug("Loading profile '{ProfileName}' from {FilePath}", profileName, filePath);
 
             var json = await File.ReadAllTextAsync(filePath, cancellationToken);
-            var profile = JsonSerializer.Deserialize<DeploymentProfile>(json, _jsonOptions);
+            var profile = JsonSerializer.Deserialize<DeploymentProfile>(json, jsonOptions);
 
             if(profile == null) {
                 throw new ProfileStorageException($"Deserialized profile '{profileName}' was null.", profileName);
             }
 
-            _logger.LogInformation("Successfully loaded profile '{ProfileName}'", profileName);
+            logger.LogInformation("Successfully loaded profile '{ProfileName}'", profileName);
             return profile;
         } catch(JsonException ex) {
-            _logger.LogError(ex, "Failed to deserialize profile '{ProfileName}' from {FilePath}", profileName, filePath);
+            logger.LogError(ex, "Failed to deserialize profile '{ProfileName}' from {FilePath}", profileName, filePath);
             throw new ProfileStorageException($"Profile '{profileName}' file is corrupted or invalid.", profileName, ex);
         } catch(IOException ex) {
-            _logger.LogError(ex, "I/O error while loading profile '{ProfileName}'", profileName);
+            logger.LogError(ex, "I/O error while loading profile '{ProfileName}'", profileName);
             throw new ProfileStorageException($"Failed to load profile '{profileName}' due to I/O error.", profileName, ex);
         }
     }
@@ -97,27 +97,27 @@ public sealed class JsonProfileRepository : IProfileRepository {
     /// <inheritdoc/>
     public async Task<DeploymentProfile> LoadFromPathAsync(string filePath, CancellationToken cancellationToken = default) {
         if(!File.Exists(filePath)) {
-            _logger.LogError("Profile file not found: {FilePath}", filePath);
+            logger.LogError("Profile file not found: {FilePath}", filePath);
             throw new FileNotFoundException($"Profile file not found: {filePath}", filePath);
         }
 
         try {
-            _logger.LogDebug("Loading profile from {FilePath}", filePath);
+            logger.LogDebug("Loading profile from {FilePath}", filePath);
 
             var json = await File.ReadAllTextAsync(filePath, cancellationToken);
-            var profile = JsonSerializer.Deserialize<DeploymentProfile>(json, _jsonOptions);
+            var profile = JsonSerializer.Deserialize<DeploymentProfile>(json, jsonOptions);
 
             if(profile == null) {
                 throw new ProfileStorageException($"Deserialized profile from '{filePath}' was null.");
             }
 
-            _logger.LogInformation("Successfully loaded profile from {FilePath}", filePath);
+            logger.LogInformation("Successfully loaded profile from {FilePath}", filePath);
             return profile;
         } catch(JsonException ex) {
-            _logger.LogError(ex, "Failed to deserialize profile from {FilePath}", filePath);
+            logger.LogError(ex, "Failed to deserialize profile from {FilePath}", filePath);
             throw new ProfileStorageException($"Profile file '{filePath}' is corrupted or invalid.", ex);
         } catch(IOException ex) {
-            _logger.LogError(ex, "I/O error while loading profile from {FilePath}", filePath);
+            logger.LogError(ex, "I/O error while loading profile from {FilePath}", filePath);
             throw new ProfileStorageException($"Failed to load profile from '{filePath}' due to I/O error.", ex);
         }
     }
@@ -127,7 +127,7 @@ public sealed class JsonProfileRepository : IProfileRepository {
         var profilesPath = PathResolver.GetProfilesDirectoryPath();
 
         if(!Directory.Exists(profilesPath)) {
-            _logger.LogDebug("Profiles directory does not exist: {ProfilesPath}", profilesPath);
+            logger.LogDebug("Profiles directory does not exist: {ProfilesPath}", profilesPath);
             return Task.FromResult(new List<string>());
         }
 
@@ -140,10 +140,10 @@ public sealed class JsonProfileRepository : IProfileRepository {
                 .OrderBy(name => name)
                 .ToList();
 
-            _logger.LogDebug("Found {Count} profiles", profileNames.Count);
+            logger.LogDebug("Found {Count} profiles", profileNames.Count);
             return Task.FromResult(profileNames);
         } catch(IOException ex) {
-            _logger.LogError(ex, "I/O error while listing profiles");
+            logger.LogError(ex, "I/O error while listing profiles");
             throw new ProfileStorageException("Failed to list profiles due to I/O error.", ex);
         }
     }
@@ -153,16 +153,16 @@ public sealed class JsonProfileRepository : IProfileRepository {
         var filePath = PathResolver.GetProfileFilePath(profileName);
 
         if(!File.Exists(filePath)) {
-            _logger.LogDebug("Profile '{ProfileName}' not found for deletion", profileName);
+            logger.LogDebug("Profile '{ProfileName}' not found for deletion", profileName);
             return Task.FromResult(false);
         }
 
         try {
             File.Delete(filePath);
-            _logger.LogInformation("Successfully deleted profile '{ProfileName}'", profileName);
+            logger.LogInformation("Successfully deleted profile '{ProfileName}'", profileName);
             return Task.FromResult(true);
         } catch(IOException ex) {
-            _logger.LogError(ex, "I/O error while deleting profile '{ProfileName}'", profileName);
+            logger.LogError(ex, "I/O error while deleting profile '{ProfileName}'", profileName);
             throw new ProfileStorageException($"Failed to delete profile '{profileName}' due to I/O error.", profileName, ex);
         }
     }
@@ -172,7 +172,7 @@ public sealed class JsonProfileRepository : IProfileRepository {
         var filePath = PathResolver.GetProfileFilePath(profileName);
         var exists = File.Exists(filePath);
 
-        _logger.LogDebug("Profile '{ProfileName}' exists: {Exists}", profileName, exists);
+        logger.LogDebug("Profile '{ProfileName}' exists: {Exists}", profileName, exists);
         return Task.FromResult(exists);
     }
 

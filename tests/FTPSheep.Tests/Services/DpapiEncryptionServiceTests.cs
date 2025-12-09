@@ -4,10 +4,10 @@ using FTPSheep.Core.Services;
 namespace FTPSheep.Tests.Services;
 
 public class DpapiEncryptionServiceTests {
-    private readonly DpapiEncryptionService _encryptionService;
+    private readonly DpapiEncryptionService encryptionService;
 
     public DpapiEncryptionServiceTests() {
-        _encryptionService = new DpapiEncryptionService();
+        encryptionService = new DpapiEncryptionService();
     }
 
     [Fact]
@@ -16,7 +16,7 @@ public class DpapiEncryptionServiceTests {
         var plainText = "MySecretPassword123";
 
         // Act
-        var encrypted = _encryptionService.Encrypt(plainText);
+        var encrypted = encryptionService.Encrypt(plainText);
 
         // Assert
         Assert.NotNull(encrypted);
@@ -32,10 +32,10 @@ public class DpapiEncryptionServiceTests {
     public void Decrypt_WithValidEncryptedText_ReturnsOriginalPlainText() {
         // Arrange
         var plainText = "MySecretPassword123";
-        var encrypted = _encryptionService.Encrypt(plainText);
+        var encrypted = encryptionService.Encrypt(plainText);
 
         // Act
-        var decrypted = _encryptionService.Decrypt(encrypted);
+        var decrypted = encryptionService.Decrypt(encrypted);
 
         // Assert
         Assert.Equal(plainText, decrypted);
@@ -48,8 +48,8 @@ public class DpapiEncryptionServiceTests {
     [InlineData("🔒🔑")]  // Unicode emoji
     public void EncryptDecrypt_RoundTrip_PreservesOriginalValue(string plainText) {
         // Act
-        var encrypted = _encryptionService.Encrypt(plainText);
-        var decrypted = _encryptionService.Decrypt(encrypted);
+        var encrypted = encryptionService.Encrypt(plainText);
+        var decrypted = encryptionService.Decrypt(encrypted);
 
         // Assert
         Assert.Equal(plainText, decrypted);
@@ -58,28 +58,28 @@ public class DpapiEncryptionServiceTests {
     [Fact]
     public void Encrypt_WithNullPlainText_ThrowsArgumentException() {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => _encryptionService.Encrypt(null!));
+        var exception = Assert.Throws<ArgumentException>(() => encryptionService.Encrypt(null!));
         Assert.Contains("Plain text cannot be null or empty", exception.Message);
     }
 
     [Fact]
     public void Encrypt_WithEmptyPlainText_ThrowsArgumentException() {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => _encryptionService.Encrypt(string.Empty));
+        var exception = Assert.Throws<ArgumentException>(() => encryptionService.Encrypt(string.Empty));
         Assert.Contains("Plain text cannot be null or empty", exception.Message);
     }
 
     [Fact]
     public void Decrypt_WithNullEncryptedText_ThrowsArgumentException() {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => _encryptionService.Decrypt(null!));
+        var exception = Assert.Throws<ArgumentException>(() => encryptionService.Decrypt(null!));
         Assert.Contains("Encrypted text cannot be null or empty", exception.Message);
     }
 
     [Fact]
     public void Decrypt_WithEmptyEncryptedText_ThrowsArgumentException() {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => _encryptionService.Decrypt(string.Empty));
+        var exception = Assert.Throws<ArgumentException>(() => encryptionService.Decrypt(string.Empty));
         Assert.Contains("Encrypted text cannot be null or empty", exception.Message);
     }
 
@@ -89,7 +89,7 @@ public class DpapiEncryptionServiceTests {
         var invalidBase64 = "This is not valid Base64!@#$";
 
         // Act & Assert
-        var exception = Assert.Throws<CryptographicException>(() => _encryptionService.Decrypt(invalidBase64));
+        var exception = Assert.Throws<CryptographicException>(() => encryptionService.Decrypt(invalidBase64));
         Assert.Contains("not a valid Base64 string", exception.Message);
     }
 
@@ -100,7 +100,7 @@ public class DpapiEncryptionServiceTests {
         var invalidCiphertext = Convert.ToBase64String(new byte[] { 1, 2, 3, 4, 5 });
 
         // Act & Assert
-        var exception = Assert.Throws<CryptographicException>(() => _encryptionService.Decrypt(invalidCiphertext));
+        var exception = Assert.Throws<CryptographicException>(() => encryptionService.Decrypt(invalidCiphertext));
         Assert.Contains("Failed to decrypt data using DPAPI", exception.Message);
     }
 
@@ -110,15 +110,15 @@ public class DpapiEncryptionServiceTests {
         var plainText = "MySecretPassword";
 
         // Act
-        var encrypted1 = _encryptionService.Encrypt(plainText);
-        var encrypted2 = _encryptionService.Encrypt(plainText);
+        var encrypted1 = encryptionService.Encrypt(plainText);
+        var encrypted2 = encryptionService.Encrypt(plainText);
 
         // Assert - DPAPI should produce different ciphertext each time (due to random IV)
         Assert.NotEqual(encrypted1, encrypted2);
 
         // But both should decrypt to the same plaintext
-        Assert.Equal(plainText, _encryptionService.Decrypt(encrypted1));
-        Assert.Equal(plainText, _encryptionService.Decrypt(encrypted2));
+        Assert.Equal(plainText, encryptionService.Decrypt(encrypted1));
+        Assert.Equal(plainText, encryptionService.Decrypt(encrypted2));
     }
 
     [Fact]

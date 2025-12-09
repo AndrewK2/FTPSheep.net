@@ -7,7 +7,7 @@ namespace FTPSheep.BuildTools.Services;
 /// Scans publish output folders and collects file metadata.
 /// </summary>
 public class PublishOutputScanner {
-    private readonly List<string> _defaultExclusionPatterns = new()
+    private readonly List<string> defaultExclusionPatterns = new()
     {
         "*.pdb",           // Debug symbols
         "*.xml",           // XML documentation files
@@ -42,7 +42,7 @@ public class PublishOutputScanner {
             RootPath = Path.GetFullPath(publishPath)
         };
 
-        var patterns = exclusionPatterns ?? _defaultExclusionPatterns;
+        var patterns = exclusionPatterns ?? defaultExclusionPatterns;
 
         // Enumerate all files in the directory
         var allFiles = Directory.EnumerateFiles(publishPath, "*", SearchOption.AllDirectories);

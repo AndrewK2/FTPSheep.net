@@ -8,17 +8,17 @@ namespace FTPSheep.BuildTools.Services;
 /// <summary>
 /// Executes MSBuild operations and captures build output.
 /// </summary>
-public class MSBuildExecutor {
-    private readonly MSBuildWrapper _wrapper;
-    private static readonly Regex ErrorPattern = new(@"error\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-    private static readonly Regex WarningPattern = new(@"warning\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+public class MsBuildExecutor {
+    private readonly MsBuildWrapper wrapper;
+    private static readonly Regex errorPattern = new(@"error\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex warningPattern = new(@"warning\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MSBuildExecutor"/> class.
+    /// Initializes a new instance of the <see cref="MsBuildExecutor"/> class.
     /// </summary>
     /// <param name="wrapper">The MSBuild wrapper for building arguments.</param>
-    public MSBuildExecutor(MSBuildWrapper? wrapper = null) {
-        _wrapper = wrapper ?? new MSBuildWrapper();
+    public MsBuildExecutor(MsBuildWrapper? wrapper = null) {
+        this.wrapper = wrapper ?? new MsBuildWrapper();
     }
 
     /// <summary>
@@ -27,7 +27,7 @@ public class MSBuildExecutor {
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    public async Task<BuildResult> BuildAsync(MSBuildOptions options, CancellationToken cancellationToken = default) {
+    public async Task<BuildResult> BuildAsync(MsBuildOptions options, CancellationToken cancellationToken = default) {
         if(!options.Targets.Contains("Build")) {
             options.Targets.Add("Build");
         }
@@ -41,7 +41,7 @@ public class MSBuildExecutor {
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    public async Task<BuildResult> PublishAsync(MSBuildOptions options, CancellationToken cancellationToken = default) {
+    public async Task<BuildResult> PublishAsync(MsBuildOptions options, CancellationToken cancellationToken = default) {
         if(!options.Targets.Contains("Publish")) {
             options.Targets.Add("Publish");
         }
@@ -62,7 +62,7 @@ public class MSBuildExecutor {
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    public async Task<BuildResult> CleanAsync(MSBuildOptions options, CancellationToken cancellationToken = default) {
+    public async Task<BuildResult> CleanAsync(MsBuildOptions options, CancellationToken cancellationToken = default) {
         options.Targets.Clear();
         options.Targets.Add("Clean");
         options.RestorePackages = false;
@@ -76,7 +76,7 @@ public class MSBuildExecutor {
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    public async Task<BuildResult> RebuildAsync(MSBuildOptions options, CancellationToken cancellationToken = default) {
+    public async Task<BuildResult> RebuildAsync(MsBuildOptions options, CancellationToken cancellationToken = default) {
         options.Targets.Clear();
         options.Targets.Add("Rebuild");
 
@@ -89,9 +89,9 @@ public class MSBuildExecutor {
     /// <param name="options">The MSBuild options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The build result.</returns>
-    private async Task<BuildResult> ExecuteAsync(MSBuildOptions options, CancellationToken cancellationToken) {
-        var msbuildPath = _wrapper.GetMSBuildPath();
-        var arguments = _wrapper.BuildArguments(options);
+    private async Task<BuildResult> ExecuteAsync(MsBuildOptions options, CancellationToken cancellationToken) {
+        var msbuildPath = wrapper.GetMsBuildPath();
+        var arguments = wrapper.BuildArguments(options);
 
         var startTime = DateTime.UtcNow;
         var outputBuilder = new StringBuilder();
@@ -170,7 +170,7 @@ public class MSBuildExecutor {
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
         foreach(var line in lines) {
-            if(ErrorPattern.IsMatch(line)) {
+            if(errorPattern.IsMatch(line)) {
                 errors.Add(line.Trim());
             }
         }
@@ -186,7 +186,7 @@ public class MSBuildExecutor {
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
         foreach(var line in lines) {
-            if(WarningPattern.IsMatch(line)) {
+            if(warningPattern.IsMatch(line)) {
                 warnings.Add(line.Trim());
             }
         }

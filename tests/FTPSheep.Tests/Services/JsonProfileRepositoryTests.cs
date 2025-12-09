@@ -7,17 +7,17 @@ using Moq;
 namespace FTPSheep.Tests.Services;
 
 public class JsonProfileRepositoryTests : IDisposable {
-    private readonly string _testDirectory;
-    private readonly JsonProfileRepository _repository;
-    private readonly Mock<ILogger<JsonProfileRepository>> _loggerMock;
+    private readonly string testDirectory;
+    private readonly JsonProfileRepository repository;
+    private readonly Mock<ILogger<JsonProfileRepository>> loggerMock;
 
     public JsonProfileRepositoryTests() {
         // Create a unique temporary directory for each test
-        _testDirectory = Path.Combine(Path.GetTempPath(), "FTPSheep.Tests", Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_testDirectory);
+        testDirectory = Path.Combine(Path.GetTempPath(), "FTPSheep.Tests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(testDirectory);
 
-        _loggerMock = new Mock<ILogger<JsonProfileRepository>>();
-        _repository = new JsonProfileRepository(_loggerMock.Object);
+        loggerMock = new Mock<ILogger<JsonProfileRepository>>();
+        repository = new JsonProfileRepository(loggerMock.Object);
 
         // Override the profiles directory for testing by creating it within test directory
         // Note: In real implementation, we'd inject a configuration or use a test-specific path
@@ -26,8 +26,8 @@ public class JsonProfileRepositoryTests : IDisposable {
 
     public void Dispose() {
         // Clean up test directory
-        if(Directory.Exists(_testDirectory)) {
-            Directory.Delete(_testDirectory, recursive: true);
+        if(Directory.Exists(testDirectory)) {
+            Directory.Delete(testDirectory, recursive: true);
         }
 
         Environment.SetEnvironmentVariable("FTPSHEEP_TEST_MODE", null);
@@ -45,10 +45,10 @@ public class JsonProfileRepositoryTests : IDisposable {
         };
 
         // Act
-        await _repository.SaveAsync(profile);
+        await repository.SaveAsync(profile);
 
         // Assert
-        var filePath = _repository.GetProfilePath("test-profile");
+        var filePath = repository.GetProfilePath("test-profile");
         Assert.True(File.Exists(filePath));
 
         // Verify JSON content
@@ -66,7 +66,7 @@ public class JsonProfileRepositoryTests : IDisposable {
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ProfileStorageException>(() => _repository.SaveAsync(profile));
+        await Assert.ThrowsAsync<ProfileStorageException>(() => repository.SaveAsync(profile));
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class JsonProfileRepositoryTests : IDisposable {
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ProfileStorageException>(() => _repository.SaveAsync(profile));
+        await Assert.ThrowsAsync<ProfileStorageException>(() => repository.SaveAsync(profile));
     }
 
     [Fact]
@@ -92,10 +92,10 @@ public class JsonProfileRepositoryTests : IDisposable {
             Build = new BuildConfiguration("Release")
         };
 
-        await _repository.SaveAsync(originalProfile);
+        await repository.SaveAsync(originalProfile);
 
         // Act
-        var loadedProfile = await _repository.LoadAsync("test-load");
+        var loadedProfile = await repository.LoadAsync("test-load");
 
         // Assert
         Assert.NotNull(loadedProfile);
@@ -109,7 +109,7 @@ public class JsonProfileRepositoryTests : IDisposable {
     [Fact]
     public async Task LoadAsync_NonExistent_ReturnsNull() {
         // Act
-        var profile = await _repository.LoadAsync("non-existent-profile");
+        var profile = await repository.LoadAsync("non-existent-profile");
 
         // Assert
         Assert.Null(profile);
@@ -118,13 +118,13 @@ public class JsonProfileRepositoryTests : IDisposable {
     [Fact]
     public async Task LoadAsync_CorruptedJson_ThrowsProfileStorageException() {
         // Arrange
-        var filePath = _repository.GetProfilePath("corrupted");
+        var filePath = repository.GetProfilePath("corrupted");
         var directory = Path.GetDirectoryName(filePath)!;
         Directory.CreateDirectory(directory);
         await File.WriteAllTextAsync(filePath, "{ invalid json content !!!!");
 
         // Act & Assert
-        await Assert.ThrowsAsync<ProfileStorageException>(() => _repository.LoadAsync("corrupted"));
+        await Assert.ThrowsAsync<ProfileStorageException>(() => repository.LoadAsync("corrupted"));
     }
 
     [Fact]
@@ -135,11 +135,11 @@ public class JsonProfileRepositoryTests : IDisposable {
             Connection = new ServerConnection("ftp.example.com")
         };
 
-        await _repository.SaveAsync(profile);
-        var filePath = _repository.GetProfilePath("path-test");
+        await repository.SaveAsync(profile);
+        var filePath = repository.GetProfilePath("path-test");
 
         // Act
-        var loadedProfile = await _repository.LoadFromPathAsync(filePath);
+        var loadedProfile = await repository.LoadFromPathAsync(filePath);
 
         // Assert
         Assert.NotNull(loadedProfile);
@@ -149,18 +149,18 @@ public class JsonProfileRepositoryTests : IDisposable {
     [Fact]
     public async Task LoadFromPathAsync_NonExistentFile_ThrowsFileNotFoundException() {
         // Arrange
-        var filePath = Path.Combine(_testDirectory, "non-existent.json");
+        var filePath = Path.Combine(testDirectory, "non-existent.json");
 
         // Act & Assert
-        await Assert.ThrowsAsync<FileNotFoundException>(() => _repository.LoadFromPathAsync(filePath));
+        await Assert.ThrowsAsync<FileNotFoundException>(() => repository.LoadFromPathAsync(filePath));
     }
 
     [Fact]
     public async Task ListProfileNamesAsync_MultipleProfiles_ReturnsSortedList() {
         // Arrange - Clean up all existing profiles first
-        var existingProfiles = await _repository.ListProfileNamesAsync();
+        var existingProfiles = await repository.ListProfileNamesAsync();
         foreach(var existing in existingProfiles) {
-            await _repository.DeleteAsync(existing);
+            await repository.DeleteAsync(existing);
         }
 
         var profiles = new[]
@@ -171,11 +171,11 @@ public class JsonProfileRepositoryTests : IDisposable {
         };
 
         foreach(var profile in profiles) {
-            await _repository.SaveAsync(profile);
+            await repository.SaveAsync(profile);
         }
 
         // Act
-        var profileNames = await _repository.ListProfileNamesAsync();
+        var profileNames = await repository.ListProfileNamesAsync();
 
         // Assert
         Assert.Equal(3, profileNames.Count);
@@ -187,13 +187,13 @@ public class JsonProfileRepositoryTests : IDisposable {
     [Fact]
     public async Task ListProfileNamesAsync_EmptyDirectory_ReturnsEmptyList() {
         // Arrange - Clean up all existing profiles first
-        var existingProfiles = await _repository.ListProfileNamesAsync();
+        var existingProfiles = await repository.ListProfileNamesAsync();
         foreach(var profile in existingProfiles) {
-            await _repository.DeleteAsync(profile);
+            await repository.DeleteAsync(profile);
         }
 
         // Act
-        var profileNames = await _repository.ListProfileNamesAsync();
+        var profileNames = await repository.ListProfileNamesAsync();
 
         // Assert
         Assert.Empty(profileNames);
@@ -207,12 +207,12 @@ public class JsonProfileRepositoryTests : IDisposable {
             Connection = new ServerConnection("ftp.example.com")
         };
 
-        await _repository.SaveAsync(profile);
-        var filePath = _repository.GetProfilePath("delete-test");
+        await repository.SaveAsync(profile);
+        var filePath = repository.GetProfilePath("delete-test");
         Assert.True(File.Exists(filePath));
 
         // Act
-        var result = await _repository.DeleteAsync("delete-test");
+        var result = await repository.DeleteAsync("delete-test");
 
         // Assert
         Assert.True(result);
@@ -222,7 +222,7 @@ public class JsonProfileRepositoryTests : IDisposable {
     [Fact]
     public async Task DeleteAsync_NonExistentProfile_ReturnsFalse() {
         // Act
-        var result = await _repository.DeleteAsync("non-existent");
+        var result = await repository.DeleteAsync("non-existent");
 
         // Assert
         Assert.False(result);
@@ -236,10 +236,10 @@ public class JsonProfileRepositoryTests : IDisposable {
             Connection = new ServerConnection("ftp.example.com")
         };
 
-        await _repository.SaveAsync(profile);
+        await repository.SaveAsync(profile);
 
         // Act
-        var exists = await _repository.ExistsAsync("exists-test");
+        var exists = await repository.ExistsAsync("exists-test");
 
         // Assert
         Assert.True(exists);
@@ -248,7 +248,7 @@ public class JsonProfileRepositoryTests : IDisposable {
     [Fact]
     public async Task ExistsAsync_NonExistentProfile_ReturnsFalse() {
         // Act
-        var exists = await _repository.ExistsAsync("non-existent");
+        var exists = await repository.ExistsAsync("non-existent");
 
         // Assert
         Assert.False(exists);
@@ -257,7 +257,7 @@ public class JsonProfileRepositoryTests : IDisposable {
     [Fact]
     public void GetProfilePath_ReturnsCorrectPath() {
         // Act
-        var path = _repository.GetProfilePath("test-profile");
+        var path = repository.GetProfilePath("test-profile");
 
         // Assert
         Assert.NotNull(path);
@@ -274,7 +274,7 @@ public class JsonProfileRepositoryTests : IDisposable {
             RemotePath = "/old"
         };
 
-        await _repository.SaveAsync(profile1);
+        await repository.SaveAsync(profile1);
 
         var profile2 = new DeploymentProfile {
             Name = "update-test",
@@ -283,10 +283,10 @@ public class JsonProfileRepositoryTests : IDisposable {
         };
 
         // Act
-        await _repository.SaveAsync(profile2);
+        await repository.SaveAsync(profile2);
 
         // Assert
-        var loadedProfile = await _repository.LoadAsync("update-test");
+        var loadedProfile = await repository.LoadAsync("update-test");
         Assert.NotNull(loadedProfile);
         Assert.Equal("ftp2.example.com", loadedProfile.Connection.Host);
         Assert.Equal("/new", loadedProfile.RemotePath);

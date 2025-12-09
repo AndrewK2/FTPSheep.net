@@ -67,7 +67,7 @@ public class PublishProfileConverter {
                 SelfContained = publishProfile.SelfContained
             },
             CleanupMode = publishProfile.DeleteExistingFiles ? CleanupMode.DeleteObsolete : CleanupMode.None,
-            AppOfflineEnabled = !publishProfile.ExcludeApp_Data, // If excluding app_data, likely don't want app_offline
+            AppOfflineEnabled = !publishProfile.ExcludeAppData, // If excluding app_data, likely don't want app_offline
             Concurrency = 4, // Default
             RetryCount = 3 // Default
         };

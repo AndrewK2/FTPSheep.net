@@ -6,24 +6,24 @@ namespace FTPSheep.Tests.BuildTools;
 /// Tests for the PublishOutputScanner class.
 /// </summary>
 public class PublishOutputScannerTests : IDisposable {
-    private readonly PublishOutputScanner _scanner;
-    private readonly string _testDirectory;
+    private readonly PublishOutputScanner scanner;
+    private readonly string testDirectory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublishOutputScannerTests"/> class.
     /// </summary>
     public PublishOutputScannerTests() {
-        _scanner = new PublishOutputScanner();
-        _testDirectory = Path.Combine(Path.GetTempPath(), $"FTPSheep_Test_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
+        scanner = new PublishOutputScanner();
+        testDirectory = Path.Combine(Path.GetTempPath(), $"FTPSheep_Test_{Guid.NewGuid()}");
+        Directory.CreateDirectory(testDirectory);
     }
 
     /// <summary>
     /// Cleans up test files.
     /// </summary>
     public void Dispose() {
-        if(Directory.Exists(_testDirectory)) {
-            Directory.Delete(_testDirectory, true);
+        if(Directory.Exists(testDirectory)) {
+            Directory.Delete(testDirectory, true);
         }
         GC.SuppressFinalize(this);
     }
@@ -39,7 +39,7 @@ public class PublishOutputScannerTests : IDisposable {
         CreateTestFile("index.html", 256);
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: false);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: false);
 
         // Assert
         Assert.Equal(3, output.FileCount);
@@ -56,7 +56,7 @@ public class PublishOutputScannerTests : IDisposable {
         CreateTestFile("file3.dll", 512);
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: false);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: false);
 
         // Assert
         Assert.Equal(3584, output.TotalSize);
@@ -71,7 +71,7 @@ public class PublishOutputScannerTests : IDisposable {
         var filePath = CreateTestFile("test.dll", 1024);
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: false);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: false);
 
         // Assert
         var file = output.Files.First();
@@ -88,13 +88,13 @@ public class PublishOutputScannerTests : IDisposable {
     [Fact]
     public void ScanPublishOutput_WithSubdirectories_ScansRecursively() {
         // Arrange
-        var subDir = Path.Combine(_testDirectory, "bin");
+        var subDir = Path.Combine(testDirectory, "bin");
         Directory.CreateDirectory(subDir);
         CreateTestFile("root.dll", 1024);
         CreateTestFile(Path.Combine("bin", "sub.dll"), 512);
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: false);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: false);
 
         // Assert
         Assert.Equal(2, output.FileCount);
@@ -115,7 +115,7 @@ public class PublishOutputScannerTests : IDisposable {
         var exclusions = new List<string> { "*.pdb", "*.xml" };
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, exclusions, validateOutput: false);
+        var output = scanner.ScanPublishOutput(testDirectory, exclusions, validateOutput: false);
 
         // Assert
         Assert.Single(output.Files);
@@ -132,7 +132,7 @@ public class PublishOutputScannerTests : IDisposable {
         CreateTestFile("app.pdb", 512);
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: false);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: false);
 
         // Assert
         Assert.Single(output.Files);
@@ -145,7 +145,7 @@ public class PublishOutputScannerTests : IDisposable {
     [Fact]
     public void ScanPublishOutput_WithEmptyDirectory_ReturnsError() {
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: true);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: true);
 
         // Assert
         Assert.True(output.HasErrors);
@@ -162,7 +162,7 @@ public class PublishOutputScannerTests : IDisposable {
         CreateTestFile("index.html", 512);
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: true);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: true);
 
         // Assert
         Assert.True(output.HasWarnings);
@@ -180,7 +180,7 @@ public class PublishOutputScannerTests : IDisposable {
         CreateTestFile("web.config", 256);
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: true);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: true);
 
         // Assert
         Assert.False(output.Warnings.Any(w => w.Contains("web.config")));
@@ -196,7 +196,7 @@ public class PublishOutputScannerTests : IDisposable {
         CreateTestFile("appsettings.Development.json", 256);
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: true);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: true);
 
         // Assert
         Assert.True(output.HasWarnings);
@@ -209,13 +209,13 @@ public class PublishOutputScannerTests : IDisposable {
     [Fact]
     public void ScanPublishOutput_WithLargeFile_ReturnsWarning() {
         // Arrange - Create a file > 100 MB
-        var largeFilePath = Path.Combine(_testDirectory, "large.bin");
+        var largeFilePath = Path.Combine(testDirectory, "large.bin");
         using(var fs = new FileStream(largeFilePath, FileMode.Create)) {
             fs.SetLength(101 * 1024 * 1024); // 101 MB
         }
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: true);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: true);
 
         // Assert
         Assert.True(output.HasWarnings);
@@ -233,7 +233,7 @@ public class PublishOutputScannerTests : IDisposable {
         CreateTestFile("small.dll", 1000);
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: false);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: false);
         var sorted = output.FilesSortedBySize.ToList();
 
         // Assert
@@ -251,7 +251,7 @@ public class PublishOutputScannerTests : IDisposable {
         CreateTestFile("app.dll", 1024);
 
         // Act
-        var output = await _scanner.ScanPublishOutputAsync(_testDirectory, validateOutput: false);
+        var output = await scanner.ScanPublishOutputAsync(testDirectory, validateOutput: false);
 
         // Assert
         Assert.Single(output.Files);
@@ -264,7 +264,7 @@ public class PublishOutputScannerTests : IDisposable {
     public void ScanPublishOutput_WithNullPath_ThrowsException() {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            _scanner.ScanPublishOutput(null!, validateOutput: false));
+            scanner.ScanPublishOutput(null!, validateOutput: false));
     }
 
     /// <summary>
@@ -277,7 +277,7 @@ public class PublishOutputScannerTests : IDisposable {
 
         // Act & Assert
         Assert.Throws<DirectoryNotFoundException>(() =>
-            _scanner.ScanPublishOutput(nonExistentPath, validateOutput: false));
+            scanner.ScanPublishOutput(nonExistentPath, validateOutput: false));
     }
 
     /// <summary>
@@ -289,7 +289,7 @@ public class PublishOutputScannerTests : IDisposable {
         CreateTestFile("file.dll", 1536); // 1.5 KB
 
         // Act
-        var output = _scanner.ScanPublishOutput(_testDirectory, validateOutput: false);
+        var output = scanner.ScanPublishOutput(testDirectory, validateOutput: false);
 
         // Assert
         Assert.Contains("KB", output.FormattedTotalSize);
@@ -299,7 +299,7 @@ public class PublishOutputScannerTests : IDisposable {
     /// Helper method to create a test file with specified size.
     /// </summary>
     private string CreateTestFile(string relativePath, int sizeInBytes) {
-        var fullPath = Path.Combine(_testDirectory, relativePath);
+        var fullPath = Path.Combine(testDirectory, relativePath);
         var directory = Path.GetDirectoryName(fullPath);
         if(!string.IsNullOrEmpty(directory)) {
             Directory.CreateDirectory(directory);

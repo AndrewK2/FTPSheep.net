@@ -4,28 +4,28 @@ using Microsoft.Extensions.Logging;
 namespace FTPSheep.Tests.Logging;
 
 public class FileLoggerTests : IDisposable {
-    private readonly string _testLogDirectory;
+    private readonly string testLogDirectory;
 
     public FileLoggerTests() {
-        _testLogDirectory = Path.Combine(Path.GetTempPath(), $"ftpsheep-logs-{Guid.NewGuid()}");
+        testLogDirectory = Path.Combine(Path.GetTempPath(), $"ftpsheep-logs-{Guid.NewGuid()}");
     }
 
     public void Dispose() {
-        if(Directory.Exists(_testLogDirectory)) {
-            Directory.Delete(_testLogDirectory, true);
+        if(Directory.Exists(testLogDirectory)) {
+            Directory.Delete(testLogDirectory, true);
         }
     }
 
     [Fact]
     public void Log_Information_WritesToFile() {
         // Arrange
-        using var logger = new FileLogger("TestCategory", _testLogDirectory, minLevel: LogLevel.Information);
+        using var logger = new FileLogger("TestCategory", testLogDirectory, minLevel: LogLevel.Information);
 
         // Act
         logger.LogInformation("Test message");
 
         // Assert
-        var logFiles = Directory.GetFiles(_testLogDirectory, "ftpsheep-*.log");
+        var logFiles = Directory.GetFiles(testLogDirectory, "ftpsheep-*.log");
         Assert.Single(logFiles);
 
         var content = File.ReadAllText(logFiles[0]);
@@ -37,14 +37,14 @@ public class FileLoggerTests : IDisposable {
     [Fact]
     public void Log_BelowMinLevel_DoesNotWrite() {
         // Arrange
-        using var logger = new FileLogger("TestCategory", _testLogDirectory, minLevel: LogLevel.Warning);
+        using var logger = new FileLogger("TestCategory", testLogDirectory, minLevel: LogLevel.Warning);
 
         // Act
         logger.LogInformation("This should not be logged");
         logger.LogWarning("This should be logged");
 
         // Assert
-        var logFiles = Directory.GetFiles(_testLogDirectory, "ftpsheep-*.log");
+        var logFiles = Directory.GetFiles(testLogDirectory, "ftpsheep-*.log");
         Assert.Single(logFiles);
 
         var content = File.ReadAllText(logFiles[0]);
@@ -55,14 +55,14 @@ public class FileLoggerTests : IDisposable {
     [Fact]
     public void Log_WithException_IncludesExceptionDetails() {
         // Arrange
-        using var logger = new FileLogger("TestCategory", _testLogDirectory);
+        using var logger = new FileLogger("TestCategory", testLogDirectory);
         var exception = new InvalidOperationException("Test exception");
 
         // Act
         logger.LogError(exception, "An error occurred");
 
         // Assert
-        var logFiles = Directory.GetFiles(_testLogDirectory, "ftpsheep-*.log");
+        var logFiles = Directory.GetFiles(testLogDirectory, "ftpsheep-*.log");
         var content = File.ReadAllText(logFiles[0]);
         Assert.Contains("An error occurred", content);
         Assert.Contains("Test exception", content);
@@ -72,7 +72,7 @@ public class FileLoggerTests : IDisposable {
     [Fact]
     public void IsEnabled_RespectsMinLevel() {
         // Arrange
-        using var logger = new FileLogger("TestCategory", _testLogDirectory, minLevel: LogLevel.Warning);
+        using var logger = new FileLogger("TestCategory", testLogDirectory, minLevel: LogLevel.Warning);
 
         // Act & Assert
         Assert.False(logger.IsEnabled(LogLevel.Trace));
@@ -86,7 +86,7 @@ public class FileLoggerTests : IDisposable {
     [Fact]
     public void Log_CreatesLogDirectory_IfNotExists() {
         // Arrange
-        var nonExistentDir = Path.Combine(_testLogDirectory, "subdir");
+        var nonExistentDir = Path.Combine(testLogDirectory, "subdir");
         Assert.False(Directory.Exists(nonExistentDir));
 
         // Act
@@ -100,7 +100,7 @@ public class FileLoggerTests : IDisposable {
     [Fact]
     public void Log_MultipleMessages_AppendsToSameFile() {
         // Arrange
-        using var logger = new FileLogger("TestCategory", _testLogDirectory);
+        using var logger = new FileLogger("TestCategory", testLogDirectory);
 
         // Act
         logger.LogInformation("Message 1");
@@ -108,7 +108,7 @@ public class FileLoggerTests : IDisposable {
         logger.LogInformation("Message 3");
 
         // Assert
-        var logFiles = Directory.GetFiles(_testLogDirectory, "ftpsheep-*.log");
+        var logFiles = Directory.GetFiles(testLogDirectory, "ftpsheep-*.log");
         Assert.Single(logFiles);
 
         var content = File.ReadAllText(logFiles[0]);
@@ -120,13 +120,13 @@ public class FileLoggerTests : IDisposable {
     [Fact]
     public void Log_IncludesTimestamp() {
         // Arrange
-        using var logger = new FileLogger("TestCategory", _testLogDirectory);
+        using var logger = new FileLogger("TestCategory", testLogDirectory);
 
         // Act
         logger.LogInformation("Test message");
 
         // Assert
-        var logFiles = Directory.GetFiles(_testLogDirectory, "ftpsheep-*.log");
+        var logFiles = Directory.GetFiles(testLogDirectory, "ftpsheep-*.log");
         var content = File.ReadAllText(logFiles[0]);
 
         // Check for timestamp pattern [yyyy-MM-dd HH:mm:ss.fff]

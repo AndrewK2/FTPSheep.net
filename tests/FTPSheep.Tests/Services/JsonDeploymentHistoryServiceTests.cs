@@ -4,17 +4,17 @@ using FTPSheep.Core.Services;
 namespace FTPSheep.Tests.Services;
 
 public class JsonDeploymentHistoryServiceTests : IDisposable {
-    private readonly string _testHistoryFile;
-    private readonly JsonDeploymentHistoryService _service;
+    private readonly string testHistoryFile;
+    private readonly JsonDeploymentHistoryService service;
 
     public JsonDeploymentHistoryServiceTests() {
-        _testHistoryFile = Path.Combine(Path.GetTempPath(), $"test-history-{Guid.NewGuid()}.json");
-        _service = new JsonDeploymentHistoryService(_testHistoryFile);
+        testHistoryFile = Path.Combine(Path.GetTempPath(), $"test-history-{Guid.NewGuid()}.json");
+        service = new JsonDeploymentHistoryService(testHistoryFile);
     }
 
     public void Dispose() {
-        if(File.Exists(_testHistoryFile)) {
-            File.Delete(_testHistoryFile);
+        if(File.Exists(testHistoryFile)) {
+            File.Delete(testHistoryFile);
         }
     }
 
@@ -31,10 +31,10 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
         };
 
         // Act
-        await _service.AddEntryAsync(entry);
+        await service.AddEntryAsync(entry);
 
         // Assert
-        var entries = await _service.GetRecentEntriesAsync(10);
+        var entries = await service.GetRecentEntriesAsync(10);
         Assert.Single(entries);
         Assert.Equal("test-profile", entries[0].ProfileName);
         Assert.Equal("ftp.example.com", entries[0].ServerHost);
@@ -51,11 +51,11 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
                 Success = true,
                 Timestamp = DateTime.UtcNow.AddMinutes(-i)
             };
-            await _service.AddEntryAsync(entry);
+            await service.AddEntryAsync(entry);
         }
 
         // Act
-        var entries = await _service.GetRecentEntriesAsync(10);
+        var entries = await service.GetRecentEntriesAsync(10);
 
         // Assert
         Assert.Equal(5, entries.Count);
@@ -72,11 +72,11 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
                 ServerHost = "ftp.example.com",
                 Success = true
             };
-            await _service.AddEntryAsync(entry);
+            await service.AddEntryAsync(entry);
         }
 
         // Act
-        var entries = await _service.GetRecentEntriesAsync(5);
+        var entries = await service.GetRecentEntriesAsync(5);
 
         // Assert
         Assert.Equal(5, entries.Count);
@@ -85,24 +85,24 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
     [Fact]
     public async Task GetProfileEntriesAsync_FiltersByProfileName() {
         // Arrange
-        await _service.AddEntryAsync(new DeploymentHistoryEntry {
+        await service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "profile-a",
             ServerHost = "ftp.example.com",
             Success = true
         });
-        await _service.AddEntryAsync(new DeploymentHistoryEntry {
+        await service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "profile-b",
             ServerHost = "ftp.example.com",
             Success = true
         });
-        await _service.AddEntryAsync(new DeploymentHistoryEntry {
+        await service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "profile-a",
             ServerHost = "ftp.example.com",
             Success = false
         });
 
         // Act
-        var entries = await _service.GetProfileEntriesAsync("profile-a");
+        var entries = await service.GetProfileEntriesAsync("profile-a");
 
         // Assert
         Assert.Equal(2, entries.Count);
@@ -113,19 +113,19 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
     public async Task GetEntriesByDateRangeAsync_FiltersByDate() {
         // Arrange
         var now = DateTime.UtcNow;
-        await _service.AddEntryAsync(new DeploymentHistoryEntry {
+        await service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "test",
             ServerHost = "ftp.example.com",
             Success = true,
             Timestamp = now.AddDays(-5)
         });
-        await _service.AddEntryAsync(new DeploymentHistoryEntry {
+        await service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "test",
             ServerHost = "ftp.example.com",
             Success = true,
             Timestamp = now.AddDays(-2)
         });
-        await _service.AddEntryAsync(new DeploymentHistoryEntry {
+        await service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "test",
             ServerHost = "ftp.example.com",
             Success = true,
@@ -133,7 +133,7 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
         });
 
         // Act
-        var entries = await _service.GetEntriesByDateRangeAsync(now.AddDays(-3), now.AddDays(1));
+        var entries = await service.GetEntriesByDateRangeAsync(now.AddDays(-3), now.AddDays(1));
 
         // Assert
         Assert.Equal(2, entries.Count);
@@ -142,30 +142,30 @@ public class JsonDeploymentHistoryServiceTests : IDisposable {
     [Fact]
     public async Task ClearHistoryAsync_RemovesAllEntries() {
         // Arrange
-        await _service.AddEntryAsync(new DeploymentHistoryEntry {
+        await service.AddEntryAsync(new DeploymentHistoryEntry {
             ProfileName = "test",
             ServerHost = "ftp.example.com",
             Success = true
         });
 
         // Act
-        await _service.ClearHistoryAsync();
+        await service.ClearHistoryAsync();
 
         // Assert
-        var entries = await _service.GetRecentEntriesAsync(10);
+        var entries = await service.GetRecentEntriesAsync(10);
         Assert.Empty(entries);
     }
 
     [Fact]
     public async Task AddEntryAsync_WithNullEntry_ThrowsArgumentNullException() {
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _service.AddEntryAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.AddEntryAsync(null!));
     }
 
     [Fact]
     public async Task GetProfileEntriesAsync_WithEmptyProfileName_ThrowsArgumentException() {
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.GetProfileEntriesAsync(""));
+        await Assert.ThrowsAsync<ArgumentException>(() => service.GetProfileEntriesAsync(""));
     }
 
     [Fact]

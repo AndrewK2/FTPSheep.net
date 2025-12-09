@@ -22,7 +22,7 @@ public class PublishProfile {
     /// <summary>
     /// Gets or sets whether to save the password.
     /// </summary>
-    public bool SavePWD { get; set; }
+    public bool SavePwd { get; set; }
 
     /// <summary>
     /// Gets or sets whether to delete existing files before publishing.
@@ -52,7 +52,7 @@ public class PublishProfile {
     /// <summary>
     /// Gets or sets whether to exclude app_offline.htm.
     /// </summary>
-    public bool ExcludeApp_Data { get; set; }
+    public bool ExcludeAppData { get; set; }
 
     /// <summary>
     /// Gets or sets additional MSBuild properties from the profile.

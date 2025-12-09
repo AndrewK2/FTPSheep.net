@@ -9,16 +9,16 @@ namespace FTPSheep.BuildTools.Services;
 /// Executes dotnet CLI operations and captures build output.
 /// </summary>
 public class DotnetCliExecutor {
-    private readonly BuildToolLocator _toolLocator;
-    private static readonly Regex ErrorPattern = new(@"error\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-    private static readonly Regex WarningPattern = new(@"warning\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private readonly BuildToolLocator toolLocator;
+    private static readonly Regex errorPattern = new(@"error\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex warningPattern = new(@"warning\s+[A-Z]+\d+:", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DotnetCliExecutor"/> class.
     /// </summary>
     /// <param name="toolLocator">The build tool locator.</param>
     public DotnetCliExecutor(BuildToolLocator? toolLocator = null) {
-        _toolLocator = toolLocator ?? new BuildToolLocator();
+        this.toolLocator = toolLocator ?? new BuildToolLocator();
     }
 
     /// <summary>
@@ -121,7 +121,7 @@ public class DotnetCliExecutor {
         string projectPath,
         string? outputPath,
         CancellationToken cancellationToken) {
-        var dotnetPath = _toolLocator.LocateDotnetCli();
+        var dotnetPath = toolLocator.LocateDotnetCli();
 
         var startTime = DateTime.UtcNow;
         var outputBuilder = new StringBuilder();
@@ -200,7 +200,7 @@ public class DotnetCliExecutor {
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
         foreach(var line in lines) {
-            if(ErrorPattern.IsMatch(line)) {
+            if(errorPattern.IsMatch(line)) {
                 errors.Add(line.Trim());
             }
         }
@@ -216,7 +216,7 @@ public class DotnetCliExecutor {
         var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
         foreach(var line in lines) {
-            if(WarningPattern.IsMatch(line)) {
+            if(warningPattern.IsMatch(line)) {
                 warnings.Add(line.Trim());
             }
         }

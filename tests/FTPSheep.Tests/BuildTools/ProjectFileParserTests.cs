@@ -5,56 +5,56 @@ using FTPSheep.BuildTools.Services;
 namespace FTPSheep.Tests.BuildTools;
 
 public class ProjectFileParserTests : IDisposable {
-    private readonly string _tempDir;
-    private readonly ProjectFileParser _parser;
+    private readonly string tempDir;
+    private readonly ProjectFileParser parser;
 
     public ProjectFileParserTests() {
-        _tempDir = Path.Combine(Path.GetTempPath(), "FTPSheepTests_" + Guid.NewGuid());
-        Directory.CreateDirectory(_tempDir);
-        _parser = new ProjectFileParser();
+        tempDir = Path.Combine(Path.GetTempPath(), "FTPSheepTests_" + Guid.NewGuid());
+        Directory.CreateDirectory(tempDir);
+        parser = new ProjectFileParser();
     }
 
     public void Dispose() {
-        if(Directory.Exists(_tempDir)) {
-            Directory.Delete(_tempDir, true);
+        if(Directory.Exists(tempDir)) {
+            Directory.Delete(tempDir, true);
         }
     }
 
     [Fact]
     public void ParseProject_WithNullPath_ShouldThrowArgumentNullException() {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _parser.ParseProject(null!));
+        Assert.Throws<ArgumentNullException>(() => parser.ParseProject(null!));
     }
 
     [Fact]
     public void ParseProject_WithEmptyPath_ShouldThrowArgumentNullException() {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _parser.ParseProject(string.Empty));
+        Assert.Throws<ArgumentNullException>(() => parser.ParseProject(string.Empty));
     }
 
     [Fact]
     public void ParseProject_WithNonExistentFile_ShouldThrowFileNotFoundException() {
         // Arrange
-        var nonExistentPath = Path.Combine(_tempDir, "NonExistent.csproj");
+        var nonExistentPath = Path.Combine(tempDir, "NonExistent.csproj");
 
         // Act & Assert
-        Assert.Throws<FileNotFoundException>(() => _parser.ParseProject(nonExistentPath));
+        Assert.Throws<FileNotFoundException>(() => parser.ParseProject(nonExistentPath));
     }
 
     [Fact]
     public void ParseProject_WithInvalidXml_ShouldThrowProjectParseException() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "Invalid.csproj");
+        var projectPath = Path.Combine(tempDir, "Invalid.csproj");
         File.WriteAllText(projectPath, "This is not valid XML");
 
         // Act & Assert
-        Assert.Throws<ProjectParseException>(() => _parser.ParseProject(projectPath));
+        Assert.Throws<ProjectParseException>(() => parser.ParseProject(projectPath));
     }
 
     [Fact]
     public void ParseProject_WithSdkStyleWebProject_ShouldParseCorrectly() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "WebApp.csproj");
+        var projectPath = Path.Combine(tempDir, "WebApp.csproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk.Web"">
   <PropertyGroup>
@@ -64,7 +64,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal("Microsoft.NET.Sdk.Web", result.Sdk);
@@ -80,7 +80,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithMultiTargeting_ShouldParseAllFrameworks() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "Library.csproj");
+        var projectPath = Path.Combine(tempDir, "Library.csproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -90,7 +90,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal(3, result.TargetFrameworks.Count);
@@ -104,7 +104,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithLegacyFrameworkProject_ShouldParseLegacyFormat() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "Legacy.csproj");
+        var projectPath = Path.Combine(tempDir, "Legacy.csproj");
         File.WriteAllText(projectPath, @"
 <Project ToolsVersion=""15.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <PropertyGroup>
@@ -114,7 +114,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Null(result.Sdk);
@@ -128,7 +128,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithBlazorWebAssembly_ShouldDetectBlazor() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "BlazorApp.csproj");
+        var projectPath = Path.Combine(tempDir, "BlazorApp.csproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk.Web"">
   <PropertyGroup>
@@ -140,7 +140,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal(ProjectType.Blazor, result.ProjectType);
@@ -149,7 +149,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithWorkerService_ShouldDetectWorkerService() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "Worker.csproj");
+        var projectPath = Path.Combine(tempDir, "Worker.csproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk.Worker"">
   <PropertyGroup>
@@ -158,7 +158,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal(ProjectType.WorkerService, result.ProjectType);
@@ -167,7 +167,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithConsoleApp_ShouldDetectConsole() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "Console.csproj");
+        var projectPath = Path.Combine(tempDir, "Console.csproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -177,7 +177,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal(ProjectType.Console, result.ProjectType);
@@ -186,7 +186,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithClassLibrary_ShouldDetectLibrary() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "Library.csproj");
+        var projectPath = Path.Combine(tempDir, "Library.csproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -196,7 +196,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal(ProjectType.Library, result.ProjectType);
@@ -205,7 +205,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithWindowsApp_ShouldDetectWindowsApp() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "WinApp.csproj");
+        var projectPath = Path.Combine(tempDir, "WinApp.csproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -215,7 +215,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal(ProjectType.WindowsApp, result.ProjectType);
@@ -224,7 +224,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithLegacyAspNetMvc_ShouldDetectMvc() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "MvcApp.csproj");
+        var projectPath = Path.Combine(tempDir, "MvcApp.csproj");
         File.WriteAllText(projectPath, @"
 <Project ToolsVersion=""15.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <PropertyGroup>
@@ -234,7 +234,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal(ProjectType.AspNetMvc, result.ProjectType);
@@ -243,7 +243,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public async Task ParseProjectAsync_WithValidProject_ShouldParseCorrectly() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "AsyncTest.csproj");
+        var projectPath = Path.Combine(tempDir, "AsyncTest.csproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -252,7 +252,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = await _parser.ParseProjectAsync(projectPath);
+        var result = await parser.ParseProjectAsync(projectPath);
 
         // Assert
         Assert.NotNull(result);
@@ -262,7 +262,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithVbProj_ShouldRecognizeExtension() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "VbApp.vbproj");
+        var projectPath = Path.Combine(tempDir, "VbApp.vbproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -271,7 +271,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal(".vbproj", result.FileExtension);
@@ -280,7 +280,7 @@ public class ProjectFileParserTests : IDisposable {
     [Fact]
     public void ParseProject_WithFsProj_ShouldRecognizeExtension() {
         // Arrange
-        var projectPath = Path.Combine(_tempDir, "FsApp.fsproj");
+        var projectPath = Path.Combine(tempDir, "FsApp.fsproj");
         File.WriteAllText(projectPath, @"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -289,7 +289,7 @@ public class ProjectFileParserTests : IDisposable {
 </Project>");
 
         // Act
-        var result = _parser.ParseProject(projectPath);
+        var result = parser.ParseProject(projectPath);
 
         // Assert
         Assert.Equal(".fsproj", result.FileExtension);

@@ -7,10 +7,10 @@ namespace FTPSheep.BuildTools.Services;
 /// Automatically selects the appropriate build tool based on project type.
 /// </summary>
 public class BuildService {
-    private readonly ProjectFileParser _parser;
-    private readonly ProjectTypeClassifier _classifier;
-    private readonly MSBuildExecutor _msbuildExecutor;
-    private readonly DotnetCliExecutor _dotnetExecutor;
+    private readonly ProjectFileParser parser;
+    private readonly ProjectTypeClassifier classifier;
+    private readonly MsBuildExecutor msbuildExecutor;
+    private readonly DotnetCliExecutor dotnetExecutor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BuildService"/> class.
@@ -18,12 +18,12 @@ public class BuildService {
     public BuildService(
         ProjectFileParser? parser = null,
         ProjectTypeClassifier? classifier = null,
-        MSBuildExecutor? msbuildExecutor = null,
+        MsBuildExecutor? msbuildExecutor = null,
         DotnetCliExecutor? dotnetExecutor = null) {
-        _parser = parser ?? new ProjectFileParser();
-        _classifier = classifier ?? new ProjectTypeClassifier();
-        _msbuildExecutor = msbuildExecutor ?? new MSBuildExecutor();
-        _dotnetExecutor = dotnetExecutor ?? new DotnetCliExecutor();
+        this.parser = parser ?? new ProjectFileParser();
+        this.classifier = classifier ?? new ProjectTypeClassifier();
+        this.msbuildExecutor = msbuildExecutor ?? new MsBuildExecutor();
+        this.dotnetExecutor = dotnetExecutor ?? new DotnetCliExecutor();
     }
 
     /// <summary>
@@ -39,19 +39,19 @@ public class BuildService {
         string configuration = "Release",
         string? outputPath = null,
         CancellationToken cancellationToken = default) {
-        var projectInfo = _parser.ParseProject(projectPath);
-        var buildTool = _classifier.GetRecommendedBuildTool(projectInfo);
+        var projectInfo = parser.ParseProject(projectPath);
+        var buildTool = classifier.GetRecommendedBuildTool(projectInfo);
 
-        if(buildTool == BuildTool.MSBuild) {
-            var options = new MSBuildWrapper().CreateBuildOptions(projectPath, configuration);
+        if(buildTool == BuildTool.MsBuild) {
+            var options = new MsBuildWrapper().CreateBuildOptions(projectPath, configuration);
 
             if(!string.IsNullOrWhiteSpace(outputPath)) {
                 options.OutputPath = outputPath;
             }
 
-            return await _msbuildExecutor.BuildAsync(options, cancellationToken);
+            return await msbuildExecutor.BuildAsync(options, cancellationToken);
         } else {
-            return await _dotnetExecutor.BuildAsync(projectPath, configuration, outputPath, cancellationToken);
+            return await dotnetExecutor.BuildAsync(projectPath, configuration, outputPath, cancellationToken);
         }
     }
 
@@ -68,16 +68,16 @@ public class BuildService {
         string outputPath,
         string configuration = "Release",
         CancellationToken cancellationToken = default) {
-        var projectInfo = _parser.ParseProject(projectPath);
-        var buildTool = _classifier.GetRecommendedBuildTool(projectInfo);
+        var projectInfo = parser.ParseProject(projectPath);
+        var buildTool = classifier.GetRecommendedBuildTool(projectInfo);
 
-        if(buildTool == BuildTool.MSBuild) {
+        if(buildTool == BuildTool.MsBuild) {
             // Use MSBuild for .NET Framework projects
-            var options = new MSBuildWrapper().CreatePublishOptions(projectPath, outputPath, configuration);
-            return await _msbuildExecutor.PublishAsync(options, cancellationToken);
+            var options = new MsBuildWrapper().CreatePublishOptions(projectPath, outputPath, configuration);
+            return await msbuildExecutor.PublishAsync(options, cancellationToken);
         } else {
             // Use dotnet CLI for .NET Core/.NET 5+ projects
-            return await _dotnetExecutor.PublishAsync(
+            return await dotnetExecutor.PublishAsync(
                 projectPath,
                 outputPath,
                 configuration,
@@ -104,14 +104,14 @@ public class BuildService {
         string? runtime = null,
         bool? selfContained = null,
         CancellationToken cancellationToken = default) {
-        var projectInfo = _parser.ParseProject(projectPath);
+        var projectInfo = parser.ParseProject(projectPath);
 
-        if(_classifier.IsDotNetFramework(projectInfo)) {
+        if(classifier.IsDotNetFramework(projectInfo)) {
             throw new InvalidOperationException(
                 "Cannot use PublishDotNetCoreAsync for .NET Framework projects. Use PublishAsync instead.");
         }
 
-        return await _dotnetExecutor.PublishAsync(
+        return await dotnetExecutor.PublishAsync(
             projectPath,
             outputPath,
             configuration,
@@ -131,14 +131,14 @@ public class BuildService {
         string projectPath,
         string configuration = "Release",
         CancellationToken cancellationToken = default) {
-        var projectInfo = _parser.ParseProject(projectPath);
-        var buildTool = _classifier.GetRecommendedBuildTool(projectInfo);
+        var projectInfo = parser.ParseProject(projectPath);
+        var buildTool = classifier.GetRecommendedBuildTool(projectInfo);
 
-        if(buildTool == BuildTool.MSBuild) {
-            var options = new MSBuildWrapper().CreateCleanOptions(projectPath, configuration);
-            return await _msbuildExecutor.CleanAsync(options, cancellationToken);
+        if(buildTool == BuildTool.MsBuild) {
+            var options = new MsBuildWrapper().CreateCleanOptions(projectPath, configuration);
+            return await msbuildExecutor.CleanAsync(options, cancellationToken);
         } else {
-            return await _dotnetExecutor.CleanAsync(projectPath, configuration, cancellationToken);
+            return await dotnetExecutor.CleanAsync(projectPath, configuration, cancellationToken);
         }
     }
 
@@ -155,11 +155,11 @@ public class BuildService {
         string configuration = "Release",
         string? outputPath = null,
         CancellationToken cancellationToken = default) {
-        var projectInfo = _parser.ParseProject(projectPath);
-        var buildTool = _classifier.GetRecommendedBuildTool(projectInfo);
+        var projectInfo = parser.ParseProject(projectPath);
+        var buildTool = classifier.GetRecommendedBuildTool(projectInfo);
 
-        if(buildTool == BuildTool.MSBuild) {
-            var options = new MSBuildWrapper().CreateBuildOptions(projectPath, configuration);
+        if(buildTool == BuildTool.MsBuild) {
+            var options = new MsBuildWrapper().CreateBuildOptions(projectPath, configuration);
             options.Targets.Clear();
             options.Targets.Add("Rebuild");
 
@@ -167,16 +167,16 @@ public class BuildService {
                 options.OutputPath = outputPath;
             }
 
-            return await _msbuildExecutor.RebuildAsync(options, cancellationToken);
+            return await msbuildExecutor.RebuildAsync(options, cancellationToken);
         } else {
             // dotnet CLI doesn't have a rebuild command, so clean then build
-            var cleanResult = await _dotnetExecutor.CleanAsync(projectPath, configuration, cancellationToken);
+            var cleanResult = await dotnetExecutor.CleanAsync(projectPath, configuration, cancellationToken);
 
             if(!cleanResult.Success) {
                 return cleanResult;
             }
 
-            return await _dotnetExecutor.BuildAsync(projectPath, configuration, outputPath, cancellationToken);
+            return await dotnetExecutor.BuildAsync(projectPath, configuration, outputPath, cancellationToken);
         }
     }
 
@@ -190,7 +190,7 @@ public class BuildService {
         string projectPath,
         CancellationToken cancellationToken = default) {
         // Both .NET Framework and .NET Core can use dotnet restore
-        return await _dotnetExecutor.RestoreAsync(projectPath, cancellationToken);
+        return await dotnetExecutor.RestoreAsync(projectPath, cancellationToken);
     }
 
     /// <summary>
@@ -199,7 +199,7 @@ public class BuildService {
     /// <param name="projectPath">The path to the project file.</param>
     /// <returns>The project information.</returns>
     public ProjectInfo GetProjectInfo(string projectPath) {
-        return _parser.ParseProject(projectPath);
+        return parser.ParseProject(projectPath);
     }
 
     /// <summary>
@@ -208,7 +208,7 @@ public class BuildService {
     /// <param name="projectPath">The path to the project file.</param>
     /// <returns>A human-readable description of the project.</returns>
     public string GetProjectDescription(string projectPath) {
-        var projectInfo = _parser.ParseProject(projectPath);
-        return _classifier.GetProjectDescription(projectInfo);
+        var projectInfo = parser.ParseProject(projectPath);
+        return classifier.GetProjectDescription(projectInfo);
     }
 }

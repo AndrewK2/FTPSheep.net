@@ -3,7 +3,7 @@ namespace FTPSheep.BuildTools.Models;
 /// <summary>
 /// Configuration options for MSBuild operations.
 /// </summary>
-public class MSBuildOptions {
+public class MsBuildOptions {
     /// <summary>
     /// Gets or sets the path to the project or solution file.
     /// </summary>
@@ -42,7 +42,7 @@ public class MSBuildOptions {
     /// <summary>
     /// Gets or sets the MSBuild verbosity level.
     /// </summary>
-    public MSBuildVerbosity Verbosity { get; set; } = MSBuildVerbosity.Minimal;
+    public MsBuildVerbosity Verbosity { get; set; } = MsBuildVerbosity.Minimal;
 
     /// <summary>
     /// Gets or sets the maximum number of concurrent processes to use during build.
@@ -68,7 +68,7 @@ public class MSBuildOptions {
 /// <summary>
 /// MSBuild verbosity levels.
 /// </summary>
-public enum MSBuildVerbosity {
+public enum MsBuildVerbosity {
     /// <summary>
     /// Quiet - minimal output.
     /// </summary>

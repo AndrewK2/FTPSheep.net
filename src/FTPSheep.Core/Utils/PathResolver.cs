@@ -12,7 +12,7 @@ public static partial class PathResolver {
     private const string ConfigFileName = "config.json";
     private const int MaxProfileNameLength = 100;
 
-    private static readonly string[] ReservedWindowsNames = {
+    private static readonly string[] reservedWindowsNames = {
         "CON", "PRN", "AUX", "NUL",
         "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
         "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
@@ -112,7 +112,7 @@ public static partial class PathResolver {
         // Check for reserved Windows names
         var nameUpper = profileName.ToUpperInvariant();
 
-        if(ReservedWindowsNames.Contains(nameUpper)) {
+        if(reservedWindowsNames.Contains(nameUpper)) {
             errors.Add($"Profile name '{profileName}' is a reserved Windows name and cannot be used.");
         }
 

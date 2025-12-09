@@ -8,23 +8,23 @@ namespace FTPSheep.Protocols.Services;
 /// Service for FTP client operations using FluentFTP.
 /// </summary>
 public class FtpClientService : IDisposable {
-    private readonly FtpConnectionConfig _config;
-    private AsyncFtpClient? _client;
-    private bool _disposed;
+    private readonly FtpConnectionConfig config;
+    private AsyncFtpClient? client;
+    private bool disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FtpClientService"/> class.
     /// </summary>
     /// <param name="config">The FTP connection configuration.</param>
     public FtpClientService(FtpConnectionConfig config) {
-        _config = config ?? throw new ArgumentNullException(nameof(config));
+        this.config = config ?? throw new ArgumentNullException(nameof(config));
         ValidateConfig(config);
     }
 
     /// <summary>
     /// Gets a value indicating whether the client is connected.
     /// </summary>
-    public bool IsConnected => _client?.IsConnected ?? false;
+    public bool IsConnected => client?.IsConnected ?? false;
 
     /// <summary>
     /// Connects to the FTP server.
@@ -32,33 +32,33 @@ public class FtpClientService : IDisposable {
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ConnectAsync(CancellationToken cancellationToken = default) {
         try {
-            _client = new AsyncFtpClient(
-                _config.Host,
-                _config.Username,
-                _config.Password,
-                _config.Port);
+            client = new AsyncFtpClient(
+                config.Host,
+                config.Username,
+                config.Password,
+                config.Port);
 
             // Configure client
-            _client.Config.DataConnectionType = _config.DataConnectionMode;
-            _client.Config.EncryptionMode = _config.EncryptionMode;
-            _client.Config.ConnectTimeout = _config.ConnectionTimeout * 1000; // Convert to milliseconds
-            _client.Config.DataConnectionConnectTimeout = _config.DataConnectionTimeout * 1000;
-            _client.Config.RetryAttempts = _config.RetryAttempts;
-            _client.Config.ValidateAnyCertificate = !_config.ValidateCertificate;
-            _client.Config.SocketKeepAlive = _config.KeepAlive;
+            client.Config.DataConnectionType = config.DataConnectionMode;
+            client.Config.EncryptionMode = config.EncryptionMode;
+            client.Config.ConnectTimeout = config.ConnectionTimeout * 1000; // Convert to milliseconds
+            client.Config.DataConnectionConnectTimeout = config.DataConnectionTimeout * 1000;
+            client.Config.RetryAttempts = config.RetryAttempts;
+            client.Config.ValidateAnyCertificate = !config.ValidateCertificate;
+            client.Config.SocketKeepAlive = config.KeepAlive;
 
-            await _client.Connect(cancellationToken);
+            await client.Connect(cancellationToken);
 
             // Change to root directory if specified
-            if(!string.IsNullOrWhiteSpace(_config.RemoteRootPath)) {
-                await _client.SetWorkingDirectory(_config.RemoteRootPath, cancellationToken);
+            if(!string.IsNullOrWhiteSpace(config.RemoteRootPath)) {
+                await client.SetWorkingDirectory(config.RemoteRootPath, cancellationToken);
             }
         } catch(Exception ex) when(ex is not FtpException) {
             throw new FtpException(
-                $"Failed to connect to FTP server {_config.Host}:{_config.Port}",
+                $"Failed to connect to FTP server {config.Host}:{config.Port}",
                 ex) {
-                Host = _config.Host,
-                Port = _config.Port,
+                Host = config.Host,
+                Port = config.Port,
                 IsTransient = IsTransientError(ex)
             };
         }
@@ -68,8 +68,8 @@ public class FtpClientService : IDisposable {
     /// Disconnects from the FTP server.
     /// </summary>
     public async Task DisconnectAsync(CancellationToken cancellationToken = default) {
-        if(_client != null && _client.IsConnected) {
-            await _client.Disconnect(cancellationToken);
+        if(client != null && client.IsConnected) {
+            await client.Disconnect(cancellationToken);
         }
     }
 
@@ -93,7 +93,7 @@ public class FtpClientService : IDisposable {
         try {
             var existsMode = overwrite ? FtpRemoteExists.Overwrite : FtpRemoteExists.Skip;
 
-            var result = await _client!.UploadFile(
+            var result = await client!.UploadFile(
                 localPath,
                 remotePath,
                 existsMode,
@@ -117,7 +117,7 @@ public class FtpClientService : IDisposable {
         EnsureConnected();
 
         try {
-            await _client!.CreateDirectory(remotePath, cancellationToken);
+            await client!.CreateDirectory(remotePath, cancellationToken);
         } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to create directory {remotePath}",
@@ -135,7 +135,7 @@ public class FtpClientService : IDisposable {
         EnsureConnected();
 
         try {
-            return await _client!.DirectoryExists(remotePath, cancellationToken);
+            return await client!.DirectoryExists(remotePath, cancellationToken);
         } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to check if directory exists: {remotePath}",
@@ -155,7 +155,7 @@ public class FtpClientService : IDisposable {
         EnsureConnected();
 
         try {
-            return await _client!.GetListing(remotePath, cancellationToken);
+            return await client!.GetListing(remotePath, cancellationToken);
         } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to list directory: {remotePath}",
@@ -172,7 +172,7 @@ public class FtpClientService : IDisposable {
         EnsureConnected();
 
         try {
-            await _client!.DeleteFile(remotePath, cancellationToken);
+            await client!.DeleteFile(remotePath, cancellationToken);
         } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to delete file: {remotePath}",
@@ -189,7 +189,7 @@ public class FtpClientService : IDisposable {
         EnsureConnected();
 
         try {
-            await _client!.DeleteDirectory(remotePath, cancellationToken);
+            await client!.DeleteDirectory(remotePath, cancellationToken);
         } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to delete directory: {remotePath}",
@@ -207,7 +207,7 @@ public class FtpClientService : IDisposable {
         EnsureConnected();
 
         try {
-            return await _client!.FileExists(remotePath, cancellationToken);
+            return await client!.FileExists(remotePath, cancellationToken);
         } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to check if file exists: {remotePath}",
@@ -225,7 +225,7 @@ public class FtpClientService : IDisposable {
         EnsureConnected();
 
         try {
-            return await _client!.GetFileSize(remotePath, -1, cancellationToken);
+            return await client!.GetFileSize(remotePath, -1, cancellationToken);
         } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to get file size: {remotePath}",
@@ -246,7 +246,7 @@ public class FtpClientService : IDisposable {
         EnsureConnected();
 
         try {
-            await _client!.SetFilePermissions(remotePath, permissions, cancellationToken);
+            await client!.SetFilePermissions(remotePath, permissions, cancellationToken);
         } catch(Exception ex) {
             // Don't throw - permissions may not be supported
             Console.WriteLine($"Warning: Failed to set permissions on {remotePath}: {ex.Message}");
@@ -274,7 +274,7 @@ public class FtpClientService : IDisposable {
     /// Ensures the client is connected.
     /// </summary>
     private void EnsureConnected() {
-        if(_client == null || !_client.IsConnected) {
+        if(client == null || !client.IsConnected) {
             throw new InvalidOperationException(
                 "FTP client is not connected. Call ConnectAsync first.");
         }
@@ -295,9 +295,9 @@ public class FtpClientService : IDisposable {
     /// Disposes the FTP client.
     /// </summary>
     public void Dispose() {
-        if(!_disposed) {
-            _client?.Dispose();
-            _disposed = true;
+        if(!disposed) {
+            client?.Dispose();
+            disposed = true;
         }
         GC.SuppressFinalize(this);
     }

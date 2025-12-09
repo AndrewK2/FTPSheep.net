@@ -11,7 +11,7 @@ namespace FTPSheep.Core.Services;
 /// Also supports loading credentials from environment variables.
 /// </summary>
 public sealed class CredentialStore : ICredentialStore {
-    private readonly DpapiEncryptionService _encryptionService;
+    private readonly DpapiEncryptionService encryptionService;
 
     private const string EnvironmentUsernameKey = "FTP_USERNAME";
     private const string EnvironmentPasswordKey = "FTP_PASSWORD";
@@ -28,7 +28,7 @@ public sealed class CredentialStore : ICredentialStore {
     /// </summary>
     /// <param name="encryptionService">The encryption service.</param>
     internal CredentialStore(DpapiEncryptionService encryptionService) {
-        _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
+        this.encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
     }
 
     /// <inheritdoc />
@@ -64,7 +64,7 @@ public sealed class CredentialStore : ICredentialStore {
             }
 
             // Encrypt the password
-            var encryptedPassword = _encryptionService.Encrypt(password);
+            var encryptedPassword = encryptionService.Encrypt(password);
 
             // Create the credential data
             var credentialData = new CredentialData {
@@ -117,7 +117,7 @@ public sealed class CredentialStore : ICredentialStore {
             }
 
             // Decrypt the password
-            var decryptedPassword = _encryptionService.Decrypt(credentialData.EncryptedPassword);
+            var decryptedPassword = encryptionService.Decrypt(credentialData.EncryptedPassword);
 
             return new Credentials(credentialData.Username, decryptedPassword);
         } catch(CryptographicException ex) {
@@ -184,7 +184,7 @@ public sealed class CredentialStore : ICredentialStore {
                 "DPAPI encryption is only available on Windows.");
         }
 
-        return _encryptionService.Encrypt(plainText);
+        return encryptionService.Encrypt(plainText);
     }
 
     /// <inheritdoc />
@@ -193,7 +193,7 @@ public sealed class CredentialStore : ICredentialStore {
             throw new ArgumentException("Encrypted text cannot be null or empty.", nameof(encryptedText));
         }
 
-        return _encryptionService.Decrypt(encryptedText);
+        return encryptionService.Decrypt(encryptedText);
     }
 
     private static string GetCredentialFilePath(string profileName) {
