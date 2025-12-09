@@ -200,7 +200,7 @@ public sealed class ProfileService : IProfileService {
     /// <inheritdoc/>
     public ValidationResult ValidateProfile(DeploymentProfile profile) {
         var result = new ValidationResult();
-
+        
         // Validate profile name
         if(string.IsNullOrWhiteSpace(profile.Name)) {
             result.AddError("Profile name cannot be empty.");

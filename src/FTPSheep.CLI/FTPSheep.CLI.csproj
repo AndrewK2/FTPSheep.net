@@ -1,27 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AssemblyName>FTPSheep</AssemblyName>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\FTPSheep.Core\FTPSheep.Core.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\FTPSheep.Core\FTPSheep.Core.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="NLog" Version="6.0.6" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="6.1.0" />
-    <PackageReference Include="Spectre.Console.Cli" Version="0.53.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="NLog" Version="6.0.6" />
+		<PackageReference Include="NLog.Extensions.Logging" Version="6.1.0" />
+		<PackageReference Include="Spectre.Console.Cli" Version="0.53.1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Include="NLog.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>FTPSheep</AssemblyName>
-  </PropertyGroup>
+	<ItemGroup>
+		<Content Include="NLog.config">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
 </Project>
