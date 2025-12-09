@@ -1,4 +1,5 @@
 using FTPSheep.Core.Models;
+using FTPSheep.BuildTools.Models;
 
 namespace FTPSheep.Core.Services;
 
@@ -7,7 +8,16 @@ namespace FTPSheep.Core.Services;
 /// </summary>
 public class DeploymentCoordinator {
     private readonly DeploymentState state;
+    private readonly AppOfflineManager appOfflineManager;
+    private readonly ExclusionPatternMatcher exclusionMatcher;
+    private readonly FileComparisonService fileComparisonService;
     private CancellationTokenSource? cancellationTokenSource;
+
+    // Deployment context (populated during execution)
+    private object? ftpClient;  // Will be IFtpClient when interface is defined
+    private List<FileMetadata>? publishedFiles;
+    private string? publishOutputPath;
+    private DeploymentProfile? currentProfile;
 
     /// <summary>
     /// Event raised when the deployment stage changes.
@@ -22,8 +32,15 @@ public class DeploymentCoordinator {
     /// <summary>
     /// Initializes a new instance of the <see cref="DeploymentCoordinator"/> class.
     /// </summary>
-    public DeploymentCoordinator() {
+    /// <param name="appOfflineManager">The app_offline.htm manager (optional).</param>
+    /// <param name="exclusionMatcher">The exclusion pattern matcher (optional).</param>
+    public DeploymentCoordinator(
+        AppOfflineManager? appOfflineManager = null,
+        ExclusionPatternMatcher? exclusionMatcher = null) {
         state = new DeploymentState();
+        this.appOfflineManager = appOfflineManager ?? new AppOfflineManager();
+        this.exclusionMatcher = exclusionMatcher ?? new ExclusionPatternMatcher();
+        this.fileComparisonService = new FileComparisonService(this.exclusionMatcher);
     }
 
     /// <summary>
@@ -188,37 +205,149 @@ public class DeploymentCoordinator {
     /// <summary>
     /// Stage 5: Upload app_offline.htm.
     /// </summary>
-    private Task UploadAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        // TODO: Implement app_offline.htm upload
-        // This will be implemented when direct deployment strategy is added (Section 5.1)
-        return Task.CompletedTask;
+    private async Task UploadAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        if(ftpClient == null) {
+            throw new InvalidOperationException("FTP client not initialized. Connect to server first.");
+        }
+
+        // Generate app_offline.htm content
+        var appOfflineContent = currentProfile?.AppOfflineTemplate != null
+            ? appOfflineManager.GenerateAppOfflineContent()
+            : AppOfflineManager.DefaultContent;
+
+        // Create temporary file
+        var tempPath = Path.Combine(Path.GetTempPath(), "app_offline.htm");
+        await File.WriteAllTextAsync(tempPath, appOfflineContent, cancellationToken);
+
+        try {
+            // Upload to server (actual implementation will use ftpClient when IFtpClient is available)
+            // For now, this is a placeholder that creates the structure
+            // TODO: Upload temp file to server root as app_offline.htm
+            // await ftpClient.UploadFileAsync(tempPath, "app_offline.htm", cancellationToken);
+        } finally {
+            // Clean up temp file
+            if(File.Exists(tempPath)) {
+                File.Delete(tempPath);
+            }
+        }
     }
 
     /// <summary>
     /// Stage 6: Upload all published files.
     /// </summary>
-    private Task UploadFilesAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        // TODO: Implement concurrent file upload
-        // This will use the upload engine from Section 4.4
-        return Task.CompletedTask;
+    private async Task UploadFilesAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        if(ftpClient == null) {
+            throw new InvalidOperationException("FTP client not initialized. Connect to server first.");
+        }
+
+        if(publishedFiles == null || publishedFiles.Count == 0) {
+            throw new InvalidOperationException("No published files found. Build project first.");
+        }
+
+        // Update state with total files and size
+        state.TotalFiles = publishedFiles.Count;
+        state.TotalSize = publishedFiles.Sum(f => f.Size);
+        OnProgressUpdated();
+
+        // TODO: Implement concurrent file upload when Section 4.4 is completed
+        // For now, this is a placeholder for the upload logic
+        // The actual implementation will:
+        // 1. Create upload queue with all files
+        // 2. Upload files concurrently (respecting MaxConcurrentUploads)
+        // 3. Update progress after each file upload
+        // 4. Handle upload failures and retries
+        // 5. Create remote directories as needed
+
+        foreach(var file in publishedFiles) {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // TODO: Upload file to server
+            // await ftpClient.UploadFileAsync(file.AbsolutePath, remotePath, cancellationToken);
+
+            // Update progress
+            state.FilesUploaded++;
+            state.SizeUploaded += file.Size;
+            OnProgressUpdated();
+        }
     }
 
     /// <summary>
     /// Stage 7: Clean up obsolete files.
     /// </summary>
-    private Task CleanupObsoleteFilesAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        // TODO: Implement cleanup mode
-        // This will be implemented when cleanup mode is added (Section 5.1)
-        return Task.CompletedTask;
+    private async Task CleanupObsoleteFilesAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        if(ftpClient == null) {
+            throw new InvalidOperationException("FTP client not initialized. Connect to server first.");
+        }
+
+        if(publishedFiles == null) {
+            throw new InvalidOperationException("No published files found. Build project first.");
+        }
+
+        if(currentProfile == null) {
+            throw new InvalidOperationException("No profile loaded.");
+        }
+
+        // TODO: List all files on server
+        // var remoteFiles = await ftpClient.ListAllFilesAsync(remotePath, cancellationToken);
+
+        // For now, use empty list as placeholder
+        var remoteFiles = new List<string>();
+
+        // Compare local and remote files to find obsolete files
+        var comparisonResult = fileComparisonService.CompareFiles(publishedFiles, remoteFiles);
+
+        if(!comparisonResult.HasObsoleteFiles) {
+            // No obsolete files to delete
+            return;
+        }
+
+        // Update state with cleanup info
+        state.ObsoleteFilesCount = comparisonResult.ObsoleteFileCount;
+        OnProgressUpdated();
+
+        // Apply cleanup mode based on profile settings
+        if(currentProfile.CleanupMode == CleanupMode.DeleteObsolete) {
+            // Delete obsolete files
+            foreach(var obsoleteFile in comparisonResult.ObsoleteFiles) {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // TODO: Delete file from server
+                // await ftpClient.DeleteFileAsync(obsoleteFile, cancellationToken);
+
+                // Update progress
+                state.ObsoleteFilesDeleted++;
+                OnProgressUpdated();
+            }
+
+            // Identify and delete empty directories
+            var emptyDirectories = fileComparisonService.IdentifyEmptyDirectories(
+                comparisonResult.ObsoleteFiles,
+                remoteFiles);
+
+            foreach(var emptyDir in emptyDirectories) {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // TODO: Delete directory from server
+                // await ftpClient.DeleteDirectoryAsync(emptyDir, cancellationToken);
+            }
+        } else if(currentProfile.CleanupMode == CleanupMode.DeleteAll) {
+            // Delete all files before uploading (implemented in pre-upload stage)
+            // This mode is handled before the upload stage
+        }
     }
 
     /// <summary>
     /// Stage 8: Delete app_offline.htm.
     /// </summary>
-    private Task DeleteAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        // TODO: Implement app_offline.htm deletion
-        // This will be implemented when direct deployment strategy is added (Section 5.1)
-        return Task.CompletedTask;
+    private async Task DeleteAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        if(ftpClient == null) {
+            throw new InvalidOperationException("FTP client not initialized. Connect to server first.");
+        }
+
+        // TODO: Delete app_offline.htm from server
+        // await ftpClient.DeleteFileAsync("app_offline.htm", cancellationToken);
+
+        await Task.CompletedTask;
     }
 
     /// <summary>

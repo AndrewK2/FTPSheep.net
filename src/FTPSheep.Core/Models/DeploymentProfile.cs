@@ -72,6 +72,12 @@ public sealed class DeploymentProfile {
     /// </summary>
     public bool AppOfflineEnabled { get; set; } = true;
 
+    /// <summary>
+    /// Gets or sets the custom app_offline.htm template content.
+    /// If null or empty, the default template will be used.
+    /// </summary>
+    public string? AppOfflineTemplate { get; set; }
+
     // Obsolete properties for backward compatibility
     // These will be removed in V2.0
 

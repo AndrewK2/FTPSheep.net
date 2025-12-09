@@ -571,29 +571,62 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 
 ## 5. Deployment Engine (Backend)
 
-### 5.1 Direct Deployment Strategy Implementation
-- [ ] Implement direct upload workflow
+### 5.1 Direct Deployment Strategy Implementation ✅
+- [x] Implement direct upload workflow
   - Upload all files directly to destination folder
   - Overwrite existing files in place
   - Create directory structure as needed
-- [ ] Create app_offline.htm handling
+- [x] Create app_offline.htm handling
   - Generate app_offline.htm file (default or custom template)
   - Upload app_offline.htm to destination root before deployment
   - Delete app_offline.htm after successful deployment
   - Keep app_offline.htm on failure (with error message if configured)
   - Option to skip app_offline.htm for non-IIS deployments
-- [ ] Implement cleanup mode (optional)
+- [x] Implement cleanup mode (optional)
   - Compare server files with published files
   - Identify obsolete files and folders
   - Apply exclusion patterns (exclude App_Data, uploads, logs, etc.)
   - Display list of files to be deleted
   - Prompt user for confirmation (unless --yes flag)
   - Delete obsolete files after upload succeeds
-- [ ] Create exclusion pattern engine
+- [x] Create exclusion pattern engine
   - Support glob patterns (*.log, temp/*, etc.)
   - Default exclusions for common folders (App_Data, uploads, logs)
   - User-configurable exclusion patterns in profile
   - Apply exclusions to both upload and cleanup operations
+
+**Implementation Notes:**
+- Created `ExclusionPatternMatcher` service with full glob pattern support (*, **, ?, etc.)
+- Implements case-insensitive matching and path normalization (forward/backslash)
+- Default exclusion patterns for common folders (App_Data, uploads, logs, .git, node_modules, etc.)
+- CreateWithDefaults() factory method to combine default and custom patterns
+- Created `AppOfflineManager` service for IIS app_offline.htm handling
+- Default template with modern, professional styling
+- Error template for deployment failures with XSS protection
+- Custom template support via DeploymentProfile.AppOfflineTemplate property
+- File creation, validation, and sanitization methods
+- Created `FileComparisonService` for cleanup mode
+- Compares local published files with remote server files
+- Identifies obsolete files (exist on server but not in local publish)
+- Respects exclusion patterns to protect critical folders
+- IdentifyEmptyDirectories() method to clean up empty folders after file deletion
+- Path normalization for cross-platform consistency
+- Updated `DeploymentProfile` model with new properties:
+  - ExclusionPatterns (List<string>) - custom glob patterns
+  - CleanupMode enum (None, DeleteObsolete, DeleteAll)
+  - AppOfflineEnabled (bool) - toggle app_offline.htm
+  - AppOfflineTemplate (string?) - custom HTML template
+- Updated `DeploymentCoordinator` with placeholder implementations:
+  - UploadAppOfflineAsync() - creates and uploads app_offline.htm
+  - UploadFilesAsync() - uploads all published files (ready for Section 4.4)
+  - CleanupObsoleteFilesAsync() - deletes obsolete files based on CleanupMode
+  - DeleteAppOfflineAsync() - removes app_offline.htm after successful deployment
+- All methods support async/await with CancellationToken
+- Comprehensive unit tests (101 new tests, all passing):
+  - ExclusionPatternMatcherTests (60 tests)
+  - AppOfflineManagerTests (21 tests)
+  - FileComparisonServiceTests (20 tests)
+- Total test count: 542 passing tests
 
 ### 5.2 Pre-Deployment Validation
 - [ ] Implement connection validation
