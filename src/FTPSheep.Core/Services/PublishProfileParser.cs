@@ -170,8 +170,7 @@ public class PublishProfileParser
     /// <summary>
     /// Gets the value of an XML element by name (ignoring namespace).
     /// </summary>
-    private static string? GetElementValue(XElement parent, string elementName)
-    {
-        return parent.Elements().FirstOrDefault(e => e.Name.LocalName == elementName)?.Value;
+    private static string? GetElementValue(XElement parent, string elementName) {
+        return parent.Elements().FirstOrDefault(e => e.Name.LocalName.Equals(elementName, StringComparison.OrdinalIgnoreCase))?.Value;
     }
 }
