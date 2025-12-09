@@ -11,24 +11,6 @@ public class BuildToolLocatorTests {
     }
 
     [Fact]
-    public void IsDotnetCliAvailable_ShouldReturnBoolean() {
-        // Act
-        var result = locator.IsDotnetCliAvailable();
-
-        // Assert - Just verify it returns a boolean without throwing
-        Assert.True(result is true or false);
-    }
-
-    [Fact]
-    public void IsMSBuildAvailable_ShouldReturnBoolean() {
-        // Act
-        var result = locator.IsMsBuildAvailable();
-
-        // Assert - Just verify it returns a boolean without throwing
-        Assert.True(result is true or false);
-    }
-
-    [Fact]
     public void LocateDotnetCli_WhenAvailable_ShouldReturnValidPath() {
         // Arrange & Act
         if(!locator.IsDotnetCliAvailable()) {
