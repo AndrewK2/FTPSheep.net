@@ -4,11 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace FTPSheep.Tests.Logging;
 
 public class FileLoggerTests : IDisposable {
-    private readonly string testLogDirectory;
-
-    public FileLoggerTests() {
-        testLogDirectory = Path.Combine(Path.GetTempPath(), $"ftpsheep-logs-{Guid.NewGuid()}");
-    }
+    private readonly string testLogDirectory = Path.Combine(Path.GetTempPath(), $"ftpsheep-logs-{Guid.NewGuid()}");
 
     public void Dispose() {
         if(Directory.Exists(testLogDirectory)) {

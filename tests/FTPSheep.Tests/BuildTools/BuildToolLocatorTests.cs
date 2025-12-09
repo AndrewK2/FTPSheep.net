@@ -4,11 +4,7 @@ using FTPSheep.BuildTools.Services;
 namespace FTPSheep.Tests.BuildTools;
 
 public class BuildToolLocatorTests {
-    private readonly BuildToolLocator locator;
-
-    public BuildToolLocatorTests() {
-        locator = new BuildToolLocator();
-    }
+    private readonly BuildToolLocator locator = new();
 
     [Fact]
     public void LocateDotnetCli_WhenAvailable_ShouldReturnValidPath() {

@@ -4,11 +4,7 @@ using FTPSheep.BuildTools.Services;
 namespace FTPSheep.Tests.BuildTools;
 
 public class MsBuildWrapperTests {
-    private readonly MsBuildWrapper wrapper;
-
-    public MsBuildWrapperTests() {
-        wrapper = new MsBuildWrapper();
-    }
+    private readonly MsBuildWrapper wrapper = new();
 
     [Fact]
     public void BuildArguments_WithMinimalOptions_GeneratesCorrectCommand() {

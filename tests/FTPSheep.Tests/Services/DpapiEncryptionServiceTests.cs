@@ -4,11 +4,7 @@ using FTPSheep.Core.Services;
 namespace FTPSheep.Tests.Services;
 
 public class DpapiEncryptionServiceTests {
-    private readonly DpapiEncryptionService encryptionService;
-
-    public DpapiEncryptionServiceTests() {
-        encryptionService = new DpapiEncryptionService();
-    }
+    private readonly DpapiEncryptionService encryptionService = new();
 
     [Fact]
     public void Encrypt_WithValidPlainText_ReturnsBase64String() {

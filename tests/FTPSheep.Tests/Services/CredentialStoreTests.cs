@@ -5,13 +5,8 @@ using FTPSheep.Core.Utils;
 namespace FTPSheep.Tests.Services;
 
 public class CredentialStoreTests : IDisposable {
-    private readonly CredentialStore credentialStore;
-    private readonly string testProfileName;
-
-    public CredentialStoreTests() {
-        credentialStore = new CredentialStore();
-        testProfileName = "test-profile";
-    }
+    private readonly CredentialStore credentialStore = new();
+    private readonly string testProfileName = "test-profile";
 
     public void Dispose() {
         // Clean up any credentials created during tests

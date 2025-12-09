@@ -51,7 +51,7 @@ public class PublishProfileParser {
         }
 
         try {
-            using var stream = new FileStream(pubxmlPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+            await using var stream = new FileStream(pubxmlPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
             var doc = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
             var profile = ParseProfileXml(doc);
             profile.SourceFilePath = pubxmlPath;

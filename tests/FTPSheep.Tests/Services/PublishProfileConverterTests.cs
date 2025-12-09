@@ -5,11 +5,7 @@ using FTPSheep.Core.Services;
 namespace FTPSheep.Tests.Services;
 
 public class PublishProfileConverterTests {
-    private readonly PublishProfileConverter converter;
-
-    public PublishProfileConverterTests() {
-        converter = new PublishProfileConverter();
-    }
+    private readonly PublishProfileConverter converter = new();
 
     #region Convert Tests
 

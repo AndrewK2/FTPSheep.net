@@ -4,11 +4,7 @@ using FTPSheep.BuildTools.Services;
 namespace FTPSheep.Tests.BuildTools;
 
 public class ProjectTypeClassifierTests {
-    private readonly ProjectTypeClassifier classifier;
-
-    public ProjectTypeClassifierTests() {
-        classifier = new ProjectTypeClassifier();
-    }
+    private readonly ProjectTypeClassifier classifier = new();
 
     [Fact]
     public void IsDotNetFramework_WithFramework472_ShouldReturnTrue() {
