@@ -148,9 +148,10 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings> {
 
             // Prompt for project path if not set
             if(string.IsNullOrWhiteSpace(convertedProfile.ProjectPath)) {
+                var defaultProjectPath = FindProjectFile(pubxmlPath) ?? Directory.GetCurrentDirectory();
                 var projectPath = AnsiConsole.Ask(
                     "Enter path to .csproj file:",
-                    Directory.GetCurrentDirectory());
+                    defaultProjectPath);
                 convertedProfile.ProjectPath = projectPath;
             }
 
@@ -169,5 +170,38 @@ internal sealed class ImportCommand : Command<ImportCommand.Settings> {
             AnsiConsole.MarkupLine($"[red]Error:[/] {ex.Message}");
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Searches for a .csproj, .vbproj, or .fsproj file starting from the .pubxml file's directory and moving up to parent directories.
+    /// </summary>
+    /// <param name="pubxmlPath">The path to the .pubxml file to use as the starting point.</param>
+    /// <returns>The path to the first project file found, or null if none found.</returns>
+    private static string? FindProjectFile(string pubxmlPath) {
+        // Start from the directory containing the .pubxml file
+        var pubxmlDir = Path.GetDirectoryName(pubxmlPath);
+        if(string.IsNullOrEmpty(pubxmlDir)) {
+            return null;
+        }
+
+        var currentDir = new DirectoryInfo(pubxmlDir);
+
+        while(currentDir != null) {
+            // Search for project files in order of preference
+            var projectExtensions = new[] { "*.csproj", "*.vbproj", "*.fsproj" };
+
+            foreach(var extension in projectExtensions) {
+                var projectFiles = currentDir.GetFiles(extension, SearchOption.TopDirectoryOnly);
+                if(projectFiles.Length > 0) {
+                    // Return the first found project file
+                    return projectFiles[0].FullName;
+                }
+            }
+
+            // Move to parent directory
+            currentDir = currentDir.Parent;
+        }
+
+        return null;
     }
 }
