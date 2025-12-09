@@ -142,6 +142,6 @@ public static partial class PathResolver {
         return false;
     }
 
-    [GeneratedRegex(@"^[a-zA-Z0-9_-]+$")]
+    [GeneratedRegex("^[.a-zA-Z0-9_-]+$")]
     private static partial Regex ProfileNameRegex();
 }
