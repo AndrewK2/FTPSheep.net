@@ -1,5 +1,8 @@
-using FTPSheep.Core.Models;
 using FTPSheep.BuildTools.Models;
+using FTPSheep.Core.Models;
+using FTPSheep.Protocols.Interfaces;
+using FTPSheep.Protocols.Models;
+using FTPSheep.Protocols.Services;
 
 namespace FTPSheep.Core.Services;
 
@@ -14,7 +17,8 @@ public class DeploymentCoordinator {
     private CancellationTokenSource? cancellationTokenSource;
 
     // Deployment context (populated during execution)
-    private object? ftpClient;  // Will be IFtpClient when interface is defined
+    private IFtpClient? ftpClient;
+    private ConcurrentUploadEngine? uploadEngine;
     private List<FileMetadata>? publishedFiles;
     private string? publishOutputPath;
     private DeploymentProfile? currentProfile;
@@ -220,10 +224,9 @@ public class DeploymentCoordinator {
         await File.WriteAllTextAsync(tempPath, appOfflineContent, cancellationToken);
 
         try {
-            // Upload to server (actual implementation will use ftpClient when IFtpClient is available)
-            // For now, this is a placeholder that creates the structure
-            // TODO: Upload temp file to server root as app_offline.htm
-            // await ftpClient.UploadFileAsync(tempPath, "app_offline.htm", cancellationToken);
+            // Upload to server root as app_offline.htm
+            await ftpClient.UploadFileAsync(tempPath, "app_offline.htm",
+                overwrite: true, createRemoteDir: false, cancellationToken);
         } finally {
             // Clean up temp file
             if(File.Exists(tempPath)) {
@@ -236,12 +239,16 @@ public class DeploymentCoordinator {
     /// Stage 6: Upload all published files.
     /// </summary>
     private async Task UploadFilesAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        if(ftpClient == null) {
-            throw new InvalidOperationException("FTP client not initialized. Connect to server first.");
+        if(uploadEngine == null) {
+            throw new InvalidOperationException("Upload engine not initialized. Connect to server first.");
         }
 
         if(publishedFiles == null || publishedFiles.Count == 0) {
             throw new InvalidOperationException("No published files found. Build project first.");
+        }
+
+        if(publishOutputPath == null) {
+            throw new InvalidOperationException("Publish output path not set. Build project first.");
         }
 
         // Update state with total files and size
@@ -249,26 +256,63 @@ public class DeploymentCoordinator {
         state.TotalSize = publishedFiles.Sum(f => f.Size);
         OnProgressUpdated();
 
-        // TODO: Implement concurrent file upload when Section 4.4 is completed
-        // For now, this is a placeholder for the upload logic
-        // The actual implementation will:
-        // 1. Create upload queue with all files
-        // 2. Upload files concurrently (respecting MaxConcurrentUploads)
-        // 3. Update progress after each file upload
-        // 4. Handle upload failures and retries
-        // 5. Create remote directories as needed
+        // Create upload tasks from published files
+        var uploadTasks = publishedFiles.Select(file => {
+            // Calculate remote path relative to the remote root
+            var relativePath = Path.GetRelativePath(publishOutputPath, file.AbsolutePath);
+            var remotePath = relativePath.Replace('\\', '/'); // Normalize to forward slashes for FTP
 
-        foreach(var file in publishedFiles) {
-            cancellationToken.ThrowIfCancellationRequested();
+            return new UploadTask {
+                LocalPath = file.AbsolutePath,
+                RemotePath = remotePath,
+                FileSize = file.Size,
+                Priority = 0, // Could be set based on file type or size
+                Overwrite = true,
+                CreateRemoteDir = true
+            };
+        }).ToList();
 
-            // TODO: Upload file to server
-            // await ftpClient.UploadFileAsync(file.AbsolutePath, remotePath, cancellationToken);
+        // Subscribe to upload events for progress tracking
+        uploadEngine.ProgressUpdated += OnUploadProgressUpdated;
+        uploadEngine.FileUploaded += OnFileUploaded;
 
-            // Update progress
-            state.FilesUploaded++;
-            state.SizeUploaded += file.Size;
-            OnProgressUpdated();
+        try {
+            // Execute concurrent uploads
+            var results = await uploadEngine.UploadFilesAsync(uploadTasks, cancellationToken);
+
+            // Update state with final results
+            var successfulUploads = results.Count(r => r.Success);
+            var failedUploads = results.Count(r => !r.Success);
+
+            if(failedUploads > 0) {
+                var failedFiles = results.Where(r => !r.Success)
+                    .Select(r => r.Task.RemotePath)
+                    .ToList();
+                throw new InvalidOperationException(
+                    $"Failed to upload {failedUploads} file(s): {string.Join(", ", failedFiles)}");
+            }
+        } finally {
+            // Unsubscribe from events
+            uploadEngine.ProgressUpdated -= OnUploadProgressUpdated;
+            uploadEngine.FileUploaded -= OnFileUploaded;
         }
+    }
+
+    /// <summary>
+    /// Handles upload progress updates from the concurrent upload engine.
+    /// </summary>
+    private void OnUploadProgressUpdated(object? sender, UploadProgress progress) {
+        state.FilesUploaded = progress.CompletedFiles;
+        state.SizeUploaded = progress.UploadedBytes;
+        OnProgressUpdated();
+    }
+
+    /// <summary>
+    /// Handles individual file upload completion from the concurrent upload engine.
+    /// </summary>
+    private void OnFileUploaded(object? sender, UploadResult result) {
+        // Individual file upload completed - progress is tracked via OnUploadProgressUpdated
+        // This can be used for detailed logging if needed
     }
 
     /// <summary>
@@ -344,10 +388,8 @@ public class DeploymentCoordinator {
             throw new InvalidOperationException("FTP client not initialized. Connect to server first.");
         }
 
-        // TODO: Delete app_offline.htm from server
-        // await ftpClient.DeleteFileAsync("app_offline.htm", cancellationToken);
-
-        await Task.CompletedTask;
+        // Delete app_offline.htm from server
+        await ftpClient.DeleteFileAsync("app_offline.htm", cancellationToken);
     }
 
     /// <summary>

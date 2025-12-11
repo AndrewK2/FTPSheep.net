@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using FTPSheep.Protocols.Exceptions;
+using FTPSheep.Protocols.Interfaces;
 using FTPSheep.Protocols.Models;
 
 namespace FTPSheep.Protocols.Services;
@@ -11,7 +12,7 @@ public class ConcurrentUploadEngine : IDisposable {
     private readonly FtpConnectionConfig config;
     private readonly int maxConcurrency;
     private readonly int maxRetries;
-    private readonly ConcurrentBag<FtpClientService> clientPool;
+    private readonly ConcurrentBag<IFtpClient> clientPool;
     private readonly SemaphoreSlim connectionSemaphore;
     private bool disposed;
 
@@ -57,7 +58,7 @@ public class ConcurrentUploadEngine : IDisposable {
 
         this.maxConcurrency = maxConcurrency;
         this.maxRetries = maxRetries;
-        this.clientPool = new ConcurrentBag<FtpClientService>();
+        this.clientPool = new ConcurrentBag<IFtpClient>();
         this.connectionSemaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
     }
 
@@ -132,7 +133,7 @@ public class ConcurrentUploadEngine : IDisposable {
     /// Uploads a single file with retry logic.
     /// </summary>
     private async Task<UploadResult> UploadWithRetryAsync(
-        FtpClientService client,
+        IFtpClient client,
         UploadTask task,
         CancellationToken cancellationToken) {
         var startTime = DateTime.UtcNow;
@@ -173,7 +174,7 @@ public class ConcurrentUploadEngine : IDisposable {
     /// <summary>
     /// Gets or creates an FTP client from the pool.
     /// </summary>
-    private async Task<FtpClientService> GetOrCreateClientAsync(CancellationToken cancellationToken) {
+    private async Task<IFtpClient> GetOrCreateClientAsync(CancellationToken cancellationToken) {
         // Wait for available slot
         await connectionSemaphore.WaitAsync(cancellationToken);
 
@@ -187,8 +188,8 @@ public class ConcurrentUploadEngine : IDisposable {
             client.Dispose();
         }
 
-        // Create and connect new client
-        var newClient = new FtpClientService(config);
+        // Create and connect new client using factory
+        var newClient = FtpClientFactory.CreateClient(config);
         await newClient.ConnectAsync(cancellationToken);
 
         return newClient;
@@ -197,7 +198,7 @@ public class ConcurrentUploadEngine : IDisposable {
     /// <summary>
     /// Returns an FTP client to the pool.
     /// </summary>
-    private void ReturnClientToPool(FtpClientService client) {
+    private void ReturnClientToPool(IFtpClient client) {
         if(client.IsConnected) {
             clientPool.Add(client);
         } else {
