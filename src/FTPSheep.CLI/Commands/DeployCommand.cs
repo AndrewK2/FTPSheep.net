@@ -425,7 +425,7 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
                     uploadTask.Description = $"[cyan]Uploading[/] ({e.State.FilesUploaded}/{e.State.TotalFiles})";
                 };
 
-                // Build deployment options
+                // Build deployment options with pre-loaded data
                 var options = new DeploymentOptions {
                     ProfileName = profile.Name,
                     ProjectPath = profile.ProjectPath,
@@ -435,7 +435,9 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
                     SkipConfirmation = true, // Already confirmed
                     DryRun = settings.DryRun,
                     BuildConfiguration = settings.Configuration,
-                    MaxConcurrentUploads = profile.Concurrency
+                    MaxConcurrentUploads = profile.Concurrency,
+                    Profile = profile,           // Pass pre-loaded profile
+                    PublishOutput = publishOutput // Pass pre-built output
                 };
 
                 // Execute deployment

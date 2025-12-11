@@ -193,12 +193,21 @@ public class DeploymentCoordinator {
     /// Stage 1: Load profile and validate configuration.
     /// </summary>
     private async Task LoadProfileAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        // Use pre-loaded profile if available
+        if(options.Profile != null) {
+            currentProfile = options.Profile;
+            state.ProfileName = currentProfile.Name;
+            state.TargetHost = currentProfile.Connection.Host;
+            return;
+        }
+
+        // Otherwise, load from service
         if(profileService == null) {
-            throw new InvalidOperationException("ProfileService is required for loading profiles.");
+            throw new InvalidOperationException("ProfileService is required when profile is not pre-loaded.");
         }
 
         if(string.IsNullOrWhiteSpace(options.ProfileName)) {
-            throw new ArgumentException("Profile name is required.", nameof(options));
+            throw new ArgumentException("Profile name is required when profile is not pre-loaded.", nameof(options));
         }
 
         // Load profile from storage
@@ -217,8 +226,20 @@ public class DeploymentCoordinator {
     /// Stage 2: Build and publish project.
     /// </summary>
     private async Task BuildProjectAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        // Use pre-loaded publish output if available
+        if(options.PublishOutput != null) {
+            publishedFiles = options.PublishOutput.Files;
+            publishOutputPath = options.PublishOutput.RootPath;
+
+            if(publishedFiles == null || publishedFiles.Count == 0) {
+                throw new InvalidOperationException("Pre-loaded publish output contains no files.");
+            }
+            return;
+        }
+
+        // Otherwise, build via service
         if(buildService == null) {
-            throw new InvalidOperationException("BuildService is required for building projects.");
+            throw new InvalidOperationException("BuildService is required when publish output is not pre-loaded.");
         }
 
         if(currentProfile == null) {
@@ -667,4 +688,16 @@ public class DeploymentOptions {
     /// Gets or sets the maximum number of concurrent uploads.
     /// </summary>
     public int MaxConcurrentUploads { get; set; } = 4;
+
+    /// <summary>
+    /// Gets or sets a pre-loaded deployment profile (optional).
+    /// If provided, skips the LoadProfile stage.
+    /// </summary>
+    public DeploymentProfile? Profile { get; set; }
+
+    /// <summary>
+    /// Gets or sets pre-scanned publish output (optional).
+    /// If provided, skips the Build stage.
+    /// </summary>
+    public BuildTools.Models.PublishOutput? PublishOutput { get; set; }
 }
