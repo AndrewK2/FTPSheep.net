@@ -14,7 +14,8 @@
       "Bash(dotnet clean:*)",
       "Bash(dotnet test:*)",
       "Bash(dotnet list:*)",
-      "Bash(Remove-Item \"p:\\FTPSheep\\src\\FTPSheep.BuildTools\\Models\\FileMetadata.cs\" -Force)"
+      "Bash(Remove-Item \"p:\\FTPSheep\\src\\FTPSheep.BuildTools\\Models\\FileMetadata.cs\" -Force)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

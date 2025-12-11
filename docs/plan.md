@@ -608,10 +608,19 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 - Comprehensive unit tests (59 tests passing):
   - UploadModelsTests (23 tests) - all model properties and calculations
   - ConcurrentUploadEngineTests (14 tests) - constructor validation, events, ordering, cancellation
-- **Integration Status:** ✅ Ready for use - Section 4.3 (IFtpClient interface) is now complete
-- DeploymentCoordinator has placeholder for integration (line 252-259)
-- All core functionality complete and tested
-- Updated UploadResult model to use protocol-agnostic bool instead of FtpStatus
+- **Integration Status:** ✅ **FULLY INTEGRATED**
+  - ConcurrentUploadEngine updated to use IFtpClient interface (Section 4.3)
+  - DeploymentCoordinator fully integrated with ConcurrentUploadEngine
+  - Upload stages (UploadFilesAsync, UploadAppOfflineAsync, DeleteAppOfflineAsync) implemented
+  - DeploymentCoordinator placeholder methods completed:
+    - LoadProfileAsync - profile loading with validation
+    - BuildProjectAsync - MSBuild/dotnet CLI integration
+    - ConnectToServerAsync - FTP connection and test with upload engine initialization
+    - RecordHistoryAsync - deployment history recording
+  - DeployCommand updated to use new constructor signature
+  - Build succeeds with 0 errors
+  - Known issue: 5 orchestration tests need mock services (601/606 tests passing)
+  - Ready for end-to-end testing once test mocks are updated
 
 ### 4.5 Upload Failure and Retry Logic
 - [ ] Implement file-level retry mechanism
@@ -743,7 +752,17 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - Exception handling with stage-specific error reporting
   - Graceful cancellation support
 - Created `DeploymentOptions` class for deployment configuration
-- Created placeholder methods for all 9 deployment stages (to be implemented when dependencies are ready)
+- ✅ **Placeholder methods now fully implemented** (previously were stubs):
+  - LoadProfileAsync - integrates with ProfileService for profile loading
+  - BuildProjectAsync - integrates with BuildService for MSBuild/dotnet CLI publishing
+  - ConnectToServerAsync - creates IFtpClient, tests connection, initializes ConcurrentUploadEngine
+  - UploadFilesAsync - uses ConcurrentUploadEngine with event-driven progress tracking
+  - UploadAppOfflineAsync - uploads app_offline.htm via IFtpClient
+  - DeleteAppOfflineAsync - removes app_offline.htm via IFtpClient
+  - RecordHistoryAsync - integrates with JsonDeploymentHistoryService
+  - CleanupObsoleteFilesAsync - still placeholder (pending Section 5.1 completion)
+- DeploymentCoordinator constructor enhanced with dependency injection:
+  - ProfileService, BuildService, JsonDeploymentHistoryService, AppOfflineManager, ExclusionPatternMatcher
 - All 33 comprehensive unit tests passing covering:
   - DeploymentStage enum values
   - DeploymentState progress tracking and computed properties

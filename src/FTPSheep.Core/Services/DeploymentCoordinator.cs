@@ -1,4 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using FTPSheep.BuildTools.Models;
+using FTPSheep.BuildTools.Services;
 using FTPSheep.Core.Models;
 using FTPSheep.Protocols.Interfaces;
 using FTPSheep.Protocols.Models;
@@ -14,6 +21,9 @@ public class DeploymentCoordinator {
     private readonly AppOfflineManager appOfflineManager;
     private readonly ExclusionPatternMatcher exclusionMatcher;
     private readonly FileComparisonService fileComparisonService;
+    private readonly ProfileService? profileService;
+    private readonly BuildService? buildService;
+    private readonly JsonDeploymentHistoryService? historyService;
     private CancellationTokenSource? cancellationTokenSource;
 
     // Deployment context (populated during execution)
@@ -36,12 +46,21 @@ public class DeploymentCoordinator {
     /// <summary>
     /// Initializes a new instance of the <see cref="DeploymentCoordinator"/> class.
     /// </summary>
+    /// <param name="profileService">The profile service (optional).</param>
+    /// <param name="buildService">The build service (optional).</param>
+    /// <param name="historyService">The deployment history service (optional).</param>
     /// <param name="appOfflineManager">The app_offline.htm manager (optional).</param>
     /// <param name="exclusionMatcher">The exclusion pattern matcher (optional).</param>
     public DeploymentCoordinator(
+        ProfileService? profileService = null,
+        BuildService? buildService = null,
+        JsonDeploymentHistoryService? historyService = null,
         AppOfflineManager? appOfflineManager = null,
         ExclusionPatternMatcher? exclusionMatcher = null) {
         state = new DeploymentState();
+        this.profileService = profileService;
+        this.buildService = buildService;
+        this.historyService = historyService;
         this.appOfflineManager = appOfflineManager ?? new AppOfflineManager();
         this.exclusionMatcher = exclusionMatcher ?? new ExclusionPatternMatcher();
         this.fileComparisonService = new FileComparisonService(this.exclusionMatcher);
@@ -173,36 +192,141 @@ public class DeploymentCoordinator {
     /// <summary>
     /// Stage 1: Load profile and validate configuration.
     /// </summary>
-    private Task LoadProfileAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        // TODO: Implement profile loading and validation
-        // This will be implemented when profile management is added
-        return Task.CompletedTask;
+    private async Task LoadProfileAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        if(profileService == null) {
+            throw new InvalidOperationException("ProfileService is required for loading profiles.");
+        }
+
+        if(string.IsNullOrWhiteSpace(options.ProfileName)) {
+            throw new ArgumentException("Profile name is required.", nameof(options));
+        }
+
+        // Load profile from storage
+        currentProfile = await profileService.LoadProfileAsync(options.ProfileName, cancellationToken);
+
+        if(currentProfile == null) {
+            throw new InvalidOperationException($"Profile '{options.ProfileName}' not found.");
+        }
+
+        // Update state with profile information
+        state.ProfileName = currentProfile.Name;
+        state.TargetHost = currentProfile.Connection.Host;
     }
 
     /// <summary>
     /// Stage 2: Build and publish project.
     /// </summary>
-    private Task BuildProjectAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        // TODO: Implement build and publish using BuildTools services
-        // This will use MSBuildWrapper or DotnetCliExecutor
-        return Task.CompletedTask;
+    private async Task BuildProjectAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        if(buildService == null) {
+            throw new InvalidOperationException("BuildService is required for building projects.");
+        }
+
+        if(currentProfile == null) {
+            throw new InvalidOperationException("Profile must be loaded before building.");
+        }
+
+        // Determine project path (from options or profile)
+        var projectPath = options.ProjectPath ?? currentProfile.ProjectPath;
+
+        if(string.IsNullOrWhiteSpace(projectPath)) {
+            throw new InvalidOperationException("Project path is required for building.");
+        }
+
+        // Determine output path (use temp directory)
+        var outputPath = Path.Combine(Path.GetTempPath(), "FTPSheep", Guid.NewGuid().ToString());
+
+        // Build and publish the project
+        var buildResult = await buildService.PublishAsync(
+            projectPath,
+            outputPath,
+            currentProfile.Build.Configuration ?? "Release",
+            cancellationToken);
+
+        if(!buildResult.Success) {
+            var errorMessage = buildResult.HasErrors
+                ? string.Join(Environment.NewLine, buildResult.Errors)
+                : buildResult.ErrorOutput;
+            throw new InvalidOperationException(
+                $"Build failed: {errorMessage}");
+        }
+
+        // Store publish output path and scan for files
+        publishOutputPath = buildResult.OutputPath;
+
+        if(string.IsNullOrWhiteSpace(publishOutputPath)) {
+            throw new InvalidOperationException("Build did not produce an output path.");
+        }
+
+        // Scan published files
+        var scanner = new PublishOutputScanner();
+        var publishOutput = await scanner.ScanPublishOutputAsync(
+            publishOutputPath,
+            exclusionPatterns: null,
+            validateOutput: true,
+            cancellationToken);
+        publishedFiles = publishOutput.Files;
+
+        if(publishedFiles == null || publishedFiles.Count == 0) {
+            throw new InvalidOperationException("No files found in publish output directory.");
+        }
     }
 
     /// <summary>
     /// Stage 3: Connect to server and validate connection.
     /// </summary>
-    private Task ConnectToServerAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        // TODO: Implement connection validation using FTP/SFTP services
-        // This will use the Protocol services from Section 4
-        return Task.CompletedTask;
+    private async Task ConnectToServerAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        if(currentProfile == null) {
+            throw new InvalidOperationException("Profile must be loaded before connecting.");
+        }
+
+        // Create FTP connection configuration from profile
+        var ftpConfig = new FtpConnectionConfig {
+            Host = currentProfile.Connection.Host,
+            Port = currentProfile.Connection.Port,
+            Username = currentProfile.Username ?? string.Empty,
+            Password = currentProfile.Password ?? string.Empty,
+            RemoteRootPath = currentProfile.RemotePath,
+            EncryptionMode = currentProfile.Connection.UseSsl
+                ? FluentFTP.FtpEncryptionMode.Explicit
+                : FluentFTP.FtpEncryptionMode.None
+        };
+
+        // Create FTP client and connect
+        ftpClient = FtpClientFactory.CreateClient(ftpConfig);
+        await ftpClient.ConnectAsync(cancellationToken);
+
+        // Test connection and write permissions
+        var canWrite = await ftpClient.TestConnectionAsync(
+            currentProfile.RemotePath,
+            cancellationToken);
+
+        if(!canWrite) {
+            throw new InvalidOperationException(
+                $"Cannot write to remote path: {currentProfile.RemotePath}");
+        }
+
+        // Initialize concurrent upload engine
+        var maxConcurrency = currentProfile.Concurrency > 0
+            ? currentProfile.Concurrency
+            : 4; // default
+
+        uploadEngine = new ConcurrentUploadEngine(ftpConfig, maxConcurrency, maxRetries: currentProfile.RetryCount);
     }
 
     /// <summary>
     /// Stage 4: Display pre-deployment summary and wait for confirmation.
     /// </summary>
     private Task DisplayPreDeploymentSummaryAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        // TODO: Implement pre-deployment summary display
-        // This will calculate file counts, sizes, and prompt for confirmation
+        // Summary information is already tracked in state
+        // This stage is primarily for displaying to the user (handled by CLI layer)
+        // The coordinator just ensures state is populated correctly
+
+        if(publishedFiles == null || publishedFiles.Count == 0) {
+            throw new InvalidOperationException("No files to deploy.");
+        }
+
+        // State is already updated with file counts and sizes
+        // CLI will display this information to the user
         return Task.CompletedTask;
     }
 
@@ -395,10 +519,33 @@ public class DeploymentCoordinator {
     /// <summary>
     /// Stage 9: Record deployment history.
     /// </summary>
-    private Task RecordHistoryAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        // TODO: Implement deployment history recording
-        // This will save deployment results to history
-        return Task.CompletedTask;
+    private async Task RecordHistoryAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        if(historyService == null) {
+            // History recording is optional, skip if service not provided
+            return;
+        }
+
+        if(currentProfile == null) {
+            return;
+        }
+
+        // Create deployment history record
+        TimeSpan duration = (state.CompletedAt.HasValue && state.StartedAt.HasValue)
+            ? state.CompletedAt.Value - state.StartedAt.Value
+            : TimeSpan.Zero;
+
+        var historyEntry = new DeploymentHistoryEntry {
+            Timestamp = DateTime.UtcNow,
+            ProfileName = currentProfile.Name,
+            ServerHost = currentProfile.Connection.Host,
+            FilesUploaded = state.FilesUploaded,
+            TotalBytes = state.SizeUploaded,
+            DurationSeconds = duration.TotalSeconds,
+            Success = true,
+            BuildConfiguration = currentProfile.Build.Configuration
+        };
+
+        await historyService.AddEntryAsync(historyEntry);
     }
 
     /// <summary>

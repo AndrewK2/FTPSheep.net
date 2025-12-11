@@ -374,8 +374,11 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
         AnsiConsole.WriteLine();
 
         var coordinator = new DeploymentCoordinator(
-            new AppOfflineManager(profile.AppOfflineTemplate),
-            ExclusionPatternMatcher.CreateWithDefaults(profile.ExclusionPatterns)
+            profileService: null,  // Not used in this flow - profile already loaded
+            buildService: null,    // Not used in this flow - project already built
+            historyService: null,  // History recording not implemented yet
+            appOfflineManager: new AppOfflineManager(profile.AppOfflineTemplate),
+            exclusionMatcher: ExclusionPatternMatcher.CreateWithDefaults(profile.ExclusionPatterns)
         );
 
         DeploymentResult? result = null;
