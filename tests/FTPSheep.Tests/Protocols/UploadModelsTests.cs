@@ -63,11 +63,10 @@ public class UploadModelsTests {
         var endTime = DateTime.UtcNow;
 
         // Act
-        var result = UploadResult.FromSuccess(task, FtpStatus.Success, startTime, endTime, retryAttempts: 0);
+        var result = UploadResult.FromSuccess(task, true, startTime, endTime, retryAttempts: 0);
 
         // Assert
         Assert.True(result.Success);
-        Assert.Equal(FtpStatus.Success, result.Status);
         Assert.Null(result.ErrorMessage);
         Assert.Null(result.Exception);
         Assert.Equal(0, result.RetryAttempts);
@@ -92,7 +91,6 @@ public class UploadModelsTests {
 
         // Assert
         Assert.False(result.Success);
-        Assert.Equal(FtpStatus.Failed, result.Status);
         Assert.Equal("Upload failed", result.ErrorMessage);
         Assert.Same(exception, result.Exception);
         Assert.Equal(3, result.RetryAttempts);
@@ -111,7 +109,7 @@ public class UploadModelsTests {
         var endTime = DateTime.UtcNow;
 
         // Act
-        var result = UploadResult.FromSuccess(task, FtpStatus.Success, startTime, endTime);
+        var result = UploadResult.FromSuccess(task, true, startTime, endTime);
 
         // Assert
         Assert.Contains("MB/s", result.FormattedSpeed);
@@ -129,7 +127,7 @@ public class UploadModelsTests {
         var endTime = DateTime.UtcNow;
 
         // Act
-        var result = UploadResult.FromSuccess(task, FtpStatus.Success, startTime, endTime);
+        var result = UploadResult.FromSuccess(task, true, startTime, endTime);
 
         // Assert
         Assert.Equal("0 B/s", result.FormattedSpeed);

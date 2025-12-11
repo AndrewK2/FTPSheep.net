@@ -1,5 +1,3 @@
-using FluentFTP;
-
 namespace FTPSheep.Protocols.Models;
 
 /// <summary>
@@ -15,11 +13,6 @@ public class UploadResult {
     /// Gets or sets whether the upload was successful.
     /// </summary>
     public bool Success { get; init; }
-
-    /// <summary>
-    /// Gets or sets the FTP status result.
-    /// </summary>
-    public FtpStatus Status { get; init; }
 
     /// <summary>
     /// Gets or sets the error message (if upload failed).
@@ -66,7 +59,7 @@ public class UploadResult {
     /// </summary>
     public static UploadResult FromSuccess(
         UploadTask task,
-        FtpStatus status,
+        bool success,
         DateTime startedAt,
         DateTime completedAt,
         int retryAttempts = 0) {
@@ -75,8 +68,7 @@ public class UploadResult {
 
         return new UploadResult {
             Task = task,
-            Success = true,
-            Status = status,
+            Success = success,
             Duration = duration,
             BytesPerSecond = bytesPerSecond,
             RetryAttempts = retryAttempts,
@@ -97,7 +89,6 @@ public class UploadResult {
         return new UploadResult {
             Task = task,
             Success = false,
-            Status = FtpStatus.Failed,
             ErrorMessage = exception.Message,
             Exception = exception,
             Duration = completedAt - startedAt,

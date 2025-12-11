@@ -1,13 +1,15 @@
 using FluentFTP;
 using FTPSheep.Protocols.Exceptions;
+using FTPSheep.Protocols.Interfaces;
 using FTPSheep.Protocols.Models;
 
 namespace FTPSheep.Protocols.Services;
 
 /// <summary>
 /// Service for FTP client operations using FluentFTP.
+/// Implements the IFtpClient interface for protocol abstraction.
 /// </summary>
-public class FtpClientService : IDisposable {
+public class FtpClientService : Interfaces.IFtpClient {
     private readonly FtpConnectionConfig config;
     private AsyncFtpClient? client;
     private bool disposed;
@@ -81,8 +83,8 @@ public class FtpClientService : IDisposable {
     /// <param name="overwrite">Whether to overwrite existing files.</param>
     /// <param name="createRemoteDir">Whether to create remote directories if they don't exist.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The upload result.</returns>
-    public async Task<FtpStatus> UploadFileAsync(
+    /// <returns>True if the file was uploaded successfully; otherwise, false.</returns>
+    public async Task<bool> UploadFileAsync(
         string localPath,
         string remotePath,
         bool overwrite = true,
@@ -100,7 +102,8 @@ public class FtpClientService : IDisposable {
                 createRemoteDir,
                 token: cancellationToken);
 
-            return result;
+            // Return true for successful uploads, false for skipped
+            return result == FtpStatus.Success;
         } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to upload file {localPath} to {remotePath}",
@@ -148,14 +151,24 @@ public class FtpClientService : IDisposable {
     /// </summary>
     /// <param name="remotePath">The remote directory path.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Array of file listings.</returns>
-    public async Task<FtpListItem[]> ListDirectoryAsync(
+    /// <returns>Array of remote file information.</returns>
+    public async Task<RemoteFileInfo[]> ListDirectoryAsync(
         string remotePath,
         CancellationToken cancellationToken = default) {
         EnsureConnected();
 
         try {
-            return await client!.GetListing(remotePath, cancellationToken);
+            var items = await client!.GetListing(remotePath, cancellationToken);
+
+            // Convert FtpListItem to protocol-agnostic RemoteFileInfo
+            return items.Select(item => new RemoteFileInfo {
+                FullPath = item.FullName,
+                Name = item.Name,
+                IsDirectory = item.Type == FtpObjectType.Directory,
+                Size = item.Size,
+                LastModified = item.Modified == DateTime.MinValue ? null : item.Modified.ToUniversalTime(),
+                Permissions = item.Chmod > 0 ? item.Chmod : null
+            }).ToArray();
         } catch(Exception ex) {
             throw new FtpException(
                 $"Failed to list directory: {remotePath}",
@@ -277,6 +290,69 @@ public class FtpClientService : IDisposable {
         if(client == null || !client.IsConnected) {
             throw new InvalidOperationException(
                 "FTP client is not connected. Call ConnectAsync first.");
+        }
+    }
+
+    /// <summary>
+    /// Tests the connection to the server and validates write permissions.
+    /// </summary>
+    /// <param name="testPath">Optional path to test write permissions (defaults to root).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the connection is valid and write permissions are confirmed; otherwise, false.</returns>
+    public async Task<bool> TestConnectionAsync(string? testPath = null, CancellationToken cancellationToken = default) {
+        try {
+            // If not connected, try to connect
+            if(!IsConnected) {
+                await ConnectAsync(cancellationToken);
+            }
+
+            // Test connection by getting current directory
+            var currentDir = await client!.GetWorkingDirectory(cancellationToken);
+            if(string.IsNullOrEmpty(currentDir)) {
+                return false;
+            }
+
+            // If testPath is specified, verify write permissions
+            if(!string.IsNullOrWhiteSpace(testPath)) {
+                // Check if path exists
+                if(!await DirectoryExistsAsync(testPath, cancellationToken)) {
+                    return false;
+                }
+
+                // Try to create a test file to verify write permissions
+                var testFileName = $".ftpsheep_test_{Guid.NewGuid():N}.tmp";
+                var testFilePath = testPath.TrimEnd('/') + "/" + testFileName;
+
+                try {
+                    // Create a temporary local file
+                    var tempFile = Path.GetTempFileName();
+                    try {
+                        await File.WriteAllTextAsync(tempFile, "FTPSheep connection test", cancellationToken);
+
+                        // Upload the test file
+                        await UploadFileAsync(tempFile, testFilePath, true, false, cancellationToken);
+
+                        // Delete the test file
+                        await DeleteFileAsync(testFilePath, cancellationToken);
+
+                        return true;
+                    } finally {
+                        // Clean up temp file
+                        if(File.Exists(tempFile)) {
+                            File.Delete(tempFile);
+                        }
+                    }
+                } catch {
+                    // Write permission test failed
+                    return false;
+                }
+            }
+
+            // Connection test succeeded (no write permission test)
+            return true;
+        } catch {
+            // Connection test failed
+            return false;
         }
     }
 
