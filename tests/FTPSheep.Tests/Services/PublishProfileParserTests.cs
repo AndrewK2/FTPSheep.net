@@ -166,28 +166,132 @@ public class PublishProfileParserTests : IDisposable {
         Assert.Throws<ProfileException>(() => parser.ParseProfile(pubxmlPath));
     }
 
+    #endregion
+
+    #region ParseFromString Tests
+
     [Fact]
-    public async Task ParseProfileAsync_WithValidProfile_ParsesCorrectly() {
+    public void ParseFromString_WithNullContent_ThrowsArgumentException() {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => parser.ParseFromString(null!));
+    }
+
+    [Fact]
+    public void ParseFromString_WithEmptyContent_ThrowsArgumentException() {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => parser.ParseFromString(string.Empty));
+    }
+
+    [Fact]
+    public void ParseFromString_WithValidFtpProfile_ParsesCorrectly() {
         // Arrange
-        var pubxmlPath = Path.Combine(testDirectory, "async-test.pubxml");
+        var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+  <PropertyGroup>
+    <WebPublishMethod>FTP</WebPublishMethod>
+    <PublishUrl>ftp://ftp.example.com/site/wwwroot</PublishUrl>
+    <UserName>testuser</UserName>
+    <DeleteExistingFiles>true</DeleteExistingFiles>
+    <TargetFramework>net8.0</TargetFramework>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishProtocol>ftps</PublishProtocol>
+  </PropertyGroup>
+</Project>";
+
+        // Act
+        var profile = parser.ParseFromString(xml);
+
+        // Assert
+        Assert.Equal("FTP", profile.PublishMethod);
+        Assert.Equal("ftp://ftp.example.com/site/wwwroot", profile.PublishUrl);
+        Assert.Equal("testuser", profile.UserName);
+        Assert.True(profile.DeleteExistingFiles);
+        Assert.Equal("net8.0", profile.TargetFramework);
+        Assert.False(profile.SelfContained);
+        Assert.Equal("win-x64", profile.RuntimeIdentifier);
+        Assert.Equal("ftps", profile.PublishProtocol);
+        Assert.Null(profile.SourceFilePath); // Should be null when parsing from string
+    }
+
+    [Fact]
+    public void ParseFromString_WithPublishMethodElement_ParsesCorrectly() {
+        // Arrange
+        var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+  <PropertyGroup>
+    <PublishMethod>FTP</PublishMethod>
+    <PublishUrl>ftp.example.com</PublishUrl>
+  </PropertyGroup>
+</Project>";
+
+        // Act
+        var profile = parser.ParseFromString(xml);
+
+        // Assert
+        Assert.Equal("FTP", profile.PublishMethod);
+        Assert.Equal("ftp.example.com", profile.PublishUrl);
+    }
+
+    [Fact]
+    public void ParseFromString_WithAdditionalProperties_CapturesProperties() {
+        // Arrange
         var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
   <PropertyGroup>
     <WebPublishMethod>FTP</WebPublishMethod>
     <PublishUrl>ftp.example.com</PublishUrl>
-    <UserName>asyncuser</UserName>
+    <CustomProperty>CustomValue</CustomProperty>
+    <AnotherProperty>AnotherValue</AnotherProperty>
   </PropertyGroup>
 </Project>";
-        await File.WriteAllTextAsync(pubxmlPath, xml);
 
         // Act
-        var profile = await parser.ParseProfileAsync(pubxmlPath);
+        var profile = parser.ParseFromString(xml);
 
         // Assert
-        Assert.Equal("FTP", profile.PublishMethod);
-        Assert.Equal("ftp.example.com", profile.PublishUrl);
-        Assert.Equal("asyncuser", profile.UserName);
-        Assert.Equal(pubxmlPath, profile.SourceFilePath);
+        Assert.Equal(2, profile.AdditionalProperties.Count);
+        Assert.Equal("CustomValue", profile.AdditionalProperties["CustomProperty"]);
+        Assert.Equal("AnotherValue", profile.AdditionalProperties["AnotherProperty"]);
+    }
+
+    [Fact]
+    public void ParseFromString_WithInvalidXml_ThrowsProfileException() {
+        // Arrange
+        var invalidXml = "invalid xml content <><";
+
+        // Act & Assert
+        Assert.Throws<ProfileException>(() => parser.ParseFromString(invalidXml));
+    }
+
+    [Fact]
+    public void ParseFromString_WithoutPropertyGroup_ThrowsProfileException() {
+        // Arrange
+        var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+</Project>";
+
+        // Act & Assert
+        Assert.Throws<ProfileException>(() => parser.ParseFromString(xml));
+    }
+
+    [Fact]
+    public void ParseFromString_WithExcludeAppDataTrue_ParsesCorrectly() {
+        // Arrange
+        var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+  <PropertyGroup>
+    <WebPublishMethod>FTP</WebPublishMethod>
+    <PublishUrl>ftp.example.com</PublishUrl>
+    <ExcludeApp_Data>true</ExcludeApp_Data>
+  </PropertyGroup>
+</Project>";
+
+        // Act
+        var profile = parser.ParseFromString(xml);
+
+        // Assert
+        Assert.True(profile.ExcludeAppData);
     }
 
     #endregion

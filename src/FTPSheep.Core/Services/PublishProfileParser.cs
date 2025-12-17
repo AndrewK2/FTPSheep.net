@@ -9,6 +9,26 @@ namespace FTPSheep.Core.Services;
 /// </summary>
 public class PublishProfileParser {
     /// <summary>
+    /// Parses a Visual Studio publish profile from XML content.
+    /// </summary>
+    /// <param name="xmlContent">The XML content of the publish profile.</param>
+    /// <returns>The parsed publish profile.</returns>
+    /// <exception cref="ArgumentException">If the content is null or empty.</exception>
+    /// <exception cref="ProfileException">If the content cannot be parsed.</exception>
+    public PublishProfile ParseFromString(string xmlContent) {
+        if(string.IsNullOrWhiteSpace(xmlContent)) {
+            throw new ArgumentException("XML content cannot be null or empty.", nameof(xmlContent));
+        }
+
+        try {
+            var doc = XDocument.Parse(xmlContent);
+            return ParseProfileXml(doc);
+        } catch(Exception ex) when(ex is not ProfileException && ex is not ArgumentException) {
+            throw new ProfileException($"Failed to parse publish profile XML: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
     /// Parses a Visual Studio publish profile from a file path.
     /// </summary>
     /// <param name="pubxmlPath">The path to the .pubxml file.</param>
@@ -26,37 +46,13 @@ public class PublishProfileParser {
         }
 
         try {
-            var doc = XDocument.Load(pubxmlPath);
-            var profile = ParseProfileXml(doc);
+            var xmlContent = File.ReadAllText(pubxmlPath);
+            var profile = ParseFromString(xmlContent);
             profile.SourceFilePath = pubxmlPath;
             return profile;
-        } catch(Exception ex) when(ex is not ProfileException && ex is not FileNotFoundException && ex is not ArgumentException) {
+        } catch(ProfileException ex) {
             throw new ProfileException($"Failed to parse publish profile '{pubxmlPath}': {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
-    /// Parses a Visual Studio publish profile asynchronously.
-    /// </summary>
-    /// <param name="pubxmlPath">The path to the .pubxml file.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The parsed publish profile.</returns>
-    public async Task<PublishProfile> ParseProfileAsync(string pubxmlPath, CancellationToken cancellationToken = default) {
-        if(string.IsNullOrWhiteSpace(pubxmlPath)) {
-            throw new ArgumentException("Profile path cannot be null or empty.", nameof(pubxmlPath));
-        }
-
-        if(!File.Exists(pubxmlPath)) {
-            throw new FileNotFoundException($"Publish profile not found: {pubxmlPath}", pubxmlPath);
-        }
-
-        try {
-            await using var stream = new FileStream(pubxmlPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
-            var doc = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
-            var profile = ParseProfileXml(doc);
-            profile.SourceFilePath = pubxmlPath;
-            return profile;
-        } catch(Exception ex) when(ex is not ProfileException && ex is not FileNotFoundException && ex is not ArgumentException) {
+        } catch(Exception ex) when(ex is not FileNotFoundException && ex is not ArgumentException) {
             throw new ProfileException($"Failed to parse publish profile '{pubxmlPath}': {ex.Message}", ex);
         }
     }

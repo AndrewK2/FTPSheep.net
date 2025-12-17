@@ -9,6 +9,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\FTPSheep.Protocols\FTPSheep.Protocols.csproj" />
 		<ProjectReference Include="..\FTPSheep.BuildTools\FTPSheep.BuildTools.csproj" />
+		<ProjectReference Include="..\FTPSheep.Utilities\FTPSheep.Utilities.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

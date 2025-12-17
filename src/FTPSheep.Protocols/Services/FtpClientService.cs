@@ -34,8 +34,7 @@ public class FtpClientService : Interfaces.IFtpClient {
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ConnectAsync(CancellationToken cancellationToken = default) {
         try {
-            client = new AsyncFtpClient(
-                config.Host,
+            client = new AsyncFtpClient(config.Host,
                 config.Username,
                 config.Password,
                 config.Port);
@@ -56,8 +55,7 @@ public class FtpClientService : Interfaces.IFtpClient {
                 await client.SetWorkingDirectory(config.RemoteRootPath, cancellationToken);
             }
         } catch(Exception ex) when(ex is not FtpException) {
-            throw new FtpException(
-                $"Failed to connect to FTP server {config.Host}:{config.Port}",
+            throw new FtpException($"Failed to connect to FTP server {config.Host}:{config.Port}",
                 ex) {
                 Host = config.Host,
                 Port = config.Port,

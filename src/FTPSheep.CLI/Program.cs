@@ -1,5 +1,6 @@
 using FTPSheep.CLI;
 using FTPSheep.CLI.Commands;
+using FTPSheep.Utilities.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using NLog.Extensions.Logging;
@@ -21,6 +22,7 @@ try {
 
         config.AddCommand<DeployCommand>("deploy")
             .WithDescription("Deploy a .NET application to FTP server")
+            .WithExample("deploy", "--file", @"c:\projects\website1\Properties\PublishProfiles\production.ftpsheep")
             .WithExample("deploy", "--profile", "production")
             .WithExample("deploy", "--yes");
 
@@ -52,7 +54,7 @@ try {
     logger.Info("FTPSheep.NET shutting down with exit code {ExitCode}", result);
     return result;
 } catch(Exception ex) {
-    logger.Fatal(ex, "Stopped program because of exception");
+    logger.Error(ex, "Stopped program because of exception\n" + ex.GetDescription());
     return 1;
 } finally {
     LogManager.Shutdown();

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FTPSheep.Core.Services;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -11,6 +12,7 @@ namespace FTPSheep.CLI.Commands;
 /// <summary>
 /// Command to import Visual Studio publish profile.
 /// </summary>
+[UsedImplicitly]
 internal sealed class ImportCommand(ILogger<ImportCommand> logger) : Command<ImportCommand.Settings> {
     /// <summary>
     /// Settings for the import command.
@@ -140,10 +142,15 @@ internal sealed class ImportCommand(ILogger<ImportCommand> logger) : Command<Imp
 
             // Prompt for project path if not set
             if(string.IsNullOrWhiteSpace(convertedProfile.ProjectPath)) {
-                var defaultProjectPath = FindProjectFile(pubxmlPath) ?? Directory.GetCurrentDirectory();
-                var projectPath = AnsiConsole.Ask(
-                    "Enter path to .csproj file:",
-                    defaultProjectPath);
+                var defaultProjectPath = FindProjectFile(pubxmlPath);
+                string projectPath;
+
+                if(!string.IsNullOrEmpty(defaultProjectPath)) {
+                    projectPath = AnsiConsole.Ask("Enter path to .csproj file:", defaultProjectPath);
+                } else {
+                    projectPath = AnsiConsole.Ask<string>("Enter path to .csproj file:");
+                }
+
                 convertedProfile.ProjectPath = projectPath;
             }
 
@@ -210,7 +217,7 @@ internal sealed class ImportCommand(ILogger<ImportCommand> logger) : Command<Imp
         // Start from the directory containing the .pubxml file
         var pubxmlDir = Path.GetDirectoryName(pubxmlPath);
         if(string.IsNullOrEmpty(pubxmlDir)) {
-            return null;
+            pubxmlDir = Directory.GetCurrentDirectory();
         }
 
         var currentDir = new DirectoryInfo(pubxmlDir);

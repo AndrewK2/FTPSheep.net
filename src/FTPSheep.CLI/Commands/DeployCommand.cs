@@ -5,6 +5,7 @@ using FTPSheep.BuildTools.Models;
 using FTPSheep.BuildTools.Services;
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
+using FTPSheep.Utilities.Logging;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -74,10 +75,15 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
             if(profile == null) {
                 return 1;
             }
-
+            
             // Validate profile
             var validationErrors = ValidateProfile(profile);
             if(validationErrors.Count > 0) {
+                logger
+                    .BuildErrorMessage("Profile validation failed")
+                    .Add("Errors", validationErrors)
+                    .AddAsJson("Profile", profile)
+                    .Write();
                 DisplayValidationErrors(validationErrors);
                 return 1;
             }
@@ -160,7 +166,11 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
         }
 
         if(profile != null) {
-            logger.LogDebug("Loaded profile: {Name}", profile.Name);
+            logger
+                .BuildDebugMessage("Loaded profile: {0}", profile.Name)
+                .Add("Name", settings.ProfileName)
+                .Add("Path", settings.ProfilePath)
+                .Write();
             AnsiConsole.MarkupLine($"[green]✓[/] Profile loaded: [cyan]{profile.Name}[/]");
         }
 
@@ -193,6 +203,7 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
     }
 
     private DeploymentProfile? LoadProfileByName(string profileName) {
+        logger.LogTrace("Loading profile by name: {0}", profileName);
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var profilesDir = Path.Combine(appDataPath, ".ftpsheep", "profiles");
         var profilePath = Path.Combine(profilesDir, $"{profileName}.json");
@@ -378,7 +389,8 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
             buildService: null,    // Not used in this flow - project already built
             historyService: null,  // History recording not implemented yet
             appOfflineManager: new AppOfflineManager(profile.AppOfflineTemplate),
-            exclusionMatcher: ExclusionPatternMatcher.CreateWithDefaults(profile.ExclusionPatterns)
+            exclusionMatcher: ExclusionPatternMatcher.CreateWithDefaults(profile.ExclusionPatterns),
+            logger: logger
         );
 
         DeploymentResult? result = null;

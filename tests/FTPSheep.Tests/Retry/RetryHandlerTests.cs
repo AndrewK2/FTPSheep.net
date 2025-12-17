@@ -13,7 +13,7 @@ public class RetryHandlerTests {
         var expectedResult = 42;
 
         // Act
-        var result = await handler.ExecuteAsync<int>(async () => await Task.FromResult(expectedResult), "TestOperation");
+        var result = await handler.ExecuteAsync(async () => await Task.FromResult(expectedResult), "TestOperation");
 
         // Assert
         Assert.Equal(expectedResult, result);
@@ -27,7 +27,7 @@ public class RetryHandlerTests {
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            handler.ExecuteAsync<int>((Func<Task<int>>)null!, "TestOperation"));
+            handler.ExecuteAsync((Func<Task<int>>)null!, "TestOperation"));
     }
 
     [Fact]

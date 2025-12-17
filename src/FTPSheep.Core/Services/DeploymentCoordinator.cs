@@ -1,15 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using FluentFTP;
 using FTPSheep.BuildTools.Models;
 using FTPSheep.BuildTools.Services;
 using FTPSheep.Core.Models;
-using FTPSheep.Protocols.Interfaces;
 using FTPSheep.Protocols.Models;
 using FTPSheep.Protocols.Services;
+using FTPSheep.Utilities;
+using FTPSheep.Utilities.Exceptions;
+using FTPSheep.Utilities.Logging;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using IFtpClient = FTPSheep.Protocols.Interfaces.IFtpClient;
 
 namespace FTPSheep.Core.Services;
 
@@ -24,6 +24,7 @@ public class DeploymentCoordinator {
     private readonly ProfileService? profileService;
     private readonly BuildService? buildService;
     private readonly JsonDeploymentHistoryService? historyService;
+    private readonly ILogger logger;
     private CancellationTokenSource? cancellationTokenSource;
 
     // Deployment context (populated during execution)
@@ -51,19 +52,20 @@ public class DeploymentCoordinator {
     /// <param name="historyService">The deployment history service (optional).</param>
     /// <param name="appOfflineManager">The app_offline.htm manager (optional).</param>
     /// <param name="exclusionMatcher">The exclusion pattern matcher (optional).</param>
-    public DeploymentCoordinator(
-        ProfileService? profileService = null,
+    /// <param name="logger"></param>
+    public DeploymentCoordinator(ProfileService? profileService = null,
         BuildService? buildService = null,
         JsonDeploymentHistoryService? historyService = null,
         AppOfflineManager? appOfflineManager = null,
-        ExclusionPatternMatcher? exclusionMatcher = null) {
+        ExclusionPatternMatcher? exclusionMatcher = null, ILogger? logger = null) {
         state = new DeploymentState();
         this.profileService = profileService;
         this.buildService = buildService;
         this.historyService = historyService;
+        this.logger = logger ?? NullLogger.Instance;
         this.appOfflineManager = appOfflineManager ?? new AppOfflineManager();
         this.exclusionMatcher = exclusionMatcher ?? new ExclusionPatternMatcher();
-        this.fileComparisonService = new FileComparisonService(this.exclusionMatcher);
+        fileComparisonService = new FileComparisonService(this.exclusionMatcher);
     }
 
     /// <summary>
@@ -142,6 +144,14 @@ public class DeploymentCoordinator {
             return DeploymentResult.FromCancellation(state);
         } catch(Exception ex) {
             var errorMessage = $"Deployment failed at stage {state.CurrentStage}: {ex.Message}";
+
+            var nex = errorMessage
+                .ToException(ex)
+                .Add("Profile", options.ProfileName)
+                .Add("Profile Path", options.ProjectPath);
+
+            logger.LogException(nex);
+
             CompleteDeployment(DeploymentStage.Failed, errorMessage, ex);
             return DeploymentResult.FromFailure(state, errorMessage, ex);
         } finally {
@@ -296,42 +306,52 @@ public class DeploymentCoordinator {
     /// Stage 3: Connect to server and validate connection.
     /// </summary>
     private async Task ConnectToServerAsync(DeploymentOptions options, CancellationToken cancellationToken) {
-        if(currentProfile == null) {
-            throw new InvalidOperationException("Profile must be loaded before connecting.");
+        try {
+            if(currentProfile == null) {
+                throw new InvalidOperationException("Profile must be loaded before connecting.");
+            }
+
+            // Create FTP connection configuration from profile
+            var conn = currentProfile.Connection;
+
+            var ftpConfig = new FtpConnectionConfig {
+                Host = conn.Host,
+                Port = conn.Port,
+                Username = currentProfile.Username ?? string.Empty,
+                Password = currentProfile.Password ?? string.Empty,
+                RemoteRootPath = currentProfile.RemotePath,
+                EncryptionMode = conn.UseSsl
+                    ? FtpEncryptionMode.Explicit
+                    : FtpEncryptionMode.None
+            };
+
+            logger.LogDebug("Connecting to {0}:{1}", conn.Host, conn.Port);
+
+            // Create FTP client and connect
+            ftpClient = FtpClientFactory.CreateClient(ftpConfig);
+            await ftpClient.ConnectAsync(cancellationToken);
+
+            // Test connection and write permissions
+            var canWrite = await ftpClient.TestConnectionAsync(
+                currentProfile.RemotePath,
+                cancellationToken);
+
+            if(!canWrite) {
+                throw new InvalidOperationException(
+                    $"Cannot write to remote path: {currentProfile.RemotePath}");
+            }
+
+            // Initialize concurrent upload engine
+            var maxConcurrency = currentProfile.Concurrency > 0
+                ? currentProfile.Concurrency
+                : 4; // default
+
+            uploadEngine = new ConcurrentUploadEngine(ftpConfig, maxConcurrency, maxRetries: currentProfile.RetryCount);
+        } catch(Exception ex) {
+            throw "Failed to connect to server \"{0}\""
+                .F(currentProfile?.Connection.Host)
+                .ToException(ex);
         }
-
-        // Create FTP connection configuration from profile
-        var ftpConfig = new FtpConnectionConfig {
-            Host = currentProfile.Connection.Host,
-            Port = currentProfile.Connection.Port,
-            Username = currentProfile.Username ?? string.Empty,
-            Password = currentProfile.Password ?? string.Empty,
-            RemoteRootPath = currentProfile.RemotePath,
-            EncryptionMode = currentProfile.Connection.UseSsl
-                ? FluentFTP.FtpEncryptionMode.Explicit
-                : FluentFTP.FtpEncryptionMode.None
-        };
-
-        // Create FTP client and connect
-        ftpClient = FtpClientFactory.CreateClient(ftpConfig);
-        await ftpClient.ConnectAsync(cancellationToken);
-
-        // Test connection and write permissions
-        var canWrite = await ftpClient.TestConnectionAsync(
-            currentProfile.RemotePath,
-            cancellationToken);
-
-        if(!canWrite) {
-            throw new InvalidOperationException(
-                $"Cannot write to remote path: {currentProfile.RemotePath}");
-        }
-
-        // Initialize concurrent upload engine
-        var maxConcurrency = currentProfile.Concurrency > 0
-            ? currentProfile.Concurrency
-            : 4; // default
-
-        uploadEngine = new ConcurrentUploadEngine(ftpConfig, maxConcurrency, maxRetries: currentProfile.RetryCount);
     }
 
     /// <summary>
@@ -633,71 +653,4 @@ public class DeploymentProgressEventArgs : EventArgs {
     public DeploymentProgressEventArgs(DeploymentState state) {
         State = state;
     }
-}
-
-/// <summary>
-/// Options for deployment execution.
-/// </summary>
-public class DeploymentOptions {
-    /// <summary>
-    /// Gets or sets the profile name to use for deployment.
-    /// </summary>
-    public string? ProfileName { get; set; }
-
-    /// <summary>
-    /// Gets or sets the project path to deploy.
-    /// </summary>
-    public string? ProjectPath { get; set; }
-
-    /// <summary>
-    /// Gets or sets the target server host.
-    /// </summary>
-    public string? TargetHost { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether to use app_offline.htm during deployment.
-    /// </summary>
-    public bool UseAppOffline { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets whether to enable cleanup mode (delete obsolete files).
-    /// </summary>
-    public bool CleanupMode { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether to skip user confirmation prompts.
-    /// </summary>
-    public bool SkipConfirmation { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether to skip connection validation.
-    /// </summary>
-    public bool SkipConnectionTest { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether this is a dry-run (no actual changes).
-    /// </summary>
-    public bool DryRun { get; set; }
-
-    /// <summary>
-    /// Gets or sets the build configuration (e.g., "Release").
-    /// </summary>
-    public string BuildConfiguration { get; set; } = "Release";
-
-    /// <summary>
-    /// Gets or sets the maximum number of concurrent uploads.
-    /// </summary>
-    public int MaxConcurrentUploads { get; set; } = 4;
-
-    /// <summary>
-    /// Gets or sets a pre-loaded deployment profile (optional).
-    /// If provided, skips the LoadProfile stage.
-    /// </summary>
-    public DeploymentProfile? Profile { get; set; }
-
-    /// <summary>
-    /// Gets or sets pre-scanned publish output (optional).
-    /// If provided, skips the Build stage.
-    /// </summary>
-    public BuildTools.Models.PublishOutput? PublishOutput { get; set; }
 }

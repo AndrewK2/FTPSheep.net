@@ -2,7 +2,7 @@
   "profiles": {
     "FTPSheep.CLI": {
       "commandName": "Project",
-      "commandLineArgs": "import new.stroyryad.com.ua-FTP.pubxml"
+      "commandLineArgs": "import console.stroyryad.com.ua-FTP.pubxml"
     }
   }
 }
