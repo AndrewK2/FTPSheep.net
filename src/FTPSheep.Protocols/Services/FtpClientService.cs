@@ -2,6 +2,7 @@ using FluentFTP;
 using FTPSheep.Protocols.Exceptions;
 using FTPSheep.Protocols.Interfaces;
 using FTPSheep.Protocols.Models;
+using FTPSheep.Utilities.Exceptions;
 
 namespace FTPSheep.Protocols.Services;
 
@@ -34,10 +35,7 @@ public class FtpClientService : Interfaces.IFtpClient {
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ConnectAsync(CancellationToken cancellationToken = default) {
         try {
-            client = new AsyncFtpClient(config.Host,
-                config.Username,
-                config.Password,
-                config.Port);
+            client = new AsyncFtpClient(config.Host, config.Username, config.Password, config.Port);
 
             // Configure client
             client.Config.DataConnectionType = config.DataConnectionMode;
@@ -54,13 +52,13 @@ public class FtpClientService : Interfaces.IFtpClient {
             if(!string.IsNullOrWhiteSpace(config.RemoteRootPath)) {
                 await client.SetWorkingDirectory(config.RemoteRootPath, cancellationToken);
             }
-        } catch(Exception ex) when(ex is not FtpException) {
-            throw new FtpException($"Failed to connect to FTP server {config.Host}:{config.Port}",
-                ex) {
-                Host = config.Host,
-                Port = config.Port,
-                IsTransient = IsTransientError(ex)
-            };
+        } catch(Exception ex) {
+            throw $"Failed to connect to FTP server {config.Host}:{config.Port}"
+                .ToException(ex)
+                .Add("Host", config.Host)
+                .Add("Port", config.Port)
+                .Add("Mode", config.DataConnectionMode)
+                .Add("IsTransient", IsTransientError(ex));
         }
     }
 

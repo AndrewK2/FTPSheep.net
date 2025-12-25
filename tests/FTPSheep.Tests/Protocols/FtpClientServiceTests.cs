@@ -290,49 +290,4 @@ public class FtpClientServiceTests {
         Assert.True(config.KeepAlive);
         Assert.Equal("UTF-8", config.Encoding);
     }
-
-    [Fact]
-    public void FtpException_CanBeCreated_WithMessage() {
-        // Arrange
-        var message = "Test error message";
-
-        // Act
-        var exception = new FtpException(message);
-
-        // Assert
-        Assert.Equal(message, exception.Message);
-        Assert.Null(exception.Host);
-        Assert.Null(exception.Port);
-        Assert.False(exception.IsTransient);
-    }
-
-    [Fact]
-    public void FtpException_CanBeCreated_WithMessageAndInnerException() {
-        // Arrange
-        var message = "Test error message";
-        var innerException = new InvalidOperationException("Inner error");
-
-        // Act
-        var exception = new FtpException(message, innerException);
-
-        // Assert
-        Assert.Equal(message, exception.Message);
-        Assert.Same(innerException, exception.InnerException);
-    }
-
-    [Fact]
-    public void FtpException_Properties_CanBeSet() {
-        // Arrange
-        var exception = new FtpException("Test error");
-
-        // Act
-        exception.Host = "ftp.example.com";
-        exception.Port = 21;
-        exception.IsTransient = true;
-
-        // Assert
-        Assert.Equal("ftp.example.com", exception.Host);
-        Assert.Equal(21, exception.Port);
-        Assert.True(exception.IsTransient);
-    }
 }

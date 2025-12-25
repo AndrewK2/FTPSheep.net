@@ -24,19 +24,4 @@ public class FtpException : Exception {
     /// <param name="innerException">The inner exception.</param>
     public FtpException(string message, Exception innerException) : base(message, innerException) {
     }
-
-    /// <summary>
-    /// Gets or sets the FTP host.
-    /// </summary>
-    public string? Host { get; set; }
-
-    /// <summary>
-    /// Gets or sets the FTP port.
-    /// </summary>
-    public int? Port { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether this is a transient error that can be retried.
-    /// </summary>
-    public bool IsTransient { get; set; }
 }

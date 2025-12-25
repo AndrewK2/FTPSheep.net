@@ -222,7 +222,7 @@ public class DeploymentCoordinator {
 
         // Load profile from storage
         currentProfile = await profileService.LoadProfileAsync(options.ProfileName, cancellationToken);
-
+        
         if(currentProfile == null) {
             throw new InvalidOperationException($"Profile '{options.ProfileName}' not found.");
         }
@@ -325,20 +325,19 @@ public class DeploymentCoordinator {
                     : FtpEncryptionMode.None
             };
 
-            logger.LogDebug("Connecting to {0}:{1}", conn.Host, conn.Port);
+            logger.LogDebug("Connecting to {0}:{1} as {2}", ftpConfig.Host, ftpConfig.Port, ftpConfig.Username);
 
             // Create FTP client and connect
             ftpClient = FtpClientFactory.CreateClient(ftpConfig);
             await ftpClient.ConnectAsync(cancellationToken);
 
             // Test connection and write permissions
-            var canWrite = await ftpClient.TestConnectionAsync(
-                currentProfile.RemotePath,
-                cancellationToken);
+
+            logger.LogDebug("Testing connection...");
+            var canWrite = await ftpClient.TestConnectionAsync(currentProfile.RemotePath, cancellationToken);
 
             if(!canWrite) {
-                throw new InvalidOperationException(
-                    $"Cannot write to remote path: {currentProfile.RemotePath}");
+                throw new InvalidOperationException($"Cannot write to remote path: {currentProfile.RemotePath}");
             }
 
             // Initialize concurrent upload engine

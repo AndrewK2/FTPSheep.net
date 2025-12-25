@@ -9,7 +9,7 @@ using Spectre.Console.Cli;
 var logger = LogManager.GetCurrentClassLogger();
 
 try {
-    logger.Info("FTPSheep.NET starting up...");
+    logger.Info("🐑FTPSheep.NET starting up...");
 
     var registrations = new ServiceCollection();
     registrations.AddNLog();

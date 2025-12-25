@@ -53,11 +53,7 @@ public sealed class ProfileService : IProfileService {
 
         // Save credentials if provided
         if(!string.IsNullOrWhiteSpace(profile.Username) && !string.IsNullOrWhiteSpace(profile.Password)) {
-            await credentialStore.SaveCredentialsAsync(
-                profile.Name,
-                profile.Username,
-                profile.Password,
-                cancellationToken);
+            await credentialStore.SaveCredentialsAsync(profile.Name, profile.Username, profile.Password, cancellationToken);
 
             logger.LogDebug("Saved credentials for profile '{ProfileName}'", profile.Name);
         }

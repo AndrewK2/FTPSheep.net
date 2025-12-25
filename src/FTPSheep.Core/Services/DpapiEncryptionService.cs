@@ -31,11 +31,8 @@ public sealed class DpapiEncryptionService {
             var plainBytes = Encoding.UTF8.GetBytes(plainText);
 
             // Encrypt using DPAPI with CurrentUser scope
-            var encryptedBytes = ProtectedData.Protect(plainBytes,
-                sEntropy,
-                DataProtectionScope.CurrentUser);
+            var encryptedBytes = ProtectedData.Protect(plainBytes, sEntropy, DataProtectionScope.CurrentUser);
 
-            // Convert to Base64 for storage
             return Convert.ToBase64String(encryptedBytes);
         } catch(CryptographicException ex) {
             throw new CryptographicException("Failed to encrypt data using DPAPI. Ensure you are running on Windows.", ex);
@@ -59,9 +56,7 @@ public sealed class DpapiEncryptionService {
             var encryptedBytes = Convert.FromBase64String(encryptedText);
 
             // Decrypt using DPAPI with CurrentUser scope
-            var decryptedBytes = ProtectedData.Unprotect(encryptedBytes,
-                sEntropy,
-                DataProtectionScope.CurrentUser);
+            var decryptedBytes = ProtectedData.Unprotect(encryptedBytes, sEntropy, DataProtectionScope.CurrentUser);
 
             // Convert back to string
             return Encoding.UTF8.GetString(decryptedBytes);

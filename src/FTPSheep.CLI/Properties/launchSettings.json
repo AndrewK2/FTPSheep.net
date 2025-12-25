@@ -2,7 +2,7 @@
   "profiles": {
     "FTPSheep.CLI": {
       "commandName": "Project",
-      "commandLineArgs": "import console.stroyryad.com.ua-FTP.pubxml"
+      "commandLineArgs": "import p:\\StroyRow\\StroyRow\\WebSite2024\\ConsoleWebsite.Server\\Properties\\PublishProfiles\\console-staging.stroyryad.com.ua-FTP.pubxml"
     }
   }
 }
