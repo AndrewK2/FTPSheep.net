@@ -13,7 +13,7 @@ namespace FTPSheep.CLI.Commands;
 /// Command to import Visual Studio publish profile.
 /// </summary>
 [UsedImplicitly]
-internal sealed class ImportCommand(ILogger<ImportCommand> logger) : Command<ImportCommand.Settings> {
+internal sealed class ImportCommand(ILogger<ImportCommand> logger) : AsyncCommand<ImportCommand.Settings> {
     /// <summary>
     /// Settings for the import command.
     /// </summary>
@@ -23,7 +23,7 @@ internal sealed class ImportCommand(ILogger<ImportCommand> logger) : Command<Imp
         public string? ProfilePath { get; init; }
     }
 
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken) {
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken) {
         AnsiConsole.MarkupLine("[bold]Import Visual Studio Publish Profile[/]");
         AnsiConsole.WriteLine();
 
@@ -65,7 +65,7 @@ internal sealed class ImportCommand(ILogger<ImportCommand> logger) : Command<Imp
 
                     var selectedName = AnsiConsole.Prompt(
                         new SelectionPrompt<string>()
-                            .Title("Multiple publish profiles found. Which one would you like to import?")
+                        .Title("Multiple publish profiles found. Which one would you like to import?")
                             .AddChoices(profileNames));
 
                     pubxmlPath = discoveredProfiles[profileNames.IndexOf(selectedName)];
@@ -167,18 +167,47 @@ internal sealed class ImportCommand(ILogger<ImportCommand> logger) : Command<Imp
             }
 
             // Build the full save path
-            var profileFileName = $"{profileName}.json";
+            var profileFileName = $"{profileName}.ftpsheep";
             var profileSavePath = Path.Combine(saveDirectory, profileFileName);
+
+            // Convert ProjectPath to relative if possible
+            if (!string.IsNullOrWhiteSpace(convertedProfile.ProjectPath))
+            {
+                // Ensure we have an absolute path
+                var absoluteProjectPath = Path.GetFullPath(convertedProfile.ProjectPath);
+
+                // Get the directory where profile will be saved
+                var profileDirectory = Path.GetDirectoryName(profileSavePath)!;
+
+                // Try to create relative path
+                var relativePath = Path.GetRelativePath(profileDirectory, absoluteProjectPath);
+
+                // Use relative path if valid, otherwise use absolute
+                // Path.GetRelativePath returns absolute path if no relative path exists (different drives)
+                if (Path.IsPathRooted(relativePath))
+                {
+                    // Different drives or can't create relative path - use absolute
+                    convertedProfile.ProjectPath = absoluteProjectPath;
+                }
+                else
+                {
+                    // Relative path is valid - use it
+                    convertedProfile.ProjectPath = relativePath;
+                }
+            }
 
             // Check if file already exists at the custom location
             if(File.Exists(profileSavePath)) {
-                var overwriteFile = AnsiConsole.Confirm($"File '{profileFileName}' already exists in this directory. Overwrite?", false);
+                var overwriteFile = await AnsiConsole.ConfirmAsync($"File '{profileFileName}' already exists in this directory. Overwrite?", false, cancellationToken);
                 if(!overwriteFile) {
                     AnsiConsole.MarkupLine("[yellow]Import cancelled.[/]");
                     return 0;
                 }
             }
 
+            //await profileService.CreateProfileAsync(convertedProfile, cancellationToken);
+
+            
             // Serialize and save the profile to the custom location
             var jsonOptions = new JsonSerializerOptions {
                 WriteIndented = true,
@@ -199,6 +228,7 @@ internal sealed class ImportCommand(ILogger<ImportCommand> logger) : Command<Imp
             AnsiConsole.MarkupLine($"Profile saved to: [cyan]{profileSavePath}[/]");
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine($"You can now deploy using: [cyan]ftpsheep deploy --profile {profileName}[/] or [cyan]ftpsheep deploy --file \"{profileSavePath}\"[/]");
+            
 
             return 0;
         } catch(Exception ex) {
