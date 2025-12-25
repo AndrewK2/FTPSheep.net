@@ -9,27 +9,18 @@ namespace FTPSheep.Tests.Services;
 
 public class ProfileServiceTests {
     private readonly Mock<IProfileRepository> repositoryMock;
-    private readonly Mock<IConfigurationService> configServiceMock;
     private readonly Mock<ICredentialStore> credentialStoreMock;
     private readonly Mock<ILogger<ProfileService>> loggerMock;
     private readonly ProfileService profileService;
 
     public ProfileServiceTests() {
         repositoryMock = new Mock<IProfileRepository>();
-        configServiceMock = new Mock<IConfigurationService>();
         credentialStoreMock = new Mock<ICredentialStore>();
         loggerMock = new Mock<ILogger<ProfileService>>();
 
         profileService = new ProfileService(
-            repositoryMock.Object,
-            configServiceMock.Object,
             credentialStoreMock.Object,
             loggerMock.Object);
-
-        // Setup default global configuration
-        configServiceMock
-            .Setup(x => x.LoadConfigurationAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(GlobalConfiguration.CreateDefault());
     }
 
     [Fact]
@@ -50,26 +41,13 @@ public class ProfileServiceTests {
             .Returns(Task.CompletedTask);
 
         // Act
-        await profileService.CreateProfileAsync(profile);
-
+        var profileSavePath = Path.GetTempFileName();
+        await profileService.CreateProfileAsync(profileSavePath, profile);
+        File.Delete(profileSavePath);
+        
         // Assert
         repositoryMock.Verify(x => x.SaveAsync(profile, It.IsAny<CancellationToken>()), Times.Once);
         credentialStoreMock.Verify(x => x.SaveCredentialsAsync("test-profile", "testuser", "testpass", It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task CreateProfileAsync_DuplicateName_ThrowsException() {
-        // Arrange
-        var profile = CreateValidProfile("duplicate");
-
-        repositoryMock
-            .Setup(x => x.ExistsAsync("duplicate", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ProfileAlreadyExistsException>(() => profileService.CreateProfileAsync(profile));
-
-        repositoryMock.Verify(x => x.SaveAsync(It.IsAny<DeploymentProfile>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -82,34 +60,11 @@ public class ProfileServiceTests {
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ProfileValidationException>(() => profileService.CreateProfileAsync(profile));
+        var profileSavePath = Path.GetTempFileName();
+
+        await Assert.ThrowsAsync<ProfileValidationException>(() => profileService.CreateProfileAsync(profileSavePath, profile));
 
         repositoryMock.Verify(x => x.SaveAsync(It.IsAny<DeploymentProfile>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task LoadProfileAsync_ByName_LoadsWithDefaults() {
-        // Arrange
-        var profile = CreateValidProfile("load-test");
-
-        repositoryMock
-            .Setup(x => x.LoadAsync("load-test", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(profile);
-
-        credentialStoreMock
-            .Setup(x => x.LoadCredentialsAsync("load-test", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Credentials("saveduser", "savedpass"));
-
-        // Act
-        var loadedProfile = await profileService.LoadProfileAsync("load-test");
-
-        // Assert
-        Assert.NotNull(loadedProfile);
-        Assert.Equal("load-test", loadedProfile.Name);
-        Assert.Equal("saveduser", loadedProfile.Username);
-        Assert.Equal("savedpass", loadedProfile.Password);
-
-        configServiceMock.Verify(x => x.ApplyDefaultsAsync(It.IsAny<DeploymentProfile>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

@@ -9,12 +9,13 @@ public interface IProfileService {
     /// <summary>
     /// Creates a new deployment profile with validation.
     /// </summary>
+    /// <param name="profileSavePath"></param>
     /// <param name="profile">The profile to create.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="Exceptions.ProfileAlreadyExistsException">Thrown when a profile with the same name already exists.</exception>
     /// <exception cref="Exceptions.ProfileValidationException">Thrown when the profile fails validation.</exception>
-    Task CreateProfileAsync(DeploymentProfile profile, CancellationToken cancellationToken = default);
+    Task CreateProfileAsync(string profileSavePath, DeploymentProfile profile, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Loads a deployment profile by name or file path, applying global defaults and loading credentials.

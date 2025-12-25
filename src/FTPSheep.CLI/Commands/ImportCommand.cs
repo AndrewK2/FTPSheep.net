@@ -1,6 +1,5 @@
 using System.ComponentModel;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Services;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
@@ -13,7 +12,7 @@ namespace FTPSheep.CLI.Commands;
 /// Command to import Visual Studio publish profile.
 /// </summary>
 [UsedImplicitly]
-internal sealed class ImportCommand(ILogger<ImportCommand> logger) : AsyncCommand<ImportCommand.Settings> {
+internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportCommand> logger) : AsyncCommand<ImportCommand.Settings> {
     /// <summary>
     /// Settings for the import command.
     /// </summary>
@@ -184,13 +183,10 @@ internal sealed class ImportCommand(ILogger<ImportCommand> logger) : AsyncComman
 
                 // Use relative path if valid, otherwise use absolute
                 // Path.GetRelativePath returns absolute path if no relative path exists (different drives)
-                if (Path.IsPathRooted(relativePath))
-                {
+                if(Path.IsPathRooted(relativePath)) {
                     // Different drives or can't create relative path - use absolute
                     convertedProfile.ProjectPath = absoluteProjectPath;
-                }
-                else
-                {
+                } else {
                     // Relative path is valid - use it
                     convertedProfile.ProjectPath = relativePath;
                 }
@@ -205,23 +201,7 @@ internal sealed class ImportCommand(ILogger<ImportCommand> logger) : AsyncComman
                 }
             }
 
-            //await profileService.CreateProfileAsync(convertedProfile, cancellationToken);
-
-            
-            // Serialize and save the profile to the custom location
-            var jsonOptions = new JsonSerializerOptions {
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                Converters = { new JsonStringEnumConverter() }
-            };
-
-            var json = JsonSerializer.Serialize(convertedProfile, jsonOptions);
-
-            logger.LogTrace("Profile JSON:\n{p}", json);
-            logger.LogDebug("Writing profile to: {p}", profileSavePath);
-
-            File.WriteAllText(profileSavePath, json);
+            await profiles.CreateProfileAsync(profileSavePath, convertedProfile, cancellationToken);
 
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine("[green]✓[/] Profile imported successfully!");

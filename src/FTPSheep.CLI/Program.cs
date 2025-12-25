@@ -1,5 +1,7 @@
 using FTPSheep.CLI;
 using FTPSheep.CLI.Commands;
+using FTPSheep.Core.Interfaces;
+using FTPSheep.Core.Services;
 using FTPSheep.Utilities.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
@@ -13,6 +15,10 @@ try {
 
     var registrations = new ServiceCollection();
     registrations.AddNLog();
+
+    registrations
+        .AddScoped<IProfileService, ProfileService>()
+        .AddScoped<ICredentialStore, CredentialStore>();
 
     var app = new CommandApp(new TypeRegistrar(registrations));
 
