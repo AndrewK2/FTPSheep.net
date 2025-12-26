@@ -1,6 +1,6 @@
 using FTPSheep.Protocols.Models;
 using FTPSheep.Protocols.Services;
-using Xunit;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FTPSheep.Tests.Protocols;
 
@@ -11,9 +11,10 @@ public class ConcurrentUploadEngineTests {
     public void Constructor_ValidParameters_InitializesCorrectly() {
         // Arrange
         var config = CreateTestConfig();
+        var factory = CreateTestFactory();
 
         // Act
-        using var engine = new ConcurrentUploadEngine(config, maxConcurrency: 4, maxRetries: 3);
+        using var engine = new ConcurrentUploadEngine(config, factory, maxConcurrency: 4, maxRetries: 3);
 
         // Assert
         Assert.NotNull(engine);
@@ -21,8 +22,11 @@ public class ConcurrentUploadEngineTests {
 
     [Fact]
     public void Constructor_NullConfig_ThrowsArgumentNullException() {
+        // Arrange
+        var factory = CreateTestFactory();
+
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ConcurrentUploadEngine(null!));
+        Assert.Throws<ArgumentNullException>(() => new ConcurrentUploadEngine(null!, factory));
     }
 
     [Theory]
@@ -32,10 +36,11 @@ public class ConcurrentUploadEngineTests {
     public void Constructor_InvalidMaxConcurrency_ThrowsArgumentException(int maxConcurrency) {
         // Arrange
         var config = CreateTestConfig();
+        var factory = CreateTestFactory();
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            new ConcurrentUploadEngine(config, maxConcurrency: maxConcurrency));
+            new ConcurrentUploadEngine(config, factory, maxConcurrency: maxConcurrency));
     }
 
     [Theory]
@@ -44,10 +49,11 @@ public class ConcurrentUploadEngineTests {
     public void Constructor_InvalidMaxRetries_ThrowsArgumentException(int maxRetries) {
         // Arrange
         var config = CreateTestConfig();
+        var factory = CreateTestFactory();
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            new ConcurrentUploadEngine(config, maxRetries: maxRetries));
+            new ConcurrentUploadEngine(config, factory, maxRetries: maxRetries));
     }
 
     [Theory]
@@ -58,9 +64,10 @@ public class ConcurrentUploadEngineTests {
     public void Constructor_ValidMaxConcurrency_Succeeds(int maxConcurrency) {
         // Arrange
         var config = CreateTestConfig();
+        var factory = CreateTestFactory();
 
         // Act
-        using var engine = new ConcurrentUploadEngine(config, maxConcurrency: maxConcurrency);
+        using var engine = new ConcurrentUploadEngine(config, factory, maxConcurrency: maxConcurrency);
 
         // Assert
         Assert.NotNull(engine);
@@ -73,9 +80,10 @@ public class ConcurrentUploadEngineTests {
     public void Constructor_ValidMaxRetries_Succeeds(int maxRetries) {
         // Arrange
         var config = CreateTestConfig();
+        var factory = CreateTestFactory();
 
         // Act
-        using var engine = new ConcurrentUploadEngine(config, maxRetries: maxRetries);
+        using var engine = new ConcurrentUploadEngine(config, factory, maxRetries: maxRetries);
 
         // Assert
         Assert.NotNull(engine);
@@ -89,7 +97,8 @@ public class ConcurrentUploadEngineTests {
     public async Task UploadFilesAsync_EmptyTaskList_ReturnsEmptyResults() {
         // Arrange
         var config = CreateTestConfig();
-        using var engine = new ConcurrentUploadEngine(config);
+        var factory = CreateTestFactory();
+        using var engine = new ConcurrentUploadEngine(config, factory);
         var tasks = new List<UploadTask>();
 
         // Act
@@ -103,7 +112,8 @@ public class ConcurrentUploadEngineTests {
     public async Task UploadFilesAsync_CancellationRequested_ThrowsTaskCanceledException() {
         // Arrange
         var config = CreateTestConfig();
-        using var engine = new ConcurrentUploadEngine(config);
+        var factory = CreateTestFactory();
+        using var engine = new ConcurrentUploadEngine(config, factory);
         var tasks = CreateTestTasks(10);
         var cts = new CancellationTokenSource();
 
@@ -124,7 +134,8 @@ public class ConcurrentUploadEngineTests {
     public void ProgressUpdated_Event_CanBeSubscribed() {
         // Arrange
         var config = CreateTestConfig();
-        using var engine = new ConcurrentUploadEngine(config);
+        var factory = CreateTestFactory();
+        using var engine = new ConcurrentUploadEngine(config, factory);
         var eventRaised = false;
 
         // Act
@@ -139,7 +150,8 @@ public class ConcurrentUploadEngineTests {
     public void FileUploaded_Event_CanBeSubscribed() {
         // Arrange
         var config = CreateTestConfig();
-        using var engine = new ConcurrentUploadEngine(config);
+        var factory = CreateTestFactory();
+        using var engine = new ConcurrentUploadEngine(config, factory);
         var eventRaised = false;
 
         // Act
@@ -158,7 +170,8 @@ public class ConcurrentUploadEngineTests {
     public void Dispose_MultipleCalls_DoesNotThrow() {
         // Arrange
         var config = CreateTestConfig();
-        var engine = new ConcurrentUploadEngine(config);
+        var factory = CreateTestFactory();
+        var engine = new ConcurrentUploadEngine(config, factory);
 
         // Act & Assert
         engine.Dispose();
@@ -216,6 +229,10 @@ public class ConcurrentUploadEngineTests {
             Username = "testuser",
             Password = "testpass"
         };
+    }
+
+    private static FtpClientFactory CreateTestFactory() {
+        return new FtpClientFactory(NullLoggerFactory.Instance);
     }
 
     private static List<UploadTask> CreateTestTasks(int count) {

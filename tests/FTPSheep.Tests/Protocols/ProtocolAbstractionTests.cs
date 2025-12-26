@@ -1,6 +1,7 @@
 using FluentFTP;
 using FTPSheep.Protocols.Models;
 using FTPSheep.Protocols.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FTPSheep.Tests.Protocols;
 
@@ -167,9 +168,12 @@ public class RemoteFileInfoTests {
 public class FtpClientFactoryTests {
     [Fact]
     public void CreateClient_WithNullConfig_ThrowsArgumentNullException() {
+        // Arrange
+        var factory = CreateTestFactory();
+
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            FtpClientFactory.CreateClient((FtpConnectionConfig)null!));
+            factory.CreateClient((FtpConnectionConfig)null!));
     }
 
     [Fact]
@@ -181,9 +185,10 @@ public class FtpClientFactoryTests {
             Username = "user",
             Password = "pass"
         };
+        var factory = CreateTestFactory();
 
         // Act
-        using var client = FtpClientFactory.CreateClient(config);
+        using var client = factory.CreateClient(config);
 
         // Assert
         Assert.NotNull(client);
@@ -192,8 +197,11 @@ public class FtpClientFactoryTests {
 
     [Fact]
     public void CreateClient_WithParameters_ReturnsIFtpClient() {
+        // Arrange
+        var factory = CreateTestFactory();
+
         // Act
-        using var client = FtpClientFactory.CreateClient(
+        using var client = factory.CreateClient(
             "ftp.example.com",
             21,
             "user",
@@ -217,7 +225,8 @@ public class FtpClientFactoryTests {
         };
 
         // Act
-        using var client = FtpClientFactory.CreateClient(config);
+        var factory = CreateTestFactory();
+        using var client = factory.CreateClient(config);
 
         // Assert
         Assert.NotNull(client);
@@ -235,7 +244,8 @@ public class FtpClientFactoryTests {
         };
 
         // Act
-        using var client = FtpClientFactory.CreateClient(config);
+        var factory = CreateTestFactory();
+        using var client = factory.CreateClient(config);
 
         // Assert
         Assert.NotNull(client);
@@ -253,7 +263,8 @@ public class FtpClientFactoryTests {
         };
 
         // Act
-        using var client = FtpClientFactory.CreateClient(config);
+        var factory = CreateTestFactory();
+        using var client = factory.CreateClient(config);
 
         // Assert
         Assert.NotNull(client);
@@ -261,8 +272,11 @@ public class FtpClientFactoryTests {
 
     [Fact]
     public void CreateClient_WithRemoteRootPath_ReturnsIFtpClient() {
+        // Arrange
+        var factory = CreateTestFactory();
+
         // Act
-        using var client = FtpClientFactory.CreateClient(
+        using var client = factory.CreateClient(
             "ftp.example.com",
             21,
             "user",
@@ -312,6 +326,10 @@ public class FtpClientFactoryTests {
         Assert.Contains("None (FTP)", modes);
         Assert.Contains("Explicit (FTPS)", modes);
         Assert.Contains("Implicit (FTPS)", modes);
+    }
+
+    private static FtpClientFactory CreateTestFactory() {
+        return new FtpClientFactory(NullLoggerFactory.Instance);
     }
 }
 

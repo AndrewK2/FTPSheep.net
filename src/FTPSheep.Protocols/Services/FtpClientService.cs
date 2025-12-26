@@ -1,8 +1,11 @@
 using FluentFTP;
 using FTPSheep.Protocols.Exceptions;
-using FTPSheep.Protocols.Interfaces;
 using FTPSheep.Protocols.Models;
+using FTPSheep.Utilities;
 using FTPSheep.Utilities.Exceptions;
+using FTPSheep.Utilities.Logging;
+using Microsoft.Extensions.Logging;
+using IFtpClient = FTPSheep.Protocols.Interfaces.IFtpClient;
 
 namespace FTPSheep.Protocols.Services;
 
@@ -10,8 +13,9 @@ namespace FTPSheep.Protocols.Services;
 /// Service for FTP client operations using FluentFTP.
 /// Implements the IFtpClient interface for protocol abstraction.
 /// </summary>
-public class FtpClientService : Interfaces.IFtpClient {
+public class FtpClientService : IFtpClient {
     private readonly FtpConnectionConfig config;
+    private readonly ILogger<IFtpClient> logger;
     private AsyncFtpClient? client;
     private bool disposed;
 
@@ -19,8 +23,10 @@ public class FtpClientService : Interfaces.IFtpClient {
     /// Initializes a new instance of the <see cref="FtpClientService"/> class.
     /// </summary>
     /// <param name="config">The FTP connection configuration.</param>
-    public FtpClientService(FtpConnectionConfig config) {
+    /// <param name="logger"></param>
+    public FtpClientService(FtpConnectionConfig config, ILogger<IFtpClient> logger) {
         this.config = config ?? throw new ArgumentNullException(nameof(config));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         ValidateConfig(config);
     }
 
@@ -46,17 +52,36 @@ public class FtpClientService : Interfaces.IFtpClient {
             client.Config.ValidateAnyCertificate = !config.ValidateCertificate;
             client.Config.SocketKeepAlive = config.KeepAlive;
 
+            logger
+                .BuildDebugMessage("Connecting to \"{0}\"", config.Host)
+                .Add("Port", config.Port)
+                .Add("Username", config.Username)
+                .Add("Password used", !string.IsNullOrEmpty(config.Password))
+                .Write();
+
             await client.Connect(cancellationToken);
+
+            logger.LogDebug("Connected");
 
             // Change to root directory if specified
             if(!string.IsNullOrWhiteSpace(config.RemoteRootPath)) {
-                await client.SetWorkingDirectory(config.RemoteRootPath, cancellationToken);
+                logger.LogDebug("Setting working directory to \"{0}\"", config.RemoteRootPath);
+
+                try {
+                    await client.SetWorkingDirectory(config.RemoteRootPath, cancellationToken);
+                } catch(Exception ex) {
+                    throw "Failed to set working directory to \"{0}\""
+                        .F(config.RemoteRootPath)
+                        .ToException(ex);
+                }
             }
         } catch(Exception ex) {
             throw $"Failed to connect to FTP server {config.Host}:{config.Port}"
                 .ToException(ex)
                 .Add("Host", config.Host)
                 .Add("Port", config.Port)
+                .Add("Username", config.Username)
+                .Add("Password used", string.IsNullOrWhiteSpace(config.Password) ? "no" : "yes")
                 .Add("Mode", config.DataConnectionMode)
                 .Add("IsTransient", IsTransientError(ex));
         }
@@ -90,6 +115,8 @@ public class FtpClientService : Interfaces.IFtpClient {
 
         try {
             var existsMode = overwrite ? FtpRemoteExists.Overwrite : FtpRemoteExists.Skip;
+
+            logger.LogDebug("Uploading file: {0}", remotePath);
 
             var result = await client!.UploadFile(
                 localPath,

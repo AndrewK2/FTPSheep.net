@@ -1,9 +1,11 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using FTPSheep.BuildTools.Models;
 using FTPSheep.BuildTools.Services;
 using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
+using FTPSheep.Protocols.Services;
 using FTPSheep.Utilities.Logging;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
@@ -17,7 +19,7 @@ namespace FTPSheep.CLI.Commands;
 /// <summary>
 /// Command to deploy a .NET application to FTP server.
 /// </summary>
-internal sealed class DeployCommand(IProfileService profiles, ILogger<DeployCommand> logger) : AsyncCommand<DeployCommand.Settings> {
+internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory ftpClientFactory, ILogger<DeployCommand> logger) : AsyncCommand<DeployCommand.Settings> {
     /// <summary>
     /// Settings for the deploy command.
     /// </summary>
@@ -88,7 +90,7 @@ internal sealed class DeployCommand(IProfileService profiles, ILogger<DeployComm
             // Phase 2: Build Project
             PublishOutput? publishOutput;
             if(!settings.SkipBuild) {
-                publishOutput = BuildProject(profile, settings, cancellationToken);
+                publishOutput = await BuildProject(profile, settings, cancellationToken);
                 if(publishOutput == null) {
                     return 1;
                 }
@@ -118,6 +120,10 @@ internal sealed class DeployCommand(IProfileService profiles, ILogger<DeployComm
 
             var result = ExecuteDeployment(profile, publishOutput, settings, cancellationToken);
 
+            logger.BuildDebugMessage("Deployment result")
+                .AddAsJson("Result", result)
+                .Write();
+            
             // Phase 6: Display Results
             DisplayDeploymentResult(result);
 
@@ -244,7 +250,7 @@ internal sealed class DeployCommand(IProfileService profiles, ILogger<DeployComm
 
     #region Build Project
 
-    private PublishOutput? BuildProject(DeploymentProfile profile, Settings settings, CancellationToken ct) {
+    private async Task<PublishOutput?> BuildProject(DeploymentProfile profile, Settings settings, CancellationToken ct) {
         var buildService = new BuildService();
         var scanner = new PublishOutputScanner();
 
@@ -252,24 +258,29 @@ internal sealed class DeployCommand(IProfileService profiles, ILogger<DeployComm
         var projectDir = Path.GetDirectoryName(profile.ProjectPath) ?? Directory.GetCurrentDirectory();
         var publishPath = Path.Combine(projectDir, "bin", settings.Configuration, "publish");
 
+        logger.LogDebug("Project dir: {Path}", projectDir);
+        logger.LogDebug("Publishing to: {Path}", publishPath);
+
         AnsiConsole.WriteLine();
 
         BuildResult? buildResult = null;
 
-        AnsiConsole.Status()
+        var sw = Stopwatch.StartNew();
+        await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .Start("Building project...", ctx => {
+            .StartAsync("Building project...", async ctx => {
                 ctx.Status($"Publishing ({settings.Configuration})...");
-                logger.LogDebug("Publishing to: {Path}", publishPath);
 
-                buildResult = buildService.PublishAsync(
-                    profile.ProjectPath,
-                    publishPath,
-                    settings.Configuration,
-                    ct).GetAwaiter().GetResult();
+                buildResult = await buildService.PublishAsync(profile.ProjectPath, publishPath, settings.Configuration, ct);
             });
 
-        if(buildResult == null || !buildResult.Success) {
+        logger
+            .BuildDebugMessage("Project build completed")
+            .Add("Time taken", sw.Elapsed)
+            .AddAsJson("Result", buildResult)
+            .Write();
+
+        if(buildResult is not { Success: true }) {
             AnsiConsole.MarkupLine("[red]✗[/] Build failed.");
             if(buildResult?.Errors.Count > 0) {
                 foreach(var error in buildResult.Errors.Take(10)) {
@@ -345,6 +356,7 @@ internal sealed class DeployCommand(IProfileService profiles, ILogger<DeployComm
         AnsiConsole.WriteLine();
 
         var coordinator = new DeploymentCoordinator(
+            ftpClientFactory: ftpClientFactory,
             profileService: null,  // Not used in this flow - profile already loaded
             buildService: null,    // Not used in this flow - project already built
             historyService: null,  // History recording not implemented yet

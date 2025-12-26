@@ -1,6 +1,7 @@
 using FluentFTP;
-using FTPSheep.Protocols.Interfaces;
 using FTPSheep.Protocols.Models;
+using Microsoft.Extensions.Logging;
+using IFtpClient = FTPSheep.Protocols.Interfaces.IFtpClient;
 
 namespace FTPSheep.Protocols.Services;
 
@@ -8,19 +9,19 @@ namespace FTPSheep.Protocols.Services;
 /// Factory for creating FTP/SFTP clients based on protocol configuration.
 /// Implements the factory pattern for protocol abstraction.
 /// </summary>
-public class FtpClientFactory {
+public class FtpClientFactory(ILoggerFactory loggerFactory) {
     /// <summary>
     /// Creates an FTP client based on the specified configuration.
     /// </summary>
     /// <param name="config">The FTP connection configuration.</param>
     /// <returns>An instance of IFtpClient.</returns>
     /// <exception cref="ArgumentNullException">Thrown when config is null.</exception>
-    public static Interfaces.IFtpClient CreateClient(FtpConnectionConfig config) {
+    public IFtpClient CreateClient(FtpConnectionConfig config) {
         ArgumentNullException.ThrowIfNull(config);
 
         // FtpClientService handles both FTP and FTPS via EncryptionMode
         // Future: Add SFTP support when SSH.NET integration is implemented
-        return new FtpClientService(config);
+        return new FtpClientService(config, loggerFactory.CreateLogger<IFtpClient>());
     }
 
     /// <summary>
@@ -33,7 +34,7 @@ public class FtpClientFactory {
     /// <param name="encryptionMode">The encryption mode (None, Explicit, Implicit).</param>
     /// <param name="remoteRootPath">Optional remote root path.</param>
     /// <returns>An instance of IFtpClient.</returns>
-    public static Interfaces.IFtpClient CreateClient(
+    public IFtpClient CreateClient(
         string host,
         int port,
         string username,

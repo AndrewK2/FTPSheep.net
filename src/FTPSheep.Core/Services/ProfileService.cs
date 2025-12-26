@@ -78,9 +78,8 @@ public sealed class ProfileService : IProfileService {
             }
 
             // Load credentials if available
-            var credentials = await credentialStore.LoadCredentialsAsync(profile.Name, cancellationToken);
+            var credentials = await credentialStore.LoadCredentialsAsync(filePath, cancellationToken);
             if(credentials != null) {
-                profile.Username = credentials.Username;
                 profile.Password = credentials.Password;
                 logger.LogDebug("Loaded credentials for profile '{ProfileName}'", profile.Name);
             } else {

@@ -24,6 +24,7 @@ public class DeploymentCoordinator {
     private readonly ProfileService? profileService;
     private readonly BuildService? buildService;
     private readonly JsonDeploymentHistoryService? historyService;
+    private readonly FtpClientFactory? ftpClientFactory;
     private readonly ILogger logger;
     private CancellationTokenSource? cancellationTokenSource;
 
@@ -52,16 +53,14 @@ public class DeploymentCoordinator {
     /// <param name="historyService">The deployment history service (optional).</param>
     /// <param name="appOfflineManager">The app_offline.htm manager (optional).</param>
     /// <param name="exclusionMatcher">The exclusion pattern matcher (optional).</param>
+    /// <param name="ftpClientFactory"></param>
     /// <param name="logger"></param>
-    public DeploymentCoordinator(ProfileService? profileService = null,
-        BuildService? buildService = null,
-        JsonDeploymentHistoryService? historyService = null,
-        AppOfflineManager? appOfflineManager = null,
-        ExclusionPatternMatcher? exclusionMatcher = null, ILogger? logger = null) {
+    public DeploymentCoordinator(ProfileService? profileService = null, BuildService? buildService = null, JsonDeploymentHistoryService? historyService = null, AppOfflineManager? appOfflineManager = null, ExclusionPatternMatcher? exclusionMatcher = null, FtpClientFactory? ftpClientFactory = null, ILogger? logger = null) {
         state = new DeploymentState();
         this.profileService = profileService;
         this.buildService = buildService;
         this.historyService = historyService;
+        this.ftpClientFactory = ftpClientFactory;
         this.logger = logger ?? NullLogger.Instance;
         this.appOfflineManager = appOfflineManager ?? new AppOfflineManager();
         this.exclusionMatcher = exclusionMatcher ?? new ExclusionPatternMatcher();
@@ -328,7 +327,11 @@ public class DeploymentCoordinator {
             logger.LogDebug("Connecting to {0}:{1} as {2}", ftpConfig.Host, ftpConfig.Port, ftpConfig.Username);
 
             // Create FTP client and connect
-            ftpClient = FtpClientFactory.CreateClient(ftpConfig);
+            if(ftpClientFactory is null) {
+                throw new InvalidOperationException("Cannot create FTP client: no client factory");
+            }
+
+            ftpClient = ftpClientFactory.CreateClient(ftpConfig);
             await ftpClient.ConnectAsync(cancellationToken);
 
             // Test connection and write permissions
@@ -345,7 +348,8 @@ public class DeploymentCoordinator {
                 ? currentProfile.Concurrency
                 : 4; // default
 
-            uploadEngine = new ConcurrentUploadEngine(ftpConfig, maxConcurrency, maxRetries: currentProfile.RetryCount);
+            var factory = ftpClientFactory ?? throw new InvalidOperationException("FtpClientFactory is required for deployment");
+            uploadEngine = new ConcurrentUploadEngine(ftpConfig, factory, maxConcurrency, maxRetries: currentProfile.RetryCount);
         } catch(Exception ex) {
             throw "Failed to connect to server \"{0}\""
                 .F(currentProfile?.Connection.Host)

@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using FTPSheep.Protocols.Exceptions;
 using FTPSheep.Protocols.Interfaces;
 using FTPSheep.Protocols.Models;
 
@@ -10,6 +9,7 @@ namespace FTPSheep.Protocols.Services;
 /// </summary>
 public class ConcurrentUploadEngine : IDisposable {
     private readonly FtpConnectionConfig config;
+    private readonly FtpClientFactory ftpClientFactory;
     private readonly int maxConcurrency;
     private readonly int maxRetries;
     private readonly ConcurrentBag<IFtpClient> clientPool;
@@ -40,26 +40,24 @@ public class ConcurrentUploadEngine : IDisposable {
     /// Initializes a new instance of the <see cref="ConcurrentUploadEngine"/> class.
     /// </summary>
     /// <param name="config">The FTP connection configuration.</param>
+    /// <param name="ftpClientFactory"></param>
     /// <param name="maxConcurrency">Maximum number of concurrent uploads (default 4).</param>
     /// <param name="maxRetries">Maximum number of retries per file (default 3).</param>
-    public ConcurrentUploadEngine(
-        FtpConnectionConfig config,
-        int maxConcurrency = 4,
-        int maxRetries = 3) {
+    public ConcurrentUploadEngine(FtpConnectionConfig config, FtpClientFactory ftpClientFactory, int maxConcurrency = 4, int maxRetries = 3) {
         this.config = config ?? throw new ArgumentNullException(nameof(config));
+        this.ftpClientFactory = ftpClientFactory ?? throw new ArgumentNullException(nameof(ftpClientFactory));
 
-        if(maxConcurrency < 1 || maxConcurrency > 20) {
+        if(maxConcurrency is < 1 or > 20) {
             throw new ArgumentException("Max concurrency must be between 1 and 20.", nameof(maxConcurrency));
         }
-
-        if(maxRetries < 0 || maxRetries > 10) {
+        if(maxRetries is < 0 or > 10) {
             throw new ArgumentException("Max retries must be between 0 and 10.", nameof(maxRetries));
         }
 
         this.maxConcurrency = maxConcurrency;
         this.maxRetries = maxRetries;
-        this.clientPool = new ConcurrentBag<IFtpClient>();
-        this.connectionSemaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
+        clientPool = new ConcurrentBag<IFtpClient>();
+        connectionSemaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
     }
 
     /// <summary>
@@ -189,7 +187,7 @@ public class ConcurrentUploadEngine : IDisposable {
         }
 
         // Create and connect new client using factory
-        var newClient = FtpClientFactory.CreateClient(config);
+        var newClient = ftpClientFactory.CreateClient(config);
         await newClient.ConnectAsync(cancellationToken);
 
         return newClient;

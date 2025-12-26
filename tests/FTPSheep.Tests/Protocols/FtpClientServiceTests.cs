@@ -1,14 +1,18 @@
-using FTPSheep.Protocols.Exceptions;
 using FTPSheep.Protocols.Models;
 using FTPSheep.Protocols.Services;
+using Microsoft.Extensions.Logging.Abstractions;
+using IFtpClient = FTPSheep.Protocols.Interfaces.IFtpClient;
 
 namespace FTPSheep.Tests.Protocols;
 
 public class FtpClientServiceTests {
     [Fact]
     public void Constructor_WithNullConfig_ThrowsArgumentNullException() {
+        // Arrange
+        var logger = CreateNullLogger();
+
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new FtpClientService(null!));
+        Assert.Throws<ArgumentNullException>(() => new FtpClientService(null!, logger));
     }
 
     [Fact]
@@ -19,9 +23,10 @@ public class FtpClientServiceTests {
             Username = "user",
             Password = "pass"
         };
+        var logger = CreateNullLogger();
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => new FtpClientService(config));
+        var ex = Assert.Throws<ArgumentException>(() => new FtpClientService(config, logger));
         Assert.Contains("Host is required", ex.Message);
     }
 
@@ -36,7 +41,7 @@ public class FtpClientServiceTests {
         };
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => new FtpClientService(config));
+        var ex = Assert.Throws<ArgumentException>(() => new FtpClientService(config, CreateNullLogger()));
         Assert.Contains("Port must be between 1 and 65535", ex.Message);
     }
 
@@ -51,7 +56,7 @@ public class FtpClientServiceTests {
         };
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => new FtpClientService(config));
+        var ex = Assert.Throws<ArgumentException>(() => new FtpClientService(config, CreateNullLogger()));
         Assert.Contains("Port must be between 1 and 65535", ex.Message);
     }
 
@@ -65,7 +70,7 @@ public class FtpClientServiceTests {
         };
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => new FtpClientService(config));
+        var ex = Assert.Throws<ArgumentException>(() => new FtpClientService(config, CreateNullLogger()));
         Assert.Contains("Username is required", ex.Message);
     }
 
@@ -80,7 +85,7 @@ public class FtpClientServiceTests {
         };
 
         // Act
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Assert
         Assert.NotNull(service);
@@ -97,7 +102,7 @@ public class FtpClientServiceTests {
         };
 
         // Act
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Assert
         Assert.False(service.IsConnected);
@@ -112,7 +117,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -129,7 +134,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -146,7 +151,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -163,7 +168,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -180,7 +185,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -197,7 +202,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -214,7 +219,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -231,7 +236,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -248,7 +253,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        using var service = new FtpClientService(config);
+        using var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -265,7 +270,7 @@ public class FtpClientServiceTests {
             Password = "pass"
         };
 
-        var service = new FtpClientService(config);
+        var service = new FtpClientService(config, CreateNullLogger());
 
         // Act & Assert - should not throw
         service.Dispose();
@@ -289,5 +294,9 @@ public class FtpClientServiceTests {
         Assert.True(config.ValidateCertificate);
         Assert.True(config.KeepAlive);
         Assert.Equal("UTF-8", config.Encoding);
+    }
+
+    private static Microsoft.Extensions.Logging.ILogger<IFtpClient> CreateNullLogger() {
+        return NullLogger<IFtpClient>.Instance;
     }
 }

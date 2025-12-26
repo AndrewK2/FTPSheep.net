@@ -90,7 +90,7 @@ public sealed class LogMessage {
         return Add(key, FormatXml(xml));
     }
 
-    public LogMessage AddAsJson(string key, object value) => Add(key, () => JsonUtils.SerializeObject(value, true, true));
+    public LogMessage AddAsJson(string key, object? value) => Add(key, () => JsonUtils.SerializeObject(value, true, true));
 
     public LogMessage Add(string key, string? value) => AddInternal(key, value);
 
