@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FTPSheep.Core.Exceptions;
 using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Models;
@@ -85,6 +83,8 @@ public sealed class ProfileService : IProfileService {
                 profile.Username = credentials.Username;
                 profile.Password = credentials.Password;
                 logger.LogDebug("Loaded credentials for profile '{ProfileName}'", profile.Name);
+            } else {
+                logger.LogInformation("Not loaded credentials for profile '{ProfileName}'", profile.Name);
             }
 
             // Normalize port if needed

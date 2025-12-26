@@ -7,13 +7,13 @@ public interface ICredentialStore {
     /// <summary>
     /// Saves credentials securely with encryption.
     /// </summary>
-    /// <param name="profileFullPath">The profile name to associate with the credentials.</param>
+    /// <param name="profileId">The profile unique id to associate with the credentials.</param>
     /// <param name="username">The username to save.</param>
     /// <param name="password">The password to save (will be encrypted).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task SaveCredentialsAsync(
-        string profileFullPath,
+        string profileId,
         string username,
         string password,
         CancellationToken cancellationToken = default);
@@ -21,32 +21,26 @@ public interface ICredentialStore {
     /// <summary>
     /// Loads credentials securely and decrypts them.
     /// </summary>
-    /// <param name="profilePath">The profile name to load credentials for.</param>
+    /// <param name="profileId">The profile unique id to load credentials for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The credentials, or null if not found.</returns>
-    Task<Credentials?> LoadCredentialsAsync(
-        string profilePath,
-        CancellationToken cancellationToken = default);
+    Task<Credentials?> LoadCredentialsAsync(string profileId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes saved credentials for a profile.
     /// </summary>
-    /// <param name="profileName">The profile name to delete credentials for.</param>
+    /// <param name="profileId">The profile unique id to delete credentials for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task DeleteCredentialsAsync(
-        string profileName,
-        CancellationToken cancellationToken = default);
+    Task DeleteCredentialsAsync(string profileId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if credentials exist for a profile.
     /// </summary>
-    /// <param name="profileName">The profile name to check.</param>
+    /// <param name="profileId">The profile unique id to check.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if credentials exist, false otherwise.</returns>
-    Task<bool> HasCredentialsAsync(
-        string profileName,
-        CancellationToken cancellationToken = default);
+    Task<bool> HasCredentialsAsync(string profileId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Encrypts a password string.

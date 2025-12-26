@@ -39,10 +39,10 @@ public interface IProfileService {
     /// <summary>
     /// Deletes a deployment profile and its associated credentials.
     /// </summary>
-    /// <param name="profileName">The name of the profile to delete.</param>
+    /// <param name="filePath">The name of the profile to delete.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns><c>true</c> if the profile was deleted; <c>false</c> if it did not exist.</returns>
-    Task<bool> DeleteProfileAsync(string profileName, CancellationToken cancellationToken = default);
+    Task<bool> DeleteProfileAsync(string filePath, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Lists all available deployment profiles with summary information.
