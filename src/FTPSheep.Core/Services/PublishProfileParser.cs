@@ -49,6 +49,7 @@ public class PublishProfileParser {
             var xmlContent = File.ReadAllText(pubxmlPath);
             var profile = ParseFromString(xmlContent);
             profile.SourceFilePath = pubxmlPath;
+
             return profile;
         } catch(ProfileException ex) {
             throw new ProfileException($"Failed to parse publish profile '{pubxmlPath}': {ex.Message}", ex);

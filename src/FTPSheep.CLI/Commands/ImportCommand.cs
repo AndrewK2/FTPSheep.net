@@ -36,8 +36,10 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
 
             // Determine which .pubxml file to import
             string pubxmlPath;
+
             if(!string.IsNullOrWhiteSpace(settings.ProfilePath)) {
                 pubxmlPath = settings.ProfilePath;
+
                 if(!File.Exists(pubxmlPath)) {
                     AnsiConsole.MarkupLine($"[red]Error:[/] File not found: {pubxmlPath}");
                     return 1;
@@ -62,16 +64,16 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
                         .Select(p => Path.GetFileName(p))
                         .ToList();
 
-                    var selectedName = AnsiConsole.Prompt(
-                        new SelectionPrompt<string>()
+                    var selectedName = AnsiConsole.Prompt(new SelectionPrompt<string>()
                         .Title("Multiple publish profiles found. Which one would you like to import?")
-                            .AddChoices(profileNames));
+                        .AddChoices(profileNames));
 
                     pubxmlPath = discoveredProfiles[profileNames.IndexOf(selectedName)];
                 }
             }
 
             AnsiConsole.WriteLine();
+
             AnsiConsole.Status()
                 .Start("Importing profile...", ctx => {
                     ctx.Status("Parsing publish profile...");
@@ -85,11 +87,14 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
 
                     // Validate the converted profile
                     var validationErrors = converter.ValidateImportedProfile(deploymentProfile);
+
                     if(validationErrors.Count > 0) {
                         AnsiConsole.MarkupLine("[red]Validation errors:[/]");
+
                         foreach(var error in validationErrors) {
                             AnsiConsole.MarkupLine($"  [red]•[/] {error}");
                         }
+
                         throw new InvalidOperationException("Profile validation failed.");
                     }
 
@@ -113,7 +118,7 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
             table.AddRow("Port", convertedProfile.Connection.Port.ToString());
             table.AddRow("Protocol", convertedProfile.Connection.UseSsl ? "FTPS" : "FTP");
             table.AddRow("Username", convertedProfile.Username ?? "[dim]not set[/]");
-            table.AddRow("Remote Path", string.IsNullOrWhiteSpace(convertedProfile.RemotePath) ? "/" : convertedProfile.RemotePath);
+            table.AddRow("Remote Path", convertedProfile.RemotePath);
             AnsiConsole.Write(table);
             AnsiConsole.WriteLine();
 
@@ -130,14 +135,10 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
                 convertedProfile.Username = username;
             }
 
-            var password = AnsiConsole.Prompt(
-                new TextPrompt<string>("Enter FTP password:")
-                    .Secret());
+            var password = AnsiConsole.Prompt(new TextPrompt<string>("Enter FTP password:")
+                .Secret());
 
-            // Encrypt and store the password
-            if(!string.IsNullOrWhiteSpace(password)) {
-                convertedProfile.EncryptedPassword = encryption.Encrypt(password);
-            }
+            convertedProfile.Password = password;
 
             // Prompt for project path if not set
             if(string.IsNullOrWhiteSpace(convertedProfile.ProjectPath)) {
@@ -155,9 +156,11 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
 
             // Prompt for save directory
             var defaultSaveDir = Path.GetDirectoryName(pubxmlPath);
+
             if(string.IsNullOrWhiteSpace(defaultSaveDir)) {
                 defaultSaveDir = Directory.GetCurrentDirectory();
             }
+
             var saveDirectory = AnsiConsole.Ask("Enter directory to save profile:", defaultSaveDir);
 
             // Ensure directory exists
@@ -170,8 +173,7 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
             var profileSavePath = Path.Combine(saveDirectory, profileFileName);
 
             // Convert ProjectPath to relative if possible
-            if (!string.IsNullOrWhiteSpace(convertedProfile.ProjectPath))
-            {
+            if(!string.IsNullOrWhiteSpace(convertedProfile.ProjectPath)) {
                 // Ensure we have an absolute path
                 var absoluteProjectPath = Path.GetFullPath(convertedProfile.ProjectPath);
 
@@ -195,6 +197,7 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
             // Check if file already exists at the custom location
             if(File.Exists(profileSavePath)) {
                 var overwriteFile = await AnsiConsole.ConfirmAsync($"File '{profileFileName}' already exists in this directory. Overwrite?", false, cancellationToken);
+
                 if(!overwriteFile) {
                     AnsiConsole.MarkupLine("[yellow]Import cancelled.[/]");
                     return 0;
@@ -208,7 +211,7 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
             AnsiConsole.MarkupLine($"Profile saved to: [cyan]{profileSavePath}[/]");
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine($"You can now deploy using: [cyan]ftpsheep deploy --profile {profileName}[/] or [cyan]ftpsheep deploy --file \"{profileSavePath}\"[/]");
-            
+
 
             return 0;
         } catch(Exception ex) {
@@ -226,6 +229,7 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
     private static string? FindProjectFile(string pubxmlPath) {
         // Start from the directory containing the .pubxml file
         var pubxmlDir = Path.GetDirectoryName(pubxmlPath);
+
         if(string.IsNullOrEmpty(pubxmlDir)) {
             pubxmlDir = Directory.GetCurrentDirectory();
         }
@@ -238,6 +242,7 @@ internal sealed class ImportCommand(IProfileService profiles, ILogger<ImportComm
 
             foreach(var extension in projectExtensions) {
                 var projectFiles = currentDir.GetFiles(extension, SearchOption.TopDirectoryOnly);
+
                 if(projectFiles.Length > 0) {
                     // Return the first found project file
                     return projectFiles[0].FullName;

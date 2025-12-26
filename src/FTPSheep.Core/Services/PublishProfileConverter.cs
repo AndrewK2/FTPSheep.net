@@ -59,7 +59,7 @@ public class PublishProfileConverter {
                          publishProfile.PublishUrl?.StartsWith("ftps://", StringComparison.OrdinalIgnoreCase) == true
             },
             Username = publishProfile.UserName ?? string.Empty,
-            RemotePath = remotePath,
+            RemotePath = string.IsNullOrWhiteSpace(remotePath) ? "/" : remotePath,
             Build = new BuildConfiguration {
                 Configuration = "Release", // Default, can be overridden
                 TargetFramework = publishProfile.TargetFramework,

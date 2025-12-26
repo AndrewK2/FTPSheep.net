@@ -56,15 +56,14 @@ public sealed class ProfileService : IProfileService {
 
         await File.WriteAllTextAsync(profileSavePath, json, cancellationToken);
 
-        /*
         // Save credentials if provided
         if(!string.IsNullOrWhiteSpace(profile.Username) && !string.IsNullOrWhiteSpace(profile.Password)) {
-            await credentialStore.SaveCredentialsAsync(profile.Name, profile.Username, profile.Password, cancellationToken);
+            await credentialStore.SaveCredentialsAsync(profileSavePath, profile.Username, profile.Password, cancellationToken);
 
             logger.LogDebug("Saved credentials for profile '{ProfileName}'", profile.Name);
         }
 
-        logger.LogInformation("Successfully created profile '{ProfileName}'", profile.Name);*/
+        logger.LogInformation("Successfully created profile '{ProfileName}'", profile.Name);
     }
 
     /// <inheritdoc/>

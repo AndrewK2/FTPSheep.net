@@ -7,13 +7,13 @@ public interface ICredentialStore {
     /// <summary>
     /// Saves credentials securely with encryption.
     /// </summary>
-    /// <param name="profileName">The profile name to associate with the credentials.</param>
+    /// <param name="profileFullPath">The profile name to associate with the credentials.</param>
     /// <param name="username">The username to save.</param>
     /// <param name="password">The password to save (will be encrypted).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task SaveCredentialsAsync(
-        string profileName,
+        string profileFullPath,
         string username,
         string password,
         CancellationToken cancellationToken = default);
@@ -21,11 +21,11 @@ public interface ICredentialStore {
     /// <summary>
     /// Loads credentials securely and decrypts them.
     /// </summary>
-    /// <param name="profileName">The profile name to load credentials for.</param>
+    /// <param name="profilePath">The profile name to load credentials for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The credentials, or null if not found.</returns>
     Task<Credentials?> LoadCredentialsAsync(
-        string profileName,
+        string profilePath,
         CancellationToken cancellationToken = default);
 
     /// <summary>

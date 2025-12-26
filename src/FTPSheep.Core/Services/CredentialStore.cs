@@ -3,6 +3,7 @@ using System.Text.Json;
 using FTPSheep.Core.Exceptions;
 using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace FTPSheep.Core.Services;
 
@@ -12,6 +13,7 @@ namespace FTPSheep.Core.Services;
 /// </summary>
 public sealed class CredentialStore : ICredentialStore {
     private readonly DpapiEncryptionService encryptionService;
+    private readonly ILogger<CredentialStore>? logger;
 
     private const string EnvironmentUsernameKey = "FTP_USERNAME";
     private const string EnvironmentPasswordKey = "FTP_PASSWORD";
@@ -19,26 +21,27 @@ public sealed class CredentialStore : ICredentialStore {
     /// <summary>
     /// Initializes a new instance of the <see cref="CredentialStore"/> class.
     /// </summary>
-    public CredentialStore()
-        : this(new DpapiEncryptionService()) {
+    public CredentialStore(ILogger<CredentialStore>? logger = null) : this(new DpapiEncryptionService(), logger) {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CredentialStore"/> class.
     /// </summary>
     /// <param name="encryptionService">The encryption service.</param>
-    internal CredentialStore(DpapiEncryptionService encryptionService) {
+    /// <param name="logger"></param>
+    internal CredentialStore(DpapiEncryptionService encryptionService, ILogger<CredentialStore>? logger) {
         this.encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
+        this.logger = logger;
     }
 
     /// <inheritdoc />
     public async Task SaveCredentialsAsync(
-        string profileName,
+        string profileFullPath,
         string username,
         string password,
         CancellationToken cancellationToken = default) {
-        if(string.IsNullOrWhiteSpace(profileName)) {
-            throw new ArgumentException("Profile name cannot be null or empty.", nameof(profileName));
+        if(string.IsNullOrWhiteSpace(profileFullPath)) {
+            throw new ArgumentException("Profile name cannot be null or empty.", nameof(profileFullPath));
         }
 
         if(string.IsNullOrWhiteSpace(username)) {
@@ -56,7 +59,10 @@ public sealed class CredentialStore : ICredentialStore {
         }
 
         try {
-            var credentialFilePath = GetCredentialFilePath(profileName);
+            var credentialFilePath = GetCredentialFilePath(profileFullPath);
+
+            logger?.LogDebug("Saving credentials to: {p}", credentialFilePath);
+
             var directory = Path.GetDirectoryName(credentialFilePath);
 
             if(!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
@@ -81,19 +87,19 @@ public sealed class CredentialStore : ICredentialStore {
             await File.WriteAllTextAsync(credentialFilePath, json, cancellationToken);
         } catch(CryptographicException ex) {
             throw new ConfigurationException(
-                $"Failed to encrypt credentials for profile '{profileName}': {ex.Message}", ex);
+                $"Failed to encrypt credentials for profile '{profileFullPath}': {ex.Message}", ex);
         } catch(IOException ex) {
             throw new ConfigurationException(
-                $"Failed to save credentials for profile '{profileName}': {ex.Message}", ex);
+                $"Failed to save credentials for profile '{profileFullPath}': {ex.Message}", ex);
         }
     }
 
     /// <inheritdoc />
     public async Task<Credentials?> LoadCredentialsAsync(
-        string profileName,
+        string profilePath,
         CancellationToken cancellationToken = default) {
-        if(string.IsNullOrWhiteSpace(profileName)) {
-            throw new ArgumentException("Profile name cannot be null or empty.", nameof(profileName));
+        if(string.IsNullOrWhiteSpace(profilePath)) {
+            throw new ArgumentException("Profile name cannot be null or empty.", nameof(profilePath));
         }
 
         // First, check environment variables (they override stored credentials)
@@ -103,7 +109,7 @@ public sealed class CredentialStore : ICredentialStore {
         }
 
         // Then check stored credentials
-        var credentialFilePath = GetCredentialFilePath(profileName);
+        var credentialFilePath = GetCredentialFilePath(profilePath);
         if(!File.Exists(credentialFilePath)) {
             return null;
         }
@@ -122,14 +128,14 @@ public sealed class CredentialStore : ICredentialStore {
             return new Credentials(credentialData.Username, decryptedPassword);
         } catch(CryptographicException ex) {
             throw new ConfigurationException(
-                $"Failed to decrypt credentials for profile '{profileName}'. " +
+                $"Failed to decrypt credentials for profile '{profilePath}'. " +
                 "The credentials may have been encrypted by a different user or on a different machine.", ex);
         } catch(JsonException ex) {
             throw new ConfigurationException(
-                $"Failed to parse credentials file for profile '{profileName}': {ex.Message}", ex);
+                $"Failed to parse credentials file for profile '{profilePath}': {ex.Message}", ex);
         } catch(IOException ex) {
             throw new ConfigurationException(
-                $"Failed to load credentials for profile '{profileName}': {ex.Message}", ex);
+                $"Failed to load credentials for profile '{profilePath}': {ex.Message}", ex);
         }
     }
 
@@ -196,9 +202,17 @@ public sealed class CredentialStore : ICredentialStore {
         return encryptionService.Decrypt(encryptedText);
     }
 
-    private static string GetCredentialFilePath(string profileName) {
+    private static string GetCredentialFilePath(string profileFullPath) {
         var credentialsDirectory = PathResolver.GetCredentialsDirectoryPath();
-        return Path.Combine(credentialsDirectory, $"{profileName}.cred.json");
+
+        var guid = new Guid(GetPathHash(profileFullPath)[..16]);
+        var pathHash = guid.ToString("D");
+        
+        return Path.Combine(credentialsDirectory, $"profile_{pathHash}.cred.json");
+
+        static byte[] GetPathHash(string profileFullPath) {
+            return SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(profileFullPath));
+        }
     }
 
     private static Credentials? LoadCredentialsFromEnvironment() {
