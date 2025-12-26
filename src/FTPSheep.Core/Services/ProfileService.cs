@@ -72,6 +72,16 @@ public sealed class ProfileService : IProfileService {
 
         var profile = await Repository.LoadFromPathAsync(profilePath, cancellationToken);
 
+        // Resolve ProjectPath to absolute if it's relative
+        if(!string.IsNullOrWhiteSpace(profile.ProjectPath) && !PathResolver.IsAbsolutePath(profile.ProjectPath)) {
+            // Get the directory of the profile file for relative path resolution
+            var profileDirectory = Path.GetDirectoryName(profilePath)!;
+            var absoluteProjectPath = Path.GetFullPath(profile.ProjectPath, profileDirectory);
+            profile.ProjectPath = absoluteProjectPath;
+            logger.LogDebug("Resolved ProjectPath from relative '{Relative}' to absolute '{Absolute}'",
+                profile.ProjectPath, absoluteProjectPath);
+        }
+
         // Load credentials if available
         var credentials = await credentialStore.LoadCredentialsAsync(profile.Name, cancellationToken);
         if(credentials != null) {
@@ -115,7 +125,8 @@ public sealed class ProfileService : IProfileService {
         }
 
         // Save the updated profile
-        await Repository.SaveAsync(profile, cancellationToken);
+        throw new NotImplementedException();
+        //await Repository.SaveAsync(filePath, profile, cancellationToken);
 
         // Update credentials if provided
         if(!string.IsNullOrWhiteSpace(profile.Username) && !string.IsNullOrWhiteSpace(profile.Password)) {
@@ -156,16 +167,15 @@ public sealed class ProfileService : IProfileService {
         var profilesPaths = await Repository.ListProfileNamesAsync(cancellationToken);
         var summaries = new List<ProfileSummary>();
 
-        foreach(var paths in profilesPaths) {
+        foreach(var filePath in profilesPaths) {
             try {
-                var profile = await Repository.LoadFromPathAsync(paths, cancellationToken);
+                var profile = await Repository.LoadFromPathAsync(filePath, cancellationToken);
                 if(profile == null) {
                     continue;
                 }
 
-                var filePath = Repository.GetProfilePath(paths);
                 var fileInfo = new FileInfo(filePath);
-                var hasCredentials = await credentialStore.HasCredentialsAsync(paths, cancellationToken);
+                var hasCredentials = await credentialStore.HasCredentialsAsync(filePath, cancellationToken);
 
                 summaries.Add(new ProfileSummary {
                     Name = profile.Name,
@@ -177,7 +187,7 @@ public sealed class ProfileService : IProfileService {
                     FilePath = filePath
                 });
             } catch(Exception ex) {
-                logger.LogWarning(ex, "Failed to load profile '{ProfileName}' for listing", paths);
+                logger.LogWarning(ex, "Failed to load profile for listing: {ProfileName}", filePath);
             }
         }
 

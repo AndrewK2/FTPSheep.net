@@ -27,27 +27,21 @@ public class ProfileServiceTests {
     public async Task CreateProfileAsync_ValidProfile_Succeeds() {
         // Arrange
         var profile = CreateValidProfile("test-profile");
-
-        repositoryMock
-            .Setup(x => x.ExistsAsync("test-profile", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
-        repositoryMock
-            .Setup(x => x.SaveAsync(It.IsAny<DeploymentProfile>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var profileSavePath = Path.GetTempFileName();
 
         credentialStoreMock
             .Setup(x => x.SaveCredentialsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        var profileSavePath = Path.GetTempFileName();
         await profileService.CreateProfileAsync(profileSavePath, profile);
-        File.Delete(profileSavePath);
-        
+
         // Assert
-        repositoryMock.Verify(x => x.SaveAsync(profile, It.IsAny<CancellationToken>()), Times.Once);
-        credentialStoreMock.Verify(x => x.SaveCredentialsAsync("test-profile", "testuser", "testpass", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.True(File.Exists(profileSavePath));
+        credentialStoreMock.Verify(x => x.SaveCredentialsAsync(profileSavePath, "testuser", "testpass", It.IsAny<CancellationToken>()), Times.Once);
+
+        // Cleanup
+        File.Delete(profileSavePath);
     }
 
     [Fact]
@@ -58,62 +52,72 @@ public class ProfileServiceTests {
             Connection = new ServerConnection("ftp.example.com"),
             RemotePath = "/www"
         };
-
-        // Act & Assert
         var profileSavePath = Path.GetTempFileName();
 
+        // Act & Assert
         await Assert.ThrowsAsync<ProfileValidationException>(() => profileService.CreateProfileAsync(profileSavePath, profile));
 
-        repositoryMock.Verify(x => x.SaveAsync(It.IsAny<DeploymentProfile>(), It.IsAny<CancellationToken>()), Times.Never);
+        // Cleanup
+        if(File.Exists(profileSavePath)) {
+            File.Delete(profileSavePath);
+        }
     }
 
     [Fact]
     public async Task LoadProfileAsync_ByPath_LoadsFromFile() {
         // Arrange
-        var filePath = @"C:\test\profile.json";
         var profile = CreateValidProfile("path-test");
+        var profilePath = Path.GetTempFileName();
 
-        repositoryMock
-            .Setup(x => x.LoadFromPathAsync(filePath, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(profile);
+        // Create actual profile file
+        await profileService.CreateProfileAsync(profilePath, profile);
 
         credentialStoreMock
-            .Setup(x => x.LoadCredentialsAsync("path-test", It.IsAny<CancellationToken>()))
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Credentials?)null);
 
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
         // Act
-        var loadedProfile = await profileService.LoadProfileAsync(filePath);
+        var loadedProfile = await profileService.LoadProfileAsync(profilePath);
 
         // Assert
         Assert.NotNull(loadedProfile);
         Assert.Equal("path-test", loadedProfile.Name);
 
-        repositoryMock.Verify(x => x.LoadFromPathAsync(filePath, It.IsAny<CancellationToken>()), Times.Once);
-        repositoryMock.Verify(x => x.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        repositoryMock.Verify(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()), Times.Once);
+
+        // Cleanup
+        File.Delete(profilePath);
     }
 
     [Fact]
     public async Task LoadProfileAsync_NonExistent_ThrowsProfileNotFoundException() {
         // Arrange
+        var nonExistentPath = @"C:\non-existent-path\profile.ftpsheep";
+
         repositoryMock
-            .Setup(x => x.LoadAsync("non-existent", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((DeploymentProfile?)null);
+            .Setup(x => x.LoadFromPathAsync(nonExistentPath, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new FileNotFoundException());
 
         // Act & Assert
-        await Assert.ThrowsAsync<ProfileNotFoundException>(() => profileService.LoadProfileAsync("non-existent"));
+        await Assert.ThrowsAsync<FileNotFoundException>(() => profileService.LoadProfileAsync(nonExistentPath));
     }
 
     [Fact]
     public async Task UpdateProfileAsync_ValidProfile_Succeeds() {
         // Arrange
         var profile = CreateValidProfile("update-test");
+        var profilePath = Path.GetTempFileName();
 
         repositoryMock
-            .Setup(x => x.ExistsAsync("update-test", It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsAsync(profilePath, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         repositoryMock
-            .Setup(x => x.SaveAsync(It.IsAny<DeploymentProfile>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.SaveAsync(profilePath, It.IsAny<DeploymentProfile>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         credentialStoreMock
@@ -124,53 +128,63 @@ public class ProfileServiceTests {
         await profileService.UpdateProfileAsync(profile);
 
         // Assert
-        repositoryMock.Verify(x => x.SaveAsync(profile, It.IsAny<CancellationToken>()), Times.Once);
+        repositoryMock.Verify(x => x.SaveAsync(It.IsAny<string>(), profile, It.IsAny<CancellationToken>()), Times.Once);
+
+        // Cleanup
+        if(File.Exists(profilePath)) {
+            File.Delete(profilePath);
+        }
     }
 
     [Fact]
     public async Task UpdateProfileAsync_NonExistent_ThrowsProfileNotFoundException() {
         // Arrange
         var profile = CreateValidProfile("non-existent");
+        var profilePath = @"C:\non-existent\profile.ftpsheep";
 
         repositoryMock
-            .Setup(x => x.ExistsAsync("non-existent", It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsAsync(profilePath, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act & Assert
         await Assert.ThrowsAsync<ProfileNotFoundException>(() => profileService.UpdateProfileAsync(profile));
 
-        repositoryMock.Verify(x => x.SaveAsync(It.IsAny<DeploymentProfile>(), It.IsAny<CancellationToken>()), Times.Never);
+        repositoryMock.Verify(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<DeploymentProfile>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task DeleteProfileAsync_ExistingProfile_ReturnsTrue() {
         // Arrange
+        var profilePath = Path.GetTempFileName();
+
         repositoryMock
-            .Setup(x => x.DeleteAsync("delete-test", It.IsAny<CancellationToken>()))
+            .Setup(x => x.DeleteAsync(profilePath, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         credentialStoreMock
-            .Setup(x => x.DeleteCredentialsAsync("delete-test", It.IsAny<CancellationToken>()))
+            .Setup(x => x.DeleteCredentialsAsync(profilePath, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await profileService.DeleteProfileAsync("delete-test");
+        var result = await profileService.DeleteProfileAsync(profilePath);
 
         // Assert
         Assert.True(result);
-        repositoryMock.Verify(x => x.DeleteAsync("delete-test", It.IsAny<CancellationToken>()), Times.Once);
-        credentialStoreMock.Verify(x => x.DeleteCredentialsAsync("delete-test", It.IsAny<CancellationToken>()), Times.Once);
+        repositoryMock.Verify(x => x.DeleteAsync(profilePath, It.IsAny<CancellationToken>()), Times.Once);
+        credentialStoreMock.Verify(x => x.DeleteCredentialsAsync(profilePath, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task DeleteProfileAsync_NonExistent_ReturnsFalse() {
         // Arrange
+        var profilePath = @"C:\non-existent\profile.ftpsheep";
+
         repositoryMock
-            .Setup(x => x.DeleteAsync("non-existent", It.IsAny<CancellationToken>()))
+            .Setup(x => x.DeleteAsync(profilePath, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act
-        var result = await profileService.DeleteProfileAsync("non-existent");
+        var result = await profileService.DeleteProfileAsync(profilePath);
 
         // Assert
         Assert.False(result);
@@ -180,23 +194,21 @@ public class ProfileServiceTests {
     [Fact]
     public async Task ListProfilesAsync_ReturnsProfileSummaries() {
         // Arrange
-        var profileNames = new List<string> { "profile1", "profile2" };
+        var profilePath1 = @"C:\profiles\profile1.ftpsheep";
+        var profilePath2 = @"C:\profiles\profile2.ftpsheep";
+        var profilePaths = new List<string> { profilePath1, profilePath2 };
 
         repositoryMock
             .Setup(x => x.ListProfileNamesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(profileNames);
+            .ReturnsAsync(profilePaths);
 
         repositoryMock
-            .Setup(x => x.LoadAsync("profile1", It.IsAny<CancellationToken>()))
+            .Setup(x => x.LoadFromPathAsync(profilePath1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateValidProfile("profile1"));
 
         repositoryMock
-            .Setup(x => x.LoadAsync("profile2", It.IsAny<CancellationToken>()))
+            .Setup(x => x.LoadFromPathAsync(profilePath2, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateValidProfile("profile2"));
-
-        repositoryMock
-            .Setup(x => x.GetProfilePath(It.IsAny<string>()))
-            .Returns<string>(name => $@"C:\test\{name}.json");
 
         credentialStoreMock
             .Setup(x => x.HasCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
