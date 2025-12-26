@@ -67,20 +67,10 @@ public sealed class ProfileService : IProfileService {
     }
 
     /// <inheritdoc/>
-    public async Task<DeploymentProfile> LoadProfileAsync(string profileNameOrPath, CancellationToken cancellationToken = default) {
-        logger.LogInformation("Loading profile '{ProfileNameOrPath}'", profileNameOrPath);
+    public async Task<DeploymentProfile> LoadProfileAsync(string profilePath, CancellationToken cancellationToken = default) {
+        logger.LogInformation("Loading profile '{ProfileNameOrPath}'", profilePath);
 
-        DeploymentProfile profile;
-
-        // Determine if it's a path or a name
-        if(PathResolver.IsAbsolutePath(profileNameOrPath)) {
-            // Load from file path
-            profile = await Repository.LoadFromPathAsync(profileNameOrPath, cancellationToken);
-        } else {
-            // Load by name
-            profile = await Repository.LoadAsync(profileNameOrPath, cancellationToken)
-                ?? throw new ProfileNotFoundException(profileNameOrPath);
-        }
+        var profile = await Repository.LoadFromPathAsync(profilePath, cancellationToken);
 
         // Load credentials if available
         var credentials = await credentialStore.LoadCredentialsAsync(profile.Name, cancellationToken);
@@ -163,19 +153,19 @@ public sealed class ProfileService : IProfileService {
     public async Task<List<ProfileSummary>> ListProfilesAsync(CancellationToken cancellationToken = default) {
         logger.LogDebug("Listing all profiles");
 
-        var profileNames = await Repository.ListProfileNamesAsync(cancellationToken);
+        var profilesPaths = await Repository.ListProfileNamesAsync(cancellationToken);
         var summaries = new List<ProfileSummary>();
 
-        foreach(var name in profileNames) {
+        foreach(var paths in profilesPaths) {
             try {
-                var profile = await Repository.LoadAsync(name, cancellationToken);
+                var profile = await Repository.LoadFromPathAsync(paths, cancellationToken);
                 if(profile == null) {
                     continue;
                 }
 
-                var filePath = Repository.GetProfilePath(name);
+                var filePath = Repository.GetProfilePath(paths);
                 var fileInfo = new FileInfo(filePath);
-                var hasCredentials = await credentialStore.HasCredentialsAsync(name, cancellationToken);
+                var hasCredentials = await credentialStore.HasCredentialsAsync(paths, cancellationToken);
 
                 summaries.Add(new ProfileSummary {
                     Name = profile.Name,
@@ -187,7 +177,7 @@ public sealed class ProfileService : IProfileService {
                     FilePath = filePath
                 });
             } catch(Exception ex) {
-                logger.LogWarning(ex, "Failed to load profile '{ProfileName}' for listing", name);
+                logger.LogWarning(ex, "Failed to load profile '{ProfileName}' for listing", paths);
             }
         }
 
