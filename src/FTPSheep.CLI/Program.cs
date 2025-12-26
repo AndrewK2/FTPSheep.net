@@ -18,6 +18,7 @@ try {
 
     registrations
         .AddScoped<IProfileService, ProfileService>()
+        .AddScoped<IProfileRepository, FileSystemProfileRepository>()
         .AddScoped<ICredentialStore, CredentialStore>();
 
     var app = new CommandApp(new TypeRegistrar(registrations));
@@ -29,7 +30,6 @@ try {
         config.AddCommand<DeployCommand>("deploy")
             .WithDescription("Deploy a .NET application to FTP server")
             .WithExample("deploy", "--file", @"c:\projects\website1\Properties\PublishProfiles\production.ftpsheep")
-            .WithExample("deploy", "--profile", "production")
             .WithExample("deploy", "--yes");
 
         config.AddBranch("profile", profile => {

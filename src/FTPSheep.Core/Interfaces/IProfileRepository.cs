@@ -16,14 +16,6 @@ public interface IProfileRepository {
     Task SaveAsync(string filePath, DeploymentProfile profile, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Loads a deployment profile by name.
-    /// </summary>
-    /// <param name="filePath">The path of the profile to load.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The loaded profile, or null if not found.</returns>
-    Task<DeploymentProfile?> LoadAsync(string filePath, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Loads a deployment profile from a specific file path.
     /// </summary>
     /// <param name="filePath">The full path to the profile file.</param>

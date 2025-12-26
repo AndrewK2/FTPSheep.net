@@ -1,8 +1,12 @@
 {
   "profiles": {
-    "FTPSheep.CLI": {
+    "Import profile": {
       "commandName": "Project",
       "commandLineArgs": "import p:\\StroyRow\\StroyRow\\WebSite2024\\ConsoleWebsite.Server\\Properties\\PublishProfiles\\console-staging.stroyryad.com.ua-FTP.pubxml"
+    },
+    "Run deploy": {
+      "commandName": "Project",
+      "commandLineArgs": "deploy --file p:\\StroyRow\\StroyRow\\WebSite2024\\ConsoleWebsite.Server\\Properties\\PublishProfiles\\console-staging.stroyryad.com.ua-FTP.ftpsheep "
     }
   }
 }

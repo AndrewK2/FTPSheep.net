@@ -20,11 +20,11 @@ public interface IProfileService {
     /// <summary>
     /// Loads a deployment profile by name or file path, applying global defaults and loading credentials.
     /// </summary>
-    /// <param name="profilePath">The profile name or file path.</param>
+    /// <param name="filePath">The profile name or file path.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The loaded and validated profile.</returns>
     /// <exception cref="Exceptions.ProfileNotFoundException">Thrown when the profile cannot be found.</exception>
-    Task<DeploymentProfile> LoadProfileAsync(string profilePath, CancellationToken cancellationToken = default);
+    Task<DeploymentProfile> LoadProfileAsync(string filePath, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an existing deployment profile with validation.

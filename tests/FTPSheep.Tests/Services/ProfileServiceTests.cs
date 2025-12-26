@@ -18,9 +18,7 @@ public class ProfileServiceTests {
         credentialStoreMock = new Mock<ICredentialStore>();
         loggerMock = new Mock<ILogger<ProfileService>>();
 
-        profileService = new ProfileService(
-            credentialStoreMock.Object,
-            loggerMock.Object);
+        profileService = new ProfileService(credentialStoreMock.Object, repositoryMock.Object, loggerMock.Object);
     }
 
     [Fact]

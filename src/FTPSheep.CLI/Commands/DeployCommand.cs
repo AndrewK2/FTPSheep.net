@@ -1,14 +1,15 @@
 using System.ComponentModel;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FTPSheep.BuildTools.Models;
 using FTPSheep.BuildTools.Services;
+using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
 using FTPSheep.Utilities.Logging;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using BuildResult = FTPSheep.BuildTools.Models.BuildResult;
+using DeploymentStage = FTPSheep.Core.Models.DeploymentStage;
 using ValidationResult = Spectre.Console.ValidationResult;
 
 namespace FTPSheep.CLI.Commands;
@@ -16,15 +17,11 @@ namespace FTPSheep.CLI.Commands;
 /// <summary>
 /// Command to deploy a .NET application to FTP server.
 /// </summary>
-internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<DeployCommand.Settings> {
+internal sealed class DeployCommand(IProfileService profiles, ILogger<DeployCommand> logger) : AsyncCommand<DeployCommand.Settings> {
     /// <summary>
     /// Settings for the deploy command.
     /// </summary>
     public sealed class Settings : CommandSettings {
-        [Description("Name of the deployment profile to use")]
-        [CommandOption("-p|--profile <PROFILE>")]
-        public string? ProfileName { get; init; }
-
         [Description("Path to a profile JSON file")]
         [CommandOption("-f|--file <PATH>")]
         public string? ProfilePath { get; init; }
@@ -66,12 +63,12 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
         }
     }
 
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken) {
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken) {
         DisplayHeader(settings);
 
         try {
             // Phase 1: Profile Resolution
-            var profile = ResolveAndLoadProfile(settings, cancellationToken);
+            var profile = await ResolveAndLoadProfile(settings, cancellationToken);
             if(profile == null) {
                 return 1;
             }
@@ -136,39 +133,32 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
 
     #region Profile Resolution
 
-    private DeploymentProfile? ResolveAndLoadProfile(Settings settings, CancellationToken ct) {
+    private async Task<DeploymentProfile?> ResolveAndLoadProfile(Settings settings, CancellationToken ct) {
         DeploymentProfile? profile = null;
 
-        AnsiConsole.Status()
+        await AnsiConsole
+            .Status()
             .Spinner(Spinner.Known.Dots)
-            .Start("Loading profile...", ctx => {
+            .StartAsync("Loading profile...", async ctx => {
                 // Priority 1: Explicit file path
                 if(!string.IsNullOrWhiteSpace(settings.ProfilePath)) {
                     ctx.Status("Loading profile from file...");
-                    profile = LoadProfileFromFile(settings.ProfilePath);
+                    profile = await LoadProfileFromFile(settings.ProfilePath);
                     return;
                 }
-
-                // Priority 2: Profile name (from app data)
-                if(!string.IsNullOrWhiteSpace(settings.ProfileName)) {
-                    ctx.Status($"Loading profile '{settings.ProfileName}'...");
-                    profile = LoadProfileByName(settings.ProfileName);
-                    return;
-                }
-
+                
                 // Priority 3: Auto-discover .pubxml files
                 ctx.Status("Searching for publish profiles...");
             });
 
         // Handle auto-discovery outside of Status (needs user interaction)
-        if(profile == null && string.IsNullOrWhiteSpace(settings.ProfilePath) && string.IsNullOrWhiteSpace(settings.ProfileName)) {
+        if(profile == null && string.IsNullOrWhiteSpace(settings.ProfilePath)) {
             profile = AutoDiscoverProfile(ct);
         }
 
         if(profile != null) {
             logger
                 .BuildDebugMessage("Loaded profile: {0}", profile.Name)
-                .Add("Name", settings.ProfileName)
                 .Add("Path", settings.ProfilePath)
                 .Write();
             AnsiConsole.MarkupLine($"[green]✓[/] Profile loaded: [cyan]{profile.Name}[/]");
@@ -177,44 +167,14 @@ internal sealed class DeployCommand(ILogger<DeployCommand> logger) : Command<Dep
         return profile;
     }
 
-    private DeploymentProfile? LoadProfileFromFile(string path) {
-        if(!File.Exists(path)) {
-            AnsiConsole.MarkupLine($"[red]Error:[/] Profile file not found: {path}");
-            return null;
-        }
-
+    private async Task<DeploymentProfile?> LoadProfileFromFile(string path) {
         try {
-            var json = File.ReadAllText(path);
-            var options = new JsonSerializerOptions {
-                PropertyNameCaseInsensitive = true,
-                Converters = { new JsonStringEnumConverter() }
-            };
-            var profile = JsonSerializer.Deserialize<DeploymentProfile>(json, options);
-
-            if(profile != null && string.IsNullOrWhiteSpace(profile.Name)) {
-                profile.Name = Path.GetFileNameWithoutExtension(path);
-            }
-
-            return profile;
+            return await profiles.LoadProfileAsync(path);
         } catch(Exception ex) {
-            AnsiConsole.MarkupLine($"[red]Error:[/] Failed to parse profile: {ex.Message}");
+            logger.LogException(ex);
+            AnsiConsole.MarkupLine($"[red]Error:[/] Failed to load profile: {ex.Message}");
             return null;
         }
-    }
-
-    private DeploymentProfile? LoadProfileByName(string profileName) {
-        logger.LogTrace("Loading profile by name: {0}", profileName);
-        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var profilesDir = Path.Combine(appDataPath, ".ftpsheep", "profiles");
-        var profilePath = Path.Combine(profilesDir, $"{profileName}.json");
-
-        if(!File.Exists(profilePath)) {
-            AnsiConsole.MarkupLine($"[red]Error:[/] Profile not found: {profileName}");
-            DisplayProfileDiscoveryHelp();
-            return null;
-        }
-
-        return LoadProfileFromFile(profilePath);
     }
 
     private DeploymentProfile? AutoDiscoverProfile(CancellationToken ct) {

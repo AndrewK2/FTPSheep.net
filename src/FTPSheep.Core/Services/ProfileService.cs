@@ -4,6 +4,8 @@ using FTPSheep.Core.Exceptions;
 using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Utils;
+using FTPSheep.Utilities;
+using FTPSheep.Utilities.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace FTPSheep.Core.Services;
@@ -12,19 +14,19 @@ namespace FTPSheep.Core.Services;
 /// High-level service for managing deployment profiles with validation and credential management.
 /// </summary>
 public sealed class ProfileService : IProfileService {
-    private IProfileRepository Repository => throw new NotSupportedException();
     private readonly ICredentialStore credentialStore;
+    private readonly IProfileRepository profilesRepository;
     private readonly ILogger<ProfileService> logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProfileService"/> class.
     /// </summary>
     /// <param name="credentialStore">The credential store.</param>
+    /// <param name="profilesRepository"></param>
     /// <param name="logger">The logger instance.</param>
-    public ProfileService(
-        ICredentialStore credentialStore,
-        ILogger<ProfileService> logger) {
+    public ProfileService(ICredentialStore credentialStore, IProfileRepository profilesRepository, ILogger<ProfileService> logger) {
         this.credentialStore = credentialStore;
+        this.profilesRepository = profilesRepository;
         this.logger = logger;
     }
 
@@ -40,21 +42,8 @@ public sealed class ProfileService : IProfileService {
         if(!validationResult.IsValid) {
             throw new ProfileValidationException(profile.Name, validationResult.Errors);
         }
-        
-        // Serialize and save the profile to the custom location
-        var jsonOptions = new JsonSerializerOptions {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter() }
-        };
 
-        var json = JsonSerializer.Serialize(profile, jsonOptions);
-
-        logger.LogTrace("Profile JSON:\n{p}", json);
-        logger.LogDebug("Writing profile to: {p}", profileSavePath);
-
-        await File.WriteAllTextAsync(profileSavePath, json, cancellationToken);
+        await profilesRepository.SaveAsync(profileSavePath, profile, cancellationToken);
 
         // Save credentials if provided
         if(!string.IsNullOrWhiteSpace(profile.Username) && !string.IsNullOrWhiteSpace(profile.Password)) {
@@ -67,46 +56,59 @@ public sealed class ProfileService : IProfileService {
     }
 
     /// <inheritdoc/>
-    public async Task<DeploymentProfile> LoadProfileAsync(string profilePath, CancellationToken cancellationToken = default) {
-        logger.LogInformation("Loading profile '{ProfileNameOrPath}'", profilePath);
-
-        var profile = await Repository.LoadFromPathAsync(profilePath, cancellationToken);
-
-        // Resolve ProjectPath to absolute if it's relative
-        if(!string.IsNullOrWhiteSpace(profile.ProjectPath) && !PathResolver.IsAbsolutePath(profile.ProjectPath)) {
-            // Get the directory of the profile file for relative path resolution
-            var profileDirectory = Path.GetDirectoryName(profilePath)!;
-            var absoluteProjectPath = Path.GetFullPath(profile.ProjectPath, profileDirectory);
-            profile.ProjectPath = absoluteProjectPath;
-            logger.LogDebug("Resolved ProjectPath from relative '{Relative}' to absolute '{Absolute}'",
-                profile.ProjectPath, absoluteProjectPath);
+    public async Task<DeploymentProfile> LoadProfileAsync(string filePath, CancellationToken cancellationToken = default) {
+        if(string.IsNullOrWhiteSpace(filePath)) {
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
         }
 
-        // Load credentials if available
-        var credentials = await credentialStore.LoadCredentialsAsync(profile.Name, cancellationToken);
-        if(credentials != null) {
-            profile.Username = credentials.Username;
-            profile.Password = credentials.Password;
-            logger.LogDebug("Loaded credentials for profile '{ProfileName}'", profile.Name);
+        try {
+            logger.LogInformation("Loading profile '{ProfileNameOrPath}'", filePath);
+            
+            var profile = await profilesRepository.LoadFromPathAsync(filePath, cancellationToken);
+
+            if(string.IsNullOrWhiteSpace(profile.Name)) {
+                profile.Name = Path.GetFileNameWithoutExtension(filePath);
+            }
+
+            // Resolve ProjectPath to absolute if it's relative
+            if(!string.IsNullOrWhiteSpace(profile.ProjectPath) && !PathResolver.IsAbsolutePath(profile.ProjectPath)) {
+                // Get the directory of the profile file for relative path resolution
+                var profileDirectory = Path.GetDirectoryName(filePath)!;
+                var absoluteProjectPath = Path.GetFullPath(profile.ProjectPath, profileDirectory);
+                profile.ProjectPath = absoluteProjectPath;
+                logger.LogDebug("Resolved ProjectPath from relative '{Relative}' to absolute '{Absolute}'", profile.ProjectPath, absoluteProjectPath);
+            }
+
+            // Load credentials if available
+            var credentials = await credentialStore.LoadCredentialsAsync(profile.Name, cancellationToken);
+            if(credentials != null) {
+                profile.Username = credentials.Username;
+                profile.Password = credentials.Password;
+                logger.LogDebug("Loaded credentials for profile '{ProfileName}'", profile.Name);
+            }
+
+            // Normalize port if needed
+            profile.Connection.NormalizePort();
+
+            // Validate the loaded profile
+            var validationResult = ValidateProfile(profile);
+            if(!validationResult.IsValid) {
+                logger.LogWarning("Loaded profile '{ProfileName}' has validation errors: {Errors}", profile.Name, string.Join("; ", validationResult.Errors));
+            }
+
+            if(validationResult.Warnings.Count > 0) {
+                logger.LogWarning("Loaded profile '{ProfileName}' has validation warnings: {Warnings}", profile.Name, string.Join("; ", validationResult.Warnings));
+            }
+
+            logger.LogInformation("Successfully loaded profile '{ProfileName}'", profile.Name);
+
+            return profile;
+        } catch(Exception ex) {
+            throw "Failed to load profile: {0}"
+                .F(filePath)
+                .ToException(ex)
+                .Add("Path", filePath);
         }
-
-        // Normalize port if needed
-        profile.Connection.NormalizePort();
-
-        // Validate the loaded profile
-        var validationResult = ValidateProfile(profile);
-        if(!validationResult.IsValid) {
-            logger.LogWarning("Loaded profile '{ProfileName}' has validation errors: {Errors}",
-                profile.Name, string.Join("; ", validationResult.Errors));
-        }
-
-        if(validationResult.Warnings.Count > 0) {
-            logger.LogWarning("Loaded profile '{ProfileName}' has validation warnings: {Warnings}",
-                profile.Name, string.Join("; ", validationResult.Warnings));
-        }
-
-        logger.LogInformation("Successfully loaded profile '{ProfileName}'", profile.Name);
-        return profile;
     }
 
     /// <inheritdoc/>
@@ -120,7 +122,7 @@ public sealed class ProfileService : IProfileService {
         }
 
         // Ensure profile exists
-        if(!await Repository.ExistsAsync(profile.Name, cancellationToken)) {
+        if(!await profilesRepository.ExistsAsync(profile.Name, cancellationToken)) {
             throw new ProfileNotFoundException(profile.Name);
         }
 
@@ -147,7 +149,7 @@ public sealed class ProfileService : IProfileService {
         logger.LogInformation("Deleting profile '{ProfileName}'", profileName);
 
         // Delete the profile file
-        var deleted = await Repository.DeleteAsync(profileName, cancellationToken);
+        var deleted = await profilesRepository.DeleteAsync(profileName, cancellationToken);
 
         if(deleted) {
             // Delete associated credentials
@@ -164,12 +166,12 @@ public sealed class ProfileService : IProfileService {
     public async Task<List<ProfileSummary>> ListProfilesAsync(CancellationToken cancellationToken = default) {
         logger.LogDebug("Listing all profiles");
 
-        var profilesPaths = await Repository.ListProfileNamesAsync(cancellationToken);
+        var profilesPaths = await profilesRepository.ListProfileNamesAsync(cancellationToken);
         var summaries = new List<ProfileSummary>();
 
         foreach(var filePath in profilesPaths) {
             try {
-                var profile = await Repository.LoadFromPathAsync(filePath, cancellationToken);
+                var profile = await profilesRepository.LoadFromPathAsync(filePath, cancellationToken);
                 if(profile == null) {
                     continue;
                 }
