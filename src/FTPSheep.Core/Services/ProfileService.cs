@@ -70,11 +70,7 @@ public sealed class ProfileService : IProfileService {
 
             // Resolve ProjectPath to absolute if it's relative
             if(!string.IsNullOrWhiteSpace(profile.ProjectPath) && !PathResolver.IsAbsolutePath(profile.ProjectPath)) {
-                // Get the directory of the profile file for relative path resolution
-                var profileDirectory = Path.GetDirectoryName(filePath)!;
-                var absoluteProjectPath = Path.GetFullPath(profile.ProjectPath, profileDirectory);
-                profile.ProjectPath = absoluteProjectPath;
-                logger.LogDebug("Resolved ProjectPath from relative '{Relative}' to absolute '{Absolute}'", profile.ProjectPath, absoluteProjectPath);
+                profile.ProjectPath = ResolveAbsoluteProjectPath(filePath, profile.ProjectPath);
             }
 
             // Load credentials if available
@@ -107,6 +103,20 @@ public sealed class ProfileService : IProfileService {
                 .F(filePath)
                 .ToException(ex)
                 .Add("Path", filePath);
+        }
+    }
+
+    private string ResolveAbsoluteProjectPath(string filePath, string projectPath) {
+        try {
+            var profileDirectory = Path.GetDirectoryName(filePath)!;
+            var absoluteProjectPath = Path.GetFullPath(projectPath, profileDirectory);
+            logger.LogDebug("Resolved ProjectPath from relative '{Relative}' to absolute '{Absolute}'", projectPath, absoluteProjectPath);
+            return absoluteProjectPath;
+        } catch(Exception ex) {
+            throw "Failed to resolve relative project path to absolute"
+                .ToException(ex)
+                .Add("Profile Path", filePath)
+                .Add("Project Path", projectPath);
         }
     }
 
