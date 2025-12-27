@@ -108,7 +108,13 @@ public sealed class ProfileService : IProfileService {
 
     private string ResolveAbsoluteProjectPath(string filePath, string projectPath) {
         try {
-            var profileDirectory = Path.GetDirectoryName(filePath)!;
+            var profileDirectory = Path.GetDirectoryName(filePath);
+
+            // If profile is in current directory (no directory component), use current directory
+            if(string.IsNullOrEmpty(profileDirectory)) {
+                profileDirectory = Directory.GetCurrentDirectory();
+            }
+
             var absoluteProjectPath = Path.GetFullPath(projectPath, profileDirectory);
             logger.LogDebug("Resolved ProjectPath from relative '{Relative}' to absolute '{Absolute}'", projectPath, absoluteProjectPath);
             return absoluteProjectPath;

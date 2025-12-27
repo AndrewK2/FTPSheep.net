@@ -10,15 +10,14 @@ namespace FTPSheep.Tests.Services;
 public class ProfileServiceTests {
     private readonly Mock<IProfileRepository> repositoryMock;
     private readonly Mock<ICredentialStore> credentialStoreMock;
-    private readonly Mock<ILogger<ProfileService>> loggerMock;
     private readonly ProfileService profileService;
 
     public ProfileServiceTests() {
         repositoryMock = new Mock<IProfileRepository>();
         credentialStoreMock = new Mock<ICredentialStore>();
-        loggerMock = new Mock<ILogger<ProfileService>>();
+        var loggerMock1 = new Mock<ILogger<ProfileService>>();
 
-        profileService = new ProfileService(credentialStoreMock.Object, repositoryMock.Object, loggerMock.Object);
+        profileService = new ProfileService(credentialStoreMock.Object, repositoryMock.Object, loggerMock1.Object);
     }
 
     [Fact]
@@ -309,6 +308,320 @@ public class ProfileServiceTests {
         Assert.False(result.IsValid);
         Assert.NotEmpty(result.Errors);
     }
+
+    #region ResolveAbsoluteProjectPath Tests
+
+    [Fact]
+    public async Task LoadProfileAsync_RelativeProjectPath_ResolvesToAbsolute() {
+        // Arrange
+        var profileDirectory = Path.Combine(Path.GetTempPath(), "FTPSheepTests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(profileDirectory);
+        var profilePath = Path.Combine(profileDirectory, "test-profile.ftpsheep");
+
+        var profile = CreateValidProfile("test-profile");
+        profile.ProjectPath = @"..\MyProject\MyProject.csproj"; // Relative path
+
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        credentialStoreMock
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Credentials?)null);
+
+        try {
+            // Act
+            var loadedProfile = await profileService.LoadProfileAsync(profilePath);
+
+            // Assert
+            Assert.NotNull(loadedProfile);
+            Assert.NotEqual(@"..\MyProject\MyProject.csproj", loadedProfile.ProjectPath);
+            Assert.True(Path.IsPathRooted(loadedProfile.ProjectPath), "ProjectPath should be absolute");
+
+            // Verify the path is correctly resolved relative to profile directory
+            var expectedPath = Path.GetFullPath(Path.Combine(profileDirectory, @"..\MyProject\MyProject.csproj"));
+            Assert.Equal(expectedPath, loadedProfile.ProjectPath);
+        } finally {
+            // Cleanup
+            if(Directory.Exists(profileDirectory)) {
+                Directory.Delete(profileDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task LoadProfileAsync_RelativeProjectPathWithCurrentDirectory_ResolvesToAbsolute() {
+        // Arrange
+        var profileDirectory = Path.Combine(Path.GetTempPath(), "FTPSheepTests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(profileDirectory);
+        var profilePath = Path.Combine(profileDirectory, "test-profile.ftpsheep");
+
+        var profile = CreateValidProfile("test-profile");
+        profile.ProjectPath = @".\MyProject.csproj"; // Relative path with current directory
+
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        credentialStoreMock
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Credentials?)null);
+
+        try {
+            // Act
+            var loadedProfile = await profileService.LoadProfileAsync(profilePath);
+
+            // Assert
+            Assert.NotNull(loadedProfile);
+            Assert.True(Path.IsPathRooted(loadedProfile.ProjectPath), "ProjectPath should be absolute");
+
+            var expectedPath = Path.GetFullPath(Path.Combine(profileDirectory, "MyProject.csproj"));
+            Assert.Equal(expectedPath, loadedProfile.ProjectPath);
+        } finally {
+            // Cleanup
+            if(Directory.Exists(profileDirectory)) {
+                Directory.Delete(profileDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task LoadProfileAsync_RelativeProjectPathWithoutPrefix_ResolvesToAbsolute() {
+        // Arrange
+        var profileDirectory = Path.Combine(Path.GetTempPath(), "FTPSheepTests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(profileDirectory);
+        var profilePath = Path.Combine(profileDirectory, "test-profile.ftpsheep");
+
+        var profile = CreateValidProfile("test-profile");
+        profile.ProjectPath = @"MyProject\MyProject.csproj"; // Relative path without prefix
+
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        credentialStoreMock
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Credentials?)null);
+
+        try {
+            // Act
+            var loadedProfile = await profileService.LoadProfileAsync(profilePath);
+
+            // Assert
+            Assert.NotNull(loadedProfile);
+            Assert.True(Path.IsPathRooted(loadedProfile.ProjectPath), "ProjectPath should be absolute");
+
+            var expectedPath = Path.GetFullPath(Path.Combine(profileDirectory, @"MyProject\MyProject.csproj"));
+            Assert.Equal(expectedPath, loadedProfile.ProjectPath);
+        } finally {
+            // Cleanup
+            if(Directory.Exists(profileDirectory)) {
+                Directory.Delete(profileDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task LoadProfileAsync_AbsoluteProjectPath_RemainsUnchanged() {
+        // Arrange
+        var profileDirectory = Path.Combine(Path.GetTempPath(), "FTPSheepTests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(profileDirectory);
+        var profilePath = Path.Combine(profileDirectory, "test-profile.ftpsheep");
+
+        var absoluteProjectPath = @"C:\Projects\MyProject\MyProject.csproj";
+        var profile = CreateValidProfile("test-profile");
+        profile.ProjectPath = absoluteProjectPath; // Already absolute
+
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        credentialStoreMock
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Credentials?)null);
+
+        try {
+            // Act
+            var loadedProfile = await profileService.LoadProfileAsync(profilePath);
+
+            // Assert
+            Assert.NotNull(loadedProfile);
+            Assert.Equal(absoluteProjectPath, loadedProfile.ProjectPath);
+        } finally {
+            // Cleanup
+            if(Directory.Exists(profileDirectory)) {
+                Directory.Delete(profileDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task LoadProfileAsync_EmptyProjectPath_RemainsEmpty() {
+        // Arrange
+        var profileDirectory = Path.Combine(Path.GetTempPath(), "FTPSheepTests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(profileDirectory);
+        var profilePath = Path.Combine(profileDirectory, "test-profile.ftpsheep");
+
+        var profile = CreateValidProfile("test-profile");
+        profile.ProjectPath = ""; // Empty project path
+
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        credentialStoreMock
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Credentials?)null);
+
+        try {
+            // Act
+            var loadedProfile = await profileService.LoadProfileAsync(profilePath);
+
+            // Assert
+            Assert.NotNull(loadedProfile);
+            Assert.Equal("", loadedProfile.ProjectPath);
+        } finally {
+            // Cleanup
+            if(Directory.Exists(profileDirectory)) {
+                Directory.Delete(profileDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task LoadProfileAsync_NullProjectPath_RemainsNull() {
+        // Arrange
+        var profileDirectory = Path.Combine(Path.GetTempPath(), "FTPSheepTests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(profileDirectory);
+        var profilePath = Path.Combine(profileDirectory, "test-profile.ftpsheep");
+
+        var profile = CreateValidProfile("test-profile");
+        profile.ProjectPath = null!; // Null project path
+
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        credentialStoreMock
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Credentials?)null);
+
+        try {
+            // Act
+            var loadedProfile = await profileService.LoadProfileAsync(profilePath);
+
+            // Assert
+            Assert.NotNull(loadedProfile);
+            Assert.Null(loadedProfile.ProjectPath);
+        } finally {
+            // Cleanup
+            if(Directory.Exists(profileDirectory)) {
+                Directory.Delete(profileDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task LoadProfileAsync_ComplexRelativePath_ResolvesCorrectly() {
+        // Arrange
+        var profileDirectory = Path.Combine(Path.GetTempPath(), "FTPSheepTests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(profileDirectory);
+        var profilePath = Path.Combine(profileDirectory, "test-profile.ftpsheep");
+
+        var profile = CreateValidProfile("test-profile");
+        profile.ProjectPath = @"..\..\Solutions\WebApp\src\WebApp.csproj"; // Complex relative path
+
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        credentialStoreMock
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Credentials?)null);
+
+        try {
+            // Act
+            var loadedProfile = await profileService.LoadProfileAsync(profilePath);
+
+            // Assert
+            Assert.NotNull(loadedProfile);
+            Assert.True(Path.IsPathRooted(loadedProfile.ProjectPath), "ProjectPath should be absolute");
+
+            // Verify the path is correctly resolved
+            var expectedPath = Path.GetFullPath(Path.Combine(profileDirectory, @"..\..\Solutions\WebApp\src\WebApp.csproj"));
+            Assert.Equal(expectedPath, loadedProfile.ProjectPath);
+        } finally {
+            // Cleanup
+            if(Directory.Exists(profileDirectory)) {
+                Directory.Delete(profileDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task LoadProfileAsync_UNCPathProjectPath_RemainsUnchanged() {
+        // Arrange
+        var profileDirectory = Path.Combine(Path.GetTempPath(), "FTPSheepTests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(profileDirectory);
+        var profilePath = Path.Combine(profileDirectory, "test-profile.ftpsheep");
+
+        var uncPath = @"\\server\share\Projects\MyProject.csproj";
+        var profile = CreateValidProfile("test-profile");
+        profile.ProjectPath = uncPath; // UNC path (already absolute)
+
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        credentialStoreMock
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Credentials?)null);
+
+        try {
+            // Act
+            var loadedProfile = await profileService.LoadProfileAsync(profilePath);
+
+            // Assert
+            Assert.NotNull(loadedProfile);
+            Assert.Equal(uncPath, loadedProfile.ProjectPath);
+        } finally {
+            // Cleanup
+            if(Directory.Exists(profileDirectory)) {
+                Directory.Delete(profileDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task LoadProfileAsync_ProfileInCurrentDirectory_ResolvesProjectPathCorrectly() {
+        // Arrange
+        var profilePath = "test-profile.ftpsheep"; // Just filename, no directory
+
+        var profile = CreateValidProfile("test-profile");
+        profile.ProjectPath = @"MyProject\MyProject.csproj"; // Relative path
+
+        repositoryMock
+            .Setup(x => x.LoadFromPathAsync(profilePath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        credentialStoreMock
+            .Setup(x => x.LoadCredentialsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Credentials?)null);
+
+        // Act
+        var loadedProfile = await profileService.LoadProfileAsync(profilePath);
+
+        // Assert
+        Assert.NotNull(loadedProfile);
+        Assert.True(Path.IsPathRooted(loadedProfile.ProjectPath), "ProjectPath should be absolute");
+
+        // When profile directory is empty string (current directory), Path.GetFullPath resolves relative to current directory
+        var profileDirectory = Path.GetDirectoryName(profilePath) ?? string.Empty;
+        var expectedPath = Path.GetFullPath(Path.Combine(profileDirectory, @"MyProject\MyProject.csproj"));
+        Assert.Equal(expectedPath, loadedProfile.ProjectPath);
+    }
+
+    #endregion
 
     private static DeploymentProfile CreateValidProfile(string name) {
         return new DeploymentProfile {
