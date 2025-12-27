@@ -4,7 +4,11 @@
       "commandName": "Project",
       "commandLineArgs": "import p:\\StroyRow\\StroyRow\\WebSite2024\\ConsoleWebsite.Server\\Properties\\PublishProfiles\\console-staging.stroyryad.com.ua-FTP.pubxml"
     },
-    "Run deploy": {
+    "Run deploy 2 (VD)": {
+      "commandName": "Project",
+      "commandLineArgs": "deploy --yes --file p:\\VirtualPhantoms\\VirtualDoseDevelopment\\Website\\Properties\\PublishProfiles\\AndrewDemoWebsite.ftpsheep"
+    },
+    "Run deploy 1 (SR)": {
       "commandName": "Project",
       "commandLineArgs": "deploy --yes --file p:\\StroyRow\\StroyRow\\WebSite2024\\ConsoleWebsite.Server\\Properties\\PublishProfiles\\console-staging.stroyryad.com.ua-FTP.ftpsheep "
     }

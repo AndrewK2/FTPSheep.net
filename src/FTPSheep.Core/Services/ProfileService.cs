@@ -60,8 +60,14 @@ public sealed class ProfileService : IProfileService {
         }
 
         try {
-            logger.LogInformation("Loading profile '{ProfileNameOrPath}'", filePath);
-            
+            logger.LogInformation("Loading profile from path: {ProfileNameOrPath}", filePath);
+
+            // Resolve filePath to full absolute path if it's relative
+            if(!PathResolver.IsAbsolutePath(filePath)) {
+                filePath = Path.GetFullPath(filePath);
+                logger.LogDebug("Resolved relative profile path to absolute: {AbsolutePath}", filePath);
+            }
+
             var profile = await profilesRepository.LoadFromPathAsync(filePath, cancellationToken);
 
             if(string.IsNullOrWhiteSpace(profile.Name)) {
@@ -79,7 +85,7 @@ public sealed class ProfileService : IProfileService {
                 profile.Password = credentials.Password;
                 logger.LogDebug("Loaded credentials for profile '{ProfileName}'", profile.Name);
             } else {
-                logger.LogInformation("Not loaded credentials for profile '{ProfileName}'", profile.Name);
+                logger.LogInformation("Not loaded credentials for profile '{ProfileName}', path: '{FilePath}'", profile.Name, filePath);
             }
 
             // Normalize port if needed
