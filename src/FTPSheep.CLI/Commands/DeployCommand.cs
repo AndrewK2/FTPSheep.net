@@ -148,6 +148,14 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             .StartAsync("Loading profile...", async ctx => {
                 // Priority 1: Explicit file path
                 if(!string.IsNullOrWhiteSpace(settings.ProfilePath)) {
+                    // Warn if file doesn't have .ftpsheep extension
+                    if(!settings.ProfilePath.EndsWith(".ftpsheep", StringComparison.OrdinalIgnoreCase)) {
+                        ctx.Status(""); // Clear status to show warning
+                        AnsiConsole.MarkupLine("[yellow]Warning:[/] The specified file does not have a .ftpsheep extension.");
+                        AnsiConsole.MarkupLine("[dim]Expected extension: .ftpsheep[/]");
+                        AnsiConsole.WriteLine();
+                    }
+
                     ctx.Status("Loading profile from file...");
                     profile = await LoadProfileFromFile(settings.ProfilePath);
                     return;
