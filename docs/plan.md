@@ -11,21 +11,21 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 ## 1. Project Setup
 
 ### 1.1 Repository and Solution Structure
-- [ ] Initialize Git repository with appropriate .gitignore for .NET projects
+- [x] Initialize Git repository with appropriate .gitignore for .NET projects
   - Exclude bin/, obj/, .vs/, user-specific files
   - Include README.md, LICENSE, .editorconfig
-- [ ] Create solution structure with organized project layout
+- [x] Create solution structure with organized project layout
   - Main CLI project (FTPSheep.CLI)
   - Core library project (FTPSheep.Core)
   - FTP/SFTP integration project (FTPSheep.Protocols)
   - Build integration project (FTPSheep.BuildTools)
   - Unit tests project (FTPSheep.Tests)
   - Integration tests project (FTPSheep.IntegrationTests)
-- [ ] Configure solution-level settings
-  - Target .NET 6.0+ for CLI tool
+- [x] Configure solution-level settings
+  - Target .NET 8.0 for all projects
   - Set up consistent code style and formatting rules
   - Configure nullable reference types
-- [ ] Set up project references and dependencies
+- [x] Set up project references and dependencies
   - Establish dependency hierarchy (CLI -> Core -> Protocols/BuildTools)
   - Add NuGet package references (see dependencies section)
 
@@ -39,27 +39,27 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - Testing setup
 
 ### 1.4 Third-Party Dependencies
-- [ ] Research and select FTP library
-  - Evaluate FluentFTP (recommended for robust FTP support)
-  - Test compatibility with various FTP servers
-  - Verify concurrent connection support
+- [x] Research and select FTP library
+  - FluentFTP v53.0.2 selected and integrated
+  - Tested compatibility with various FTP servers
+  - Verified concurrent connection support
 - [ ] Research and select SFTP library
-  - Evaluate SSH.NET (recommended for SFTP support)
+  - SSH.NET identified for future SFTP support (V2)
   - Test SSH key authentication support
   - Verify compatibility with common SFTP servers
-- [ ] Select command-line parsing library
-  - Evaluate System.CommandLine or Spectre.Console.Cli
-  - Ensure support for subcommands, options, arguments
-  - Verify help generation capabilities
-- [ ] Select console UI/progress library
-  - Evaluate Spectre.Console for rich console output
-  - Verify progress bar, color support, formatting capabilities
-- [ ] Add logging framework
-  - NLog via Microsoft.Extensions.Logging
-  - Configure console and file sinks
-- [ ] Add JSON/XML serialization libraries
+- [x] Select command-line parsing library
+  - Spectre.Console.Cli selected and integrated
+  - Supports subcommands, options, arguments
+  - Help generation capabilities verified
+- [x] Select console UI/progress library
+  - Spectre.Console selected and integrated
+  - Progress bar, color support, formatting capabilities verified
+- [x] Add logging framework
+  - Microsoft.Extensions.Logging integrated
+  - Custom ColoredConsoleLogger and FileLogger implemented
+- [x] Add JSON/XML serialization libraries
   - System.Text.Json for profile storage
-  - XML parsing for .pubxml files
+  - System.Xml.Linq for .pubxml parsing
 
 ### 1.5 Initial Project Scaffolding
 - [x] Create basic CLI entry point with version and help commands
@@ -622,19 +622,26 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - Known issue: 5 orchestration tests need mock services (601/606 tests passing)
   - Ready for end-to-end testing once test mocks are updated
 
-### 4.5 Upload Failure and Retry Logic
-- [ ] Implement file-level retry mechanism
-  - Retry failed file uploads (default 3 retries)
-  - Exponential backoff between retries
-  - Track retry attempts per file
-- [ ] Create failure recovery
+### 4.5 Upload Failure and Retry Logic ✅
+- [x] Implement file-level retry mechanism
+  - Retry failed file uploads (default 3 retries, configurable 0-10)
+  - Exponential backoff between retries (1s, 2s, 4s, 8s...)
+  - Track retry attempts per file in UploadResult
+  - Automatic transient error detection
+- [x] Create failure recovery
   - Identify failed files after all retries exhausted
-  - Report failed files to user
-  - Option to retry only failed files
+  - Failed files tracked in UploadResult and DeploymentResult
+  - Report failed files to user via DeploymentResult.FailedFiles
 - [ ] Add upload verification
   - Verify file size after upload (if server supports)
   - Compare checksums if available
   - Re-upload corrupted files
+
+**Implementation Notes:**
+- Created comprehensive retry logic in `ConcurrentUploadEngine` (src/FTPSheep.Protocols/Services/ConcurrentUploadEngine.cs)
+- Per-file retry tracking with exponential backoff
+- Configurable retry count and delay settings
+- Failed files tracked and reported in deployment results
 
 ## 5. Deployment Engine (Backend)
 
@@ -695,21 +702,27 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - FileComparisonServiceTests (20 tests)
 - Total test count: 542 passing tests
 
-### 5.2 Pre-Deployment Validation
-- [ ] Implement connection validation
-  - Test FTP/SFTP connection before build
+### 5.2 Pre-Deployment Validation ✅
+- [x] Implement connection validation
+  - Test FTP connection via TestConnectionAsync in FtpClientService
   - Verify credentials and authentication
-  - Check remote path exists and is writable
-  - Option to skip validation with --skip-connection-test
-- [ ] Create publish folder validation
-  - Verify publish folder is not empty
-  - Check for required files (web.config, assemblies)
-  - Calculate total deployment size
-  - Warn about very large deployments
+  - Check remote path exists and is writable (TestConnectionAsync with validateWritePermission parameter)
+  - Executed in DeploymentCoordinator stage 3 (ConnectingToServer)
+- [x] Create publish folder validation
+  - Verify publish folder is not empty (PublishOutputScanner validates)
+  - Check for required files: web.config (warnings for web apps), assemblies
+  - Calculate total deployment size (PublishOutput.TotalSize)
+  - Warn about very large deployments (files > 100 MB flagged)
+  - Warn about development files (appsettings.Development.json, launchSettings.json)
 - [ ] Implement server capacity checks
-  - Check available disk space on server (if supported)
+  - Check available disk space on server (not supported by FTP protocol)
   - Warn if deployment size exceeds available space
   - Estimate deployment time based on file size and connection speed
+
+**Implementation Notes:**
+- Connection validation in `FtpClientService.TestConnectionAsync()` (src/FTPSheep.Protocols/Services/FtpClientService.cs:183-216)
+- Publish folder validation in `PublishOutputScanner.ValidatePublishOutput()` (src/FTPSheep.BuildTools/Services/PublishOutputScanner.cs:110-180)
+- Comprehensive validation warnings and errors tracked in PublishOutput model
 
 ### 5.3 Deployment Orchestration ✅
 - [x] Create deployment coordinator
@@ -791,21 +804,27 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 
 ## 6. Visual Studio Publish Profile Integration
 
-### 6.1 Publish Profile Parser
-- [ ] Implement .pubxml XML parser
-  - Parse Visual Studio publish profile XML structure
-  - Handle various .pubxml schema versions
-  - Extract all relevant properties
-- [ ] Create profile property extractor
-  - Extract PublishMethod (should be FTP)
-  - Extract PublishUrl (FTP server and path)
-  - Extract UserName
-  - Extract WebPublishMethod
-  - Extract any FTP-specific settings
-- [ ] Implement profile validation
-  - Verify profile is FTP or SFTP type
-  - Validate extracted settings
-  - Handle missing or malformed properties
+### 6.1 Publish Profile Parser ✅
+- [x] Implement .pubxml XML parser
+  - Parse Visual Studio publish profile XML structure using System.Xml.Linq
+  - Handle various .pubxml schema versions with namespace support
+  - Extract all relevant properties into PublishProfile model
+- [x] Create profile property extractor
+  - Extract PublishMethod (FTP, MSDeploy, etc.)
+  - Extract PublishUrl (FTP server and path with ParsePublishUrl method)
+  - Extract UserName, SavePwd, DeleteExistingFiles
+  - Extract WebPublishMethod and FTP-specific settings
+  - Extract build settings (TargetFramework, RuntimeIdentifier, SelfContained)
+- [x] Implement profile validation
+  - Verify profile is FTP type via IsFtpProfile property
+  - Validate extracted settings in PublishProfileConverter
+  - Handle missing or malformed properties with fallback logic
+
+**Implementation Notes:**
+- Created `PublishProfile` model (src/FTPSheep.Core/Models/PublishProfile.cs)
+- Created `PublishProfileParser` service (src/FTPSheep.Core/Services/PublishProfileParser.cs)
+- Created `PublishProfileConverter` service (src/FTPSheep.Core/Services/PublishProfileConverter.cs)
+- Comprehensive unit tests (49 tests passing)
 
 ### 6.2 Profile Auto-Discovery
 - [ ] Implement .pubxml file search
@@ -876,14 +895,14 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 ## 7. CLI Interface and Commands
 
 ### 7.1 Command Framework Setup
-- [ ] Implement command-line parsing infrastructure
-  - Use System.CommandLine or Spectre.Console.Cli
-  - Set up command routing
-  - Configure global options (--verbose, --quiet, --no-color)
+- [x] Implement command-line parsing infrastructure
+  - Spectre.Console.Cli selected and integrated
+  - Command routing set up for DeployCommand and ImportCommand
+  - Global options infrastructure (--verbose, --quiet, --no-color) - in progress
 - [ ] Create base command handler
-  - Common logging and error handling
-  - Exit code management
-  - Cancellation token support (Ctrl+C)
+  - Common logging and error handling (implemented per-command)
+  - Exit code management (ExitCodes class exists)
+  - Cancellation token support (Ctrl+C) - in progress
 
 ### 7.2 Deploy Command
 - [ ] Implement `ftpsheep deploy` command
@@ -929,12 +948,13 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - Display confirmation message
 
 ### 7.4 Import and Init Commands
-- [ ] Implement `ftpsheep import <pubxml-path>` command
+- [x] Implement `ftpsheep import <pubxml-path>` command ✅
   - Accept path to .pubxml file
   - Parse and convert to FTPSheep.NET profile
-  - Prompt for profile name
-  - Save imported profile
-  - Display success message
+  - Prompt for profile name using Spectre.Console
+  - Save imported profile via ProfileService
+  - Display success message with profile details
+  - **Fully implemented** in src/FTPSheep.CLI/Commands/ImportCommand.cs
 - [ ] Implement `ftpsheep init` command
   - Interactive guided setup for new users
   - Ask: import from VS or create new profile
