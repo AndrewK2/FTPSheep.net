@@ -10,7 +10,7 @@
     },
     "Run deploy 1 (SR)": {
       "commandName": "Project",
-      "commandLineArgs": "deploy --yes --file p:\\StroyRow\\StroyRow\\WebSite2024\\ConsoleWebsite.Server\\Properties\\PublishProfiles\\console-staging.stroyryad.com.ua-FTP.ftpsheep "
+      "commandLineArgs": "deploy --yes --file p:\\StroyRow\\StroyRow\\WebSite2024\\ConsoleWebsite.Server\\Properties\\PublishProfiles\\console-staging.stroyryad.com.ua-LOCAL-FTP.ftpsheep"
     }
   }
 }

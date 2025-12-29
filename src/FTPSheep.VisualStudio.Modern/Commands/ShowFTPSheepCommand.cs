@@ -19,7 +19,7 @@ public class ShowFTPSheepCommand : Command
     /// <summary>
     /// Command configuration - appears in View > Other Windows menu.
     /// </summary>
-    public override CommandConfiguration CommandConfiguration => new("FTPSheep")
+    public override CommandConfiguration CommandConfiguration => new("Publish with FTPSheep")
     {
         Placements = new[] { CommandPlacement.KnownPlacements.ToolsMenu },
         Icon = new(ImageMoniker.KnownValues.ToolWindow, IconSettings.IconAndText),
