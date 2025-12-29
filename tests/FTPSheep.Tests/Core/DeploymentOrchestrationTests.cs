@@ -10,17 +10,18 @@ public class DeploymentOrchestrationTests {
     public void DeploymentStage_EnumValues_AreCorrect() {
         Assert.Equal(0, (int)DeploymentStage.NotStarted);
         Assert.Equal(1, (int)DeploymentStage.LoadingProfile);
-        Assert.Equal(2, (int)DeploymentStage.BuildingProject);
-        Assert.Equal(3, (int)DeploymentStage.ConnectingToServer);
-        Assert.Equal(4, (int)DeploymentStage.PreDeploymentSummary);
-        Assert.Equal(5, (int)DeploymentStage.UploadingAppOffline);
-        Assert.Equal(6, (int)DeploymentStage.UploadingFiles);
-        Assert.Equal(7, (int)DeploymentStage.CleaningUpObsoleteFiles);
-        Assert.Equal(8, (int)DeploymentStage.DeletingAppOffline);
-        Assert.Equal(9, (int)DeploymentStage.RecordingHistory);
-        Assert.Equal(10, (int)DeploymentStage.Completed);
-        Assert.Equal(11, (int)DeploymentStage.Failed);
-        Assert.Equal(12, (int)DeploymentStage.Cancelled);
+        Assert.Equal(2, (int)DeploymentStage.ValidatingConnection);
+        Assert.Equal(3, (int)DeploymentStage.BuildingProject);
+        Assert.Equal(4, (int)DeploymentStage.ConnectingToServer);
+        Assert.Equal(5, (int)DeploymentStage.PreDeploymentSummary);
+        Assert.Equal(6, (int)DeploymentStage.UploadingAppOffline);
+        Assert.Equal(7, (int)DeploymentStage.UploadingFiles);
+        Assert.Equal(8, (int)DeploymentStage.CleaningUpObsoleteFiles);
+        Assert.Equal(9, (int)DeploymentStage.DeletingAppOffline);
+        Assert.Equal(10, (int)DeploymentStage.RecordingHistory);
+        Assert.Equal(11, (int)DeploymentStage.Completed);
+        Assert.Equal(12, (int)DeploymentStage.Failed);
+        Assert.Equal(13, (int)DeploymentStage.Cancelled);
     }
 
     #endregion
@@ -407,6 +408,7 @@ public class DeploymentOrchestrationTests {
         await coordinator.ExecuteDeploymentAsync(options);
 
         Assert.Contains(DeploymentStage.LoadingProfile, stageChanges);
+        Assert.Contains(DeploymentStage.ValidatingConnection, stageChanges);
         Assert.Contains(DeploymentStage.BuildingProject, stageChanges);
         Assert.Contains(DeploymentStage.ConnectingToServer, stageChanges);
         Assert.Contains(DeploymentStage.Completed, stageChanges);
@@ -471,6 +473,54 @@ public class DeploymentOrchestrationTests {
         // Verify state is still valid
         Assert.NotNull(coordinator.State);
         Assert.Equal(DeploymentStage.NotStarted, coordinator.State.CurrentStage);
+    }
+
+    [Fact]
+    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithDefaultOptions_IncludesValidationStage() {
+        var coordinator = new DeploymentCoordinator();
+        var options = new DeploymentOptions {
+            UseAppOffline = false,
+            CleanupMode = false,
+            SkipConnectionTest = false
+        };
+        var stageChanges = new List<DeploymentStage>();
+
+        coordinator.StageChanged += (sender, args) => stageChanges.Add(args.Stage);
+
+        await coordinator.ExecuteDeploymentAsync(options);
+
+        // Verify ValidatingConnection stage is included
+        Assert.Contains(DeploymentStage.ValidatingConnection, stageChanges);
+
+        // Verify it comes after LoadingProfile and before BuildingProject
+        var validationIndex = stageChanges.IndexOf(DeploymentStage.ValidatingConnection);
+        var loadProfileIndex = stageChanges.IndexOf(DeploymentStage.LoadingProfile);
+        var buildIndex = stageChanges.IndexOf(DeploymentStage.BuildingProject);
+
+        Assert.True(validationIndex > loadProfileIndex, "ValidatingConnection should come after LoadingProfile");
+        Assert.True(validationIndex < buildIndex, "ValidatingConnection should come before BuildingProject");
+    }
+
+    [Fact]
+    public async Task DeploymentCoordinator_ExecuteDeploymentAsync_WithSkipConnectionTest_SkipsValidationStage() {
+        var coordinator = new DeploymentCoordinator();
+        var options = new DeploymentOptions {
+            UseAppOffline = false,
+            CleanupMode = false,
+            SkipConnectionTest = true
+        };
+        var stageChanges = new List<DeploymentStage>();
+
+        coordinator.StageChanged += (sender, args) => stageChanges.Add(args.Stage);
+
+        await coordinator.ExecuteDeploymentAsync(options);
+
+        // Verify ValidatingConnection stage is NOT included when skipped
+        Assert.DoesNotContain(DeploymentStage.ValidatingConnection, stageChanges);
+
+        // Verify workflow still proceeds correctly (LoadingProfile → BuildingProject)
+        Assert.Contains(DeploymentStage.LoadingProfile, stageChanges);
+        Assert.Contains(DeploymentStage.BuildingProject, stageChanges);
     }
 
     #endregion

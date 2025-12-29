@@ -97,41 +97,49 @@ public class DeploymentCoordinator {
             await ExecuteStageAsync(DeploymentStage.LoadingProfile,
                 () => LoadProfileAsync(options, token), token);
 
-            // Stage 2: Build and publish project
+            // Stage 2: Validate FTP connection (if not skipped)
+            if(!options.SkipConnectionTest) {
+                await ExecuteStageAsync(DeploymentStage.ValidatingConnection,
+                    () => ValidateConnectionAsync(options, token), token);
+            } else {
+                logger.LogDebug("FTP connectivity check skipped");
+            }
+
+            // Stage 3: Build and publish project
             await ExecuteStageAsync(DeploymentStage.BuildingProject,
                 () => BuildProjectAsync(options, token), token);
 
-            // Stage 3: Connect to server and validate connection
+            // Stage 4: Connect to server and initialize upload engine
             await ExecuteStageAsync(DeploymentStage.ConnectingToServer,
                 () => ConnectToServerAsync(options, token), token);
 
-            // Stage 4: Display pre-deployment summary and confirm
+            // Stage 5: Display pre-deployment summary and confirm
             await ExecuteStageAsync(DeploymentStage.PreDeploymentSummary,
                 () => DisplayPreDeploymentSummaryAsync(options, token), token);
 
-            // Stage 5: Upload app_offline.htm (if enabled)
+            // Stage 6: Upload app_offline.htm (if enabled)
             if(options.UseAppOffline) {
                 await ExecuteStageAsync(DeploymentStage.UploadingAppOffline,
                     () => UploadAppOfflineAsync(options, token), token);
             }
 
-            // Stage 6: Upload all published files (concurrent)
+            // Stage 7: Upload all published files (concurrent)
             await ExecuteStageAsync(DeploymentStage.UploadingFiles,
                 () => UploadFilesAsync(options, token), token);
 
-            // Stage 7: Clean up obsolete files (if cleanup mode enabled)
+            // Stage 8: Clean up obsolete files (if cleanup mode enabled)
             if(options.CleanupMode) {
                 await ExecuteStageAsync(DeploymentStage.CleaningUpObsoleteFiles,
                     () => CleanupObsoleteFilesAsync(options, token), token);
             }
 
-            // Stage 8: Delete app_offline.htm (if deployment succeeded)
+            // Stage 9: Delete app_offline.htm (if deployment succeeded)
             if(options.UseAppOffline) {
                 await ExecuteStageAsync(DeploymentStage.DeletingAppOffline,
                     () => DeleteAppOfflineAsync(options, token), token);
             }
 
-            // Stage 9: Record deployment history and display summary
+            // Stage 10: Record deployment history and display summary
             await ExecuteStageAsync(DeploymentStage.RecordingHistory,
                 () => RecordHistoryAsync(options, token), token);
 
@@ -232,7 +240,84 @@ public class DeploymentCoordinator {
     }
 
     /// <summary>
-    /// Stage 2: Build and publish project.
+    /// Creates FTP connection configuration from deployment profile.
+    /// </summary>
+    /// <param name="profile">The deployment profile.</param>
+    /// <returns>FTP connection configuration.</returns>
+    private FtpConnectionConfig CreateFtpConfigFromProfile(DeploymentProfile profile) {
+        if(profile == null) {
+            throw new ArgumentNullException(nameof(profile));
+        }
+
+        var conn = profile.Connection;
+
+        return new FtpConnectionConfig {
+            Host = conn.Host,
+            Port = conn.Port,
+            Username = profile.Username ?? string.Empty,
+            Password = profile.Password ?? string.Empty,
+            RemoteRootPath = profile.RemotePath,
+            EncryptionMode = conn.UseSsl
+                ? FtpEncryptionMode.Explicit
+                : FtpEncryptionMode.None
+        };
+    }
+
+    /// <summary>
+    /// Stage 2: Validate FTP connection and write permissions.
+    /// </summary>
+    private async Task ValidateConnectionAsync(DeploymentOptions options, CancellationToken cancellationToken) {
+        if(currentProfile == null) {
+            throw new InvalidOperationException("Profile must be loaded before validating connection.");
+        }
+
+        if(ftpClientFactory == null) {
+            throw new InvalidOperationException("FtpClientFactory is required for connection validation.");
+        }
+
+        try {
+            // Create FTP configuration from profile
+            var ftpConfig = CreateFtpConfigFromProfile(currentProfile);
+
+            logger.LogInformation("Validating connection to {Host}:{Port}", ftpConfig.Host, ftpConfig.Port);
+
+            // Create temporary client for validation
+            using var tempClient = ftpClientFactory.CreateClient(ftpConfig);
+
+            // Connect to server
+            await tempClient.ConnectAsync(cancellationToken);
+
+            // Test write permissions to remote path
+            var canWrite = await tempClient.TestConnectionAsync(
+                currentProfile.RemotePath,
+                cancellationToken);
+
+            if(!canWrite) {
+                throw new InvalidOperationException(
+                    $"Connection successful but cannot write to remote path: {currentProfile.RemotePath}. " +
+                    "Check directory permissions on the FTP server.");
+            }
+
+            logger.LogDebug("Connection validation successful");
+        } catch(Exception ex) {
+            var errorMsg = $"Failed to validate FTP connection to {currentProfile.Connection.Host}:{currentProfile.Connection.Port}";
+
+            // Add helpful context based on error type
+            if(ex.Message.Contains("authentication", StringComparison.OrdinalIgnoreCase) ||
+                ex.Message.Contains("login", StringComparison.OrdinalIgnoreCase)) {
+                errorMsg += " - Authentication failed. Check username and password.";
+            } else if(ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)) {
+                errorMsg += " - Connection timeout. Check server address, port, and firewall settings.";
+            } else if(ex.Message.Contains("refused", StringComparison.OrdinalIgnoreCase)) {
+                errorMsg += " - Connection refused. Check if FTP server is running and accessible.";
+            }
+
+            throw new InvalidOperationException(errorMsg, ex);
+        }
+    }
+
+    /// <summary>
+    /// Stage 3: Build and publish project.
     /// </summary>
     private async Task BuildProjectAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // Use pre-loaded publish output if available
@@ -302,7 +387,7 @@ public class DeploymentCoordinator {
     }
 
     /// <summary>
-    /// Stage 3: Connect to server and validate connection.
+    /// Stage 4: Connect to server and initialize upload engine.
     /// </summary>
     private async Task ConnectToServerAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         try {
@@ -310,19 +395,8 @@ public class DeploymentCoordinator {
                 throw new InvalidOperationException("Profile must be loaded before connecting.");
             }
 
-            // Create FTP connection configuration from profile
-            var conn = currentProfile.Connection;
-
-            var ftpConfig = new FtpConnectionConfig {
-                Host = conn.Host,
-                Port = conn.Port,
-                Username = currentProfile.Username ?? string.Empty,
-                Password = currentProfile.Password ?? string.Empty,
-                RemoteRootPath = currentProfile.RemotePath,
-                EncryptionMode = conn.UseSsl
-                    ? FtpEncryptionMode.Explicit
-                    : FtpEncryptionMode.None
-            };
+            // Create FTP connection configuration from profile (using helper)
+            var ftpConfig = CreateFtpConfigFromProfile(currentProfile);
 
             logger.LogDebug("Connecting to {0}:{1} as {2}", ftpConfig.Host, ftpConfig.Port, ftpConfig.Username);
 
@@ -334,14 +408,8 @@ public class DeploymentCoordinator {
             ftpClient = ftpClientFactory.CreateClient(ftpConfig);
             await ftpClient.ConnectAsync(cancellationToken);
 
-            // Test connection and write permissions
-
-            logger.LogDebug("Testing connection...");
-            var canWrite = await ftpClient.TestConnectionAsync(currentProfile.RemotePath, cancellationToken);
-
-            if(!canWrite) {
-                throw new InvalidOperationException($"Cannot write to remote path: {currentProfile.RemotePath}");
-            }
+            // Note: Connection already validated in ValidatingConnection stage (Stage 2)
+            // Skip redundant TestConnectionAsync call here
 
             // Initialize concurrent upload engine
             var maxConcurrency = currentProfile.Concurrency > 0
@@ -358,7 +426,7 @@ public class DeploymentCoordinator {
     }
 
     /// <summary>
-    /// Stage 4: Display pre-deployment summary and wait for confirmation.
+    /// Stage 5: Display pre-deployment summary and wait for confirmation.
     /// </summary>
     private Task DisplayPreDeploymentSummaryAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         // Summary information is already tracked in state
@@ -375,7 +443,7 @@ public class DeploymentCoordinator {
     }
 
     /// <summary>
-    /// Stage 5: Upload app_offline.htm.
+    /// Stage 6: Upload app_offline.htm.
     /// </summary>
     private async Task UploadAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         if(ftpClient == null) {
@@ -393,8 +461,8 @@ public class DeploymentCoordinator {
 
         try {
             // Upload to server root as app_offline.htm
-            await ftpClient.UploadFileAsync(tempPath, "app_offline.htm",
-                overwrite: true, createRemoteDir: false, cancellationToken);
+            logger.LogDebug("Uploading app_offline.htm");
+            await ftpClient.UploadFileAsync(tempPath, "app_offline.htm", overwrite: true, createRemoteDir: false, cancellationToken);
         } finally {
             // Clean up temp file
             if(File.Exists(tempPath)) {
@@ -404,7 +472,7 @@ public class DeploymentCoordinator {
     }
 
     /// <summary>
-    /// Stage 6: Upload all published files.
+    /// Stage 7: Upload all published files.
     /// </summary>
     private async Task UploadFilesAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         if(uploadEngine == null) {
@@ -484,7 +552,7 @@ public class DeploymentCoordinator {
     }
 
     /// <summary>
-    /// Stage 7: Clean up obsolete files.
+    /// Stage 8: Clean up obsolete files.
     /// </summary>
     private async Task CleanupObsoleteFilesAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         if(ftpClient == null) {
@@ -549,7 +617,7 @@ public class DeploymentCoordinator {
     }
 
     /// <summary>
-    /// Stage 8: Delete app_offline.htm.
+    /// Stage 9: Delete app_offline.htm.
     /// </summary>
     private async Task DeleteAppOfflineAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         if(ftpClient == null) {
@@ -557,11 +625,12 @@ public class DeploymentCoordinator {
         }
 
         // Delete app_offline.htm from server
+        logger.LogDebug("Deleting app_offline.htm");
         await ftpClient.DeleteFileAsync("app_offline.htm", cancellationToken);
     }
 
     /// <summary>
-    /// Stage 9: Record deployment history.
+    /// Stage 10: Record deployment history.
     /// </summary>
     private async Task RecordHistoryAsync(DeploymentOptions options, CancellationToken cancellationToken) {
         if(historyService == null) {

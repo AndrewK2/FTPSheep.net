@@ -1,13 +1,16 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using FluentFTP;
 using FTPSheep.BuildTools.Models;
 using FTPSheep.BuildTools.Services;
 using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
+using FTPSheep.Protocols.Models;
 using FTPSheep.Protocols.Services;
 using FTPSheep.Utilities.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using BuildResult = FTPSheep.BuildTools.Models.BuildResult;
@@ -49,6 +52,10 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         [CommandOption("--skip-build")]
         public bool SkipBuild { get; init; }
 
+        [Description("Skip FTP connection validation before building")]
+        [CommandOption("--skip-connection-test")]
+        public bool SkipConnectionTest { get; init; }
+
         [Description("Clean destination before uploading")]
         [CommandOption("--clean")]
         public bool CleanDestination { get; init; }
@@ -87,7 +94,17 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                 return 1;
             }
 
-            // Phase 2: Build Project
+            // Phase 2: Validate FTP Connection (before building)
+            if(!settings.SkipConnectionTest) {
+                var connectionValid = await ValidateFtpConnection(profile, cancellationToken);
+                if(!connectionValid) {
+                    return 1;
+                }
+            } else {
+                AnsiConsole.MarkupLine("[dim]FTP connection validation skipped[/]");
+            }
+
+            // Phase 3: Build Project
             PublishOutput? publishOutput;
             if(!settings.SkipBuild) {
                 publishOutput = await BuildProject(profile, settings, cancellationToken);
@@ -101,10 +118,10 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                 }
             }
 
-            // Phase 3: Pre-deployment Summary
+            // Phase 4: Pre-deployment Summary
             DisplayPreDeploymentSummary(profile, publishOutput, settings);
 
-            // Phase 4: Confirmation
+            // Phase 5: Confirmation
             if(!settings.AutoConfirm && !settings.DryRun) {
                 if(!ConfirmDeployment()) {
                     AnsiConsole.MarkupLine("[yellow]Deployment cancelled.[/]");
@@ -112,13 +129,13 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                 }
             }
 
-            // Phase 5: Execute Deployment
+            // Phase 6: Execute Deployment
             if(settings.DryRun) {
                 DisplayDryRunSummary(profile, publishOutput);
                 return 0;
             }
 
-            var result = ExecuteDeployment(profile, publishOutput, settings, cancellationToken);
+            var result = await ExecuteDeployment(profile, publishOutput, settings, cancellationToken);
 
             logger.BuildDebugMessage("Deployment result")
                 .AddAsJson("Result", result)
@@ -353,9 +370,79 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
     #endregion
 
+    #region FTP Connection Validation
+
+    private async Task<bool> ValidateFtpConnection(DeploymentProfile profile, CancellationToken ct) {
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine("[cyan]Validating FTP connection...[/]");
+
+        try {
+            // Create FTP connection configuration
+            var ftpConfig = new FtpConnectionConfig {
+                Host = profile.Connection.Host,
+                Port = profile.Connection.Port,
+                Username = profile.Username ?? string.Empty,
+                Password = profile.Password ?? string.Empty,
+                RemoteRootPath = profile.RemotePath,
+                EncryptionMode = profile.Connection.UseSsl
+                    ? FtpEncryptionMode.Explicit
+                    : FtpEncryptionMode.None
+            };
+
+            logger.LogDebug("Validating connection to {Host}:{Port}", ftpConfig.Host, ftpConfig.Port);
+
+            // Create FTP client factory and client
+            var factory = new FtpClientFactory(NullLoggerFactory.Instance);
+            using var client = factory.CreateClient(ftpConfig);
+
+            // Connect to server
+            await client.ConnectAsync(ct);
+            AnsiConsole.MarkupLine($"[green]✓[/] Connected to {ftpConfig.Host}:{ftpConfig.Port}");
+
+            // Test write permissions
+            var canWrite = await client.TestConnectionAsync(profile.RemotePath, ct);
+
+            if(!canWrite) {
+                AnsiConsole.MarkupLine($"[red]✗[/] Cannot write to remote path: {profile.RemotePath}");
+                AnsiConsole.MarkupLine("[yellow]Hint:[/] Check directory permissions on the FTP server.");
+                return false;
+            }
+
+            AnsiConsole.MarkupLine($"[green]✓[/] Write permissions verified for {profile.RemotePath}");
+            return true;
+
+        } catch(Exception ex) {
+            var errorMsg = $"Failed to validate FTP connection to {profile.Connection.Host}:{profile.Connection.Port}";
+
+            // Add helpful context based on error type
+            if(ex.Message.Contains("authentication", StringComparison.OrdinalIgnoreCase) ||
+               ex.Message.Contains("login", StringComparison.OrdinalIgnoreCase)) {
+                errorMsg = $"{errorMsg} - Authentication failed";
+                AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
+                AnsiConsole.MarkupLine("[yellow]Hint:[/] Check username and password in your profile.");
+            } else if(ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)) {
+                errorMsg = $"{errorMsg} - Connection timeout";
+                AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
+                AnsiConsole.MarkupLine("[yellow]Hint:[/] Check server address, port, and firewall settings.");
+            } else if(ex.Message.Contains("refused", StringComparison.OrdinalIgnoreCase)) {
+                errorMsg = $"{errorMsg} - Connection refused";
+                AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
+                AnsiConsole.MarkupLine("[yellow]Hint:[/] Check if FTP server is running and accessible.");
+            } else {
+                AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
+                AnsiConsole.MarkupLine($"[dim]Error: {ex.Message}[/]");
+            }
+
+            logger.LogError(ex, "FTP connection validation failed");
+            return false;
+        }
+    }
+
+    #endregion
+
     #region Deployment Execution
 
-    private DeploymentResult ExecuteDeployment(
+    private async Task<DeploymentResult> ExecuteDeployment(
         DeploymentProfile profile,
         PublishOutput publishOutput,
         Settings settings,
@@ -382,7 +469,8 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             AnsiConsole.MarkupLine("\n[yellow]Cancellation requested...[/]");
         };
 
-        AnsiConsole.Progress()
+        await AnsiConsole
+            .Progress()
             .AutoClear(false)
             .HideCompleted(false)
             .Columns(
@@ -391,9 +479,9 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                 new PercentageColumn(),
                 new SpinnerColumn()
             )
-            .Start(ctx => {
+            .StartAsync(async ctx => {
                 // Create progress tasks
-                var stageTask = ctx.AddTask("[cyan]Deployment[/]", maxValue: 9);
+                var stageTask = ctx.AddTask("[cyan]Deployment[/]", maxValue: 10);
                 var uploadTask = ctx.AddTask("[dim]Uploading files[/]", maxValue: publishOutput.FileCount);
                 uploadTask.IsIndeterminate = true;
 
@@ -425,6 +513,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                     UseAppOffline = !settings.NoAppOffline && profile.AppOfflineEnabled,
                     CleanupMode = settings.CleanDestination || profile.CleanupMode != CleanupMode.None,
                     SkipConfirmation = true, // Already confirmed
+                    SkipConnectionTest = true, // Already validated in CLI before building
                     DryRun = settings.DryRun,
                     BuildConfiguration = settings.Configuration,
                     MaxConcurrentUploads = profile.Concurrency,
@@ -433,7 +522,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                 };
 
                 // Execute deployment
-                result = coordinator.ExecuteDeploymentAsync(options, ct).GetAwaiter().GetResult();
+                result = await coordinator.ExecuteDeploymentAsync(options, ct);
 
                 // Update final state
                 stageTask.Value = 9;
@@ -456,6 +545,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
     private static string GetStageDescription(DeploymentStage stage) => stage switch {
         DeploymentStage.NotStarted => "[dim]Starting...[/]",
         DeploymentStage.LoadingProfile => "Loading profile...",
+        DeploymentStage.ValidatingConnection => "Validating FTP connection...",
         DeploymentStage.BuildingProject => "Building project...",
         DeploymentStage.ConnectingToServer => "Connecting to server...",
         DeploymentStage.PreDeploymentSummary => "Preparing deployment...",

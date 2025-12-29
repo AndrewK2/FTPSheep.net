@@ -150,6 +150,7 @@ public class VsDeploymentOrchestrator
         {
             DeploymentStage.NotStarted => "Not Started",
             DeploymentStage.LoadingProfile => "Loading Profile",
+            DeploymentStage.ValidatingConnection => "Validating Connection",
             DeploymentStage.BuildingProject => "Building Project",
             DeploymentStage.ConnectingToServer => "Connecting to Server",
             DeploymentStage.PreDeploymentSummary => "Pre-Deployment Summary",

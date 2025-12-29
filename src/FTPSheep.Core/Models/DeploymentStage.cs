@@ -15,57 +15,62 @@ public enum DeploymentStage {
     LoadingProfile = 1,
 
     /// <summary>
-    /// Stage 2: Building and publishing the project.
+    /// Stage 2: Validating FTP connection and write permissions.
     /// </summary>
-    BuildingProject = 2,
+    ValidatingConnection = 2,
 
     /// <summary>
-    /// Stage 3: Connecting to server and validating connection.
+    /// Stage 3: Building and publishing the project.
     /// </summary>
-    ConnectingToServer = 3,
+    BuildingProject = 3,
 
     /// <summary>
-    /// Stage 4: Displaying pre-deployment summary and waiting for confirmation.
+    /// Stage 4: Connecting to server and initializing upload engine.
     /// </summary>
-    PreDeploymentSummary = 4,
+    ConnectingToServer = 4,
 
     /// <summary>
-    /// Stage 5: Uploading app_offline.htm (if enabled).
+    /// Stage 5: Displaying pre-deployment summary and waiting for confirmation.
     /// </summary>
-    UploadingAppOffline = 5,
+    PreDeploymentSummary = 5,
 
     /// <summary>
-    /// Stage 6: Uploading all published files (concurrent).
+    /// Stage 6: Uploading app_offline.htm (if enabled).
     /// </summary>
-    UploadingFiles = 6,
+    UploadingAppOffline = 6,
 
     /// <summary>
-    /// Stage 7: Cleaning up obsolete files (if cleanup mode enabled).
+    /// Stage 7: Uploading all published files (concurrent).
     /// </summary>
-    CleaningUpObsoleteFiles = 7,
+    UploadingFiles = 7,
 
     /// <summary>
-    /// Stage 8: Deleting app_offline.htm (if deployment succeeded).
+    /// Stage 8: Cleaning up obsolete files (if cleanup mode enabled).
     /// </summary>
-    DeletingAppOffline = 8,
+    CleaningUpObsoleteFiles = 8,
 
     /// <summary>
-    /// Stage 9: Recording deployment history and displaying summary.
+    /// Stage 9: Deleting app_offline.htm (if deployment succeeded).
     /// </summary>
-    RecordingHistory = 9,
+    DeletingAppOffline = 9,
+
+    /// <summary>
+    /// Stage 10: Recording deployment history and displaying summary.
+    /// </summary>
+    RecordingHistory = 10,
 
     /// <summary>
     /// Deployment completed successfully.
     /// </summary>
-    Completed = 10,
+    Completed = 11,
 
     /// <summary>
     /// Deployment failed.
     /// </summary>
-    Failed = 11,
+    Failed = 12,
 
     /// <summary>
     /// Deployment was cancelled by user.
     /// </summary>
-    Cancelled = 12
+    Cancelled = 13
 }
