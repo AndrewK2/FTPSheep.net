@@ -1,5 +1,8 @@
 using System.Text.RegularExpressions;
 using FTPSheep.BuildTools.Models;
+#if NET48
+using FTPSheep.BuildTools.Compatibility;
+#endif
 
 namespace FTPSheep.BuildTools.Services;
 
@@ -47,7 +50,11 @@ public class PublishOutputScanner {
         var allFiles = Directory.EnumerateFiles(publishPath, "*", SearchOption.AllDirectories);
 
         foreach(var file in allFiles) {
+#if NET48
+            var relativePath = PathHelper.GetRelativePath(publishPath, file);
+#else
             var relativePath = Path.GetRelativePath(publishPath, file);
+#endif
 
             // Check if file matches any exclusion pattern
             if(IsExcluded(relativePath, patterns)) {

@@ -148,7 +148,11 @@ public class BuildToolLocator {
             return null;
         }
 
+#if NET48
+        var paths = pathEnv.Split(new[] { Path.PathSeparator }, StringSplitOptions.RemoveEmptyEntries);
+#else
         var paths = pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
+#endif
         foreach(var path in paths) {
             var fullPath = Path.Combine(path, executable);
             if(File.Exists(fullPath)) {

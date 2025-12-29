@@ -1,6 +1,9 @@
 using System.Xml.Linq;
 using FTPSheep.BuildTools.Exceptions;
 using FTPSheep.BuildTools.Models;
+#if NET48
+using FTPSheep.BuildTools.Compatibility;
+#endif
 
 namespace FTPSheep.BuildTools.Services;
 
@@ -92,7 +95,11 @@ public class ProjectFileParser {
             .FirstOrDefault()?.Value;
 
         if(!string.IsNullOrWhiteSpace(targetFrameworks)) {
+#if NET48
+            frameworks.AddRange(targetFrameworks.SplitAndTrim(';'));
+#else
             frameworks.AddRange(targetFrameworks.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+#endif
             return frameworks;
         }
 

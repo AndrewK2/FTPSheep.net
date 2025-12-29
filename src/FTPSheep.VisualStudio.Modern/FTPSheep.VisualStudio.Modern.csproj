@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- VisualStudio.Extensibility specific properties -->
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Include all source files -->
+  <ItemGroup>
+    <Compile Include="**\*.cs" />
+  </ItemGroup>
+
+  <!-- Include XAML files as embedded resources -->
+  <ItemGroup>
+    <EmbeddedResource Include="**\*.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
+  </ItemGroup>
+
+  <!-- VisualStudio.Extensibility SDK -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Extensibility.Sdk" Version="17.14.40254" />
+  </ItemGroup>
+
+  <!-- FTPSheep Core Libraries (all .NET 8 - no multi-targeting needed!) -->
+  <ItemGroup>
+    <ProjectReference Include="..\FTPSheep.Core\FTPSheep.Core.csproj" />
+    <ProjectReference Include="..\FTPSheep.BuildTools\FTPSheep.BuildTools.csproj" />
+    <ProjectReference Include="..\FTPSheep.Protocols\FTPSheep.Protocols.csproj" />
+    <ProjectReference Include="..\FTPSheep.Utilities\FTPSheep.Utilities.csproj" />
+  </ItemGroup>
+
+</Project>

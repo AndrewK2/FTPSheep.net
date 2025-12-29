@@ -1,21 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir:*)",
-      "Bash(dotnet new:*)",
-      "Bash(dotnet sln:*)",
+      "Bash(cat:*)",
+      "Bash(dir:*)",
       "Bash(dotnet add:*)",
       "Bash(dotnet build:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(dotnet list:*)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet remove:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet test:*)",
+      "Bash(find:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(dotnet remove:*)",
-      "Bash(dotnet run:*)",
-      "Bash(dir:*)",
-      "Bash(dotnet clean:*)",
-      "Bash(dotnet test:*)",
-      "Bash(dotnet list:*)",
-      "Bash(Remove-Item \"p:\\FTPSheep\\src\\FTPSheep.BuildTools\\Models\\FileMetadata.cs\" -Force)",
-      "Bash(find:*)"
+      "Bash(mkdir:*)",
+      "WebFetch(domain:github.com)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

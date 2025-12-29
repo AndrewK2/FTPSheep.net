@@ -2,6 +2,10 @@ using FluentFTP;
 using FTPSheep.Protocols.Models;
 using Microsoft.Extensions.Logging;
 using IFtpClient = FTPSheep.Protocols.Interfaces.IFtpClient;
+#if NET48
+using FTPSheep.Protocols.Compatibility;
+using ArgumentNullExceptionHelper = FTPSheep.Protocols.Compatibility.ArgumentHelper;
+#endif
 
 namespace FTPSheep.Protocols.Services;
 
@@ -17,7 +21,11 @@ public class FtpClientFactory(ILoggerFactory loggerFactory) {
     /// <returns>An instance of IFtpClient.</returns>
     /// <exception cref="ArgumentNullException">Thrown when config is null.</exception>
     public IFtpClient CreateClient(FtpConnectionConfig config) {
+#if NET48
+        ArgumentNullExceptionHelper.ThrowIfNull(config);
+#else
         ArgumentNullException.ThrowIfNull(config);
+#endif
 
         // FtpClientService handles both FTP and FTPS via EncryptionMode
         // Future: Add SFTP support when SSH.NET integration is implemented
