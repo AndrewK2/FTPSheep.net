@@ -244,6 +244,57 @@ public class PublishProfileConverterTests {
         Assert.Equal(2121, deploymentProfile.Connection.Port);
     }
 
+    [Fact]
+    public void Convert_WithFtpSitePath_UsesFtpSitePathAsRemotePath() {
+        // Arrange
+        var publishProfile = new PublishProfile {
+            PublishMethod = "FTP",
+            PublishUrl = "ftp://ftp.example.com/www",
+            UserName = "testuser"
+        };
+        publishProfile.AdditionalProperties["FtpSitePath"] = "/site/wwwroot";
+
+        // Act
+        var deploymentProfile = converter.Convert(publishProfile);
+
+        // Assert
+        Assert.Equal("/site/wwwroot", deploymentProfile.RemotePath);
+    }
+
+    [Fact]
+    public void Convert_WithFtpSitePathAndDifferentPublishUrlPath_PrioritizesFtpSitePath() {
+        // Arrange - PublishUrl has /www but FtpSitePath has /site/wwwroot
+        var publishProfile = new PublishProfile {
+            PublishMethod = "FTP",
+            PublishUrl = "ftp://ftp.example.com/www",
+            UserName = "testuser"
+        };
+        publishProfile.AdditionalProperties["FtpSitePath"] = "/site/wwwroot";
+
+        // Act
+        var deploymentProfile = converter.Convert(publishProfile);
+
+        // Assert - Should use FtpSitePath, not the path from PublishUrl
+        Assert.Equal("/site/wwwroot", deploymentProfile.RemotePath);
+    }
+
+    [Fact]
+    public void Convert_WithoutFtpSitePath_UsesPublishUrlPath() {
+        // Arrange
+        var publishProfile = new PublishProfile {
+            PublishMethod = "FTP",
+            PublishUrl = "ftp://ftp.example.com/www",
+            UserName = "testuser"
+        };
+        // No FtpSitePath in AdditionalProperties
+
+        // Act
+        var deploymentProfile = converter.Convert(publishProfile);
+
+        // Assert - Should use path from PublishUrl
+        Assert.Equal("/www", deploymentProfile.RemotePath);
+    }
+
     #endregion
 
     #region ValidateImportedProfile Tests

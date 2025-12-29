@@ -48,6 +48,12 @@ public class PublishProfileConverter {
             name = $"{host}-import";
         }
 
+        // Determine remote path - prioritize FtpSitePath over path from PublishUrl
+        var finalRemotePath = remotePath;
+        if(publishProfile.AdditionalProperties.TryGetValue("FtpSitePath", out var ftpSitePath) && !string.IsNullOrWhiteSpace(ftpSitePath)) {
+            finalRemotePath = ftpSitePath;
+        }
+
         // Create the deployment profile
         var deploymentProfile = new DeploymentProfile {
             Name = name,
@@ -59,7 +65,7 @@ public class PublishProfileConverter {
                          publishProfile.PublishUrl?.StartsWith("ftps://", StringComparison.OrdinalIgnoreCase) == true
             },
             Username = publishProfile.UserName ?? string.Empty,
-            RemotePath = string.IsNullOrWhiteSpace(remotePath) ? "/" : remotePath,
+            RemotePath = finalRemotePath ?? "/",
             Build = new BuildConfiguration {
                 Configuration = "Release", // Default, can be overridden
                 TargetFramework = publishProfile.TargetFramework,
