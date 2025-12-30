@@ -96,7 +96,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
             // Phase 2: Validate FTP Connection (before building)
             if(!settings.SkipConnectionTest) {
-                var connectionValid = await ValidateFtpConnection(profile, cancellationToken);
+                var connectionValid = await ValidateFtpConnection(profile, settings.ProfilePath, cancellationToken);
                 if(!connectionValid) {
                     return 1;
                 }
@@ -191,6 +191,8 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             logger
                 .BuildDebugMessage("Loaded profile: {0}", profile.Name)
                 .Add("Path", settings.ProfilePath)
+                .Add("FTP Username", profile.Username)
+                .Add("FTP password present", !string.IsNullOrEmpty(profile.Password))
                 .Write();
             AnsiConsole.MarkupLine($"[green]✓[/] Profile loaded: [cyan]{profile.Name}[/]");
         }
@@ -372,17 +374,38 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
     #region FTP Connection Validation
 
-    private async Task<bool> ValidateFtpConnection(DeploymentProfile profile, CancellationToken ct) {
+    private async Task<bool> ValidateFtpConnection(DeploymentProfile profile, string? profilePath, CancellationToken ct) {
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine("[cyan]Validating FTP connection...[/]");
 
         try {
+            // Check if password is missing and prompt for it
+            var password = profile.Password;
+            var passwordEnteredInteractively = false;
+            var shouldSavePassword = false;
+
+            if (string.IsNullOrEmpty(password)) {
+                AnsiConsole.MarkupLine("[yellow]Password not found in profile.[/]");
+                password = AnsiConsole.Prompt(
+                    new TextPrompt<string>($"Enter password for [cyan]{profile.Username ?? "user"}[/]@[cyan]{profile.Connection.Host}[/]:")
+                        .PromptStyle("red")
+                        .Secret());
+
+                passwordEnteredInteractively = true;
+
+                // Ask if user wants to save the password to the profile
+                shouldSavePassword = AnsiConsole.Confirm("Save password to profile for future use?", false);
+                if (shouldSavePassword) {
+                    profile.Password = password;
+                }
+            }
+
             // Create FTP connection configuration
             var ftpConfig = new FtpConnectionConfig {
                 Host = profile.Connection.Host,
                 Port = profile.Connection.Port,
                 Username = profile.Username ?? string.Empty,
-                Password = profile.Password ?? string.Empty,
+                Password = password ?? string.Empty,
                 RemoteRootPath = profile.RemotePath,
                 EncryptionMode = profile.Connection.UseSsl
                     ? FtpEncryptionMode.Explicit
@@ -409,6 +432,18 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             }
 
             AnsiConsole.MarkupLine($"[green]✓[/] Write permissions verified for {profile.RemotePath}");
+
+            // Save the profile if password was entered interactively and user wants to save it
+            if (passwordEnteredInteractively && shouldSavePassword && !string.IsNullOrEmpty(profilePath)) {
+                try {
+                    // Update the profile with the new password
+                    await profiles.UpdateProfileAsync(profilePath, profile, ct);
+                    AnsiConsole.MarkupLine("[green]✓[/] Password saved to profile");
+                } catch (Exception ex) {
+                    AnsiConsole.MarkupLine($"[yellow]Warning:[/] Failed to save password: {ex.Message}");
+                }
+            }
+
             return true;
 
         } catch(Exception ex) {
@@ -433,7 +468,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                 AnsiConsole.MarkupLine($"[dim]Error: {ex.Message}[/]");
             }
 
-            logger.LogError(ex, "FTP connection validation failed");
+            logger.LogException(ex, "FTP connection validation failed");
             return false;
         }
     }

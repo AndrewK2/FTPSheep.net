@@ -37,6 +37,17 @@ public interface IProfileService {
     Task UpdateProfileAsync(DeploymentProfile profile, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Updates an existing deployment profile at the specified file path.
+    /// </summary>
+    /// <param name="filePath">The path to the profile file to update.</param>
+    /// <param name="profile">The profile with updated values.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="Exceptions.ProfileNotFoundException">Thrown when the profile file does not exist.</exception>
+    /// <exception cref="Exceptions.ProfileValidationException">Thrown when the profile fails validation.</exception>
+    Task UpdateProfileAsync(string filePath, DeploymentProfile profile, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes a deployment profile and its associated credentials.
     /// </summary>
     /// <param name="filePath">The name of the profile to delete.</param>
