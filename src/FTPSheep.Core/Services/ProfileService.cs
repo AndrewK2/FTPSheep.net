@@ -148,13 +148,54 @@ public sealed class ProfileService : IProfileService {
         }
 
         // Save the updated profile
-        throw new NotImplementedException();
+        throw new NotImplementedException("Use UpdateProfileAsync(string filePath, DeploymentProfile profile) instead");
         //await Repository.SaveAsync(filePath, profile, cancellationToken);
 
         // Update credentials if provided
         if(!string.IsNullOrWhiteSpace(profile.Username) && !string.IsNullOrWhiteSpace(profile.Password)) {
             await credentialStore.SaveCredentialsAsync(
                 profile.Name,
+                profile.Username,
+                profile.Password,
+                cancellationToken);
+
+            logger.LogDebug("Updated credentials for profile '{ProfileName}'", profile.Name);
+        }
+
+        logger.LogInformation("Successfully updated profile '{ProfileName}'", profile.Name);
+    }
+
+    /// <summary>
+    /// Updates an existing deployment profile at the specified file path.
+    /// </summary>
+    /// <param name="filePath">The path to the profile file to update.</param>
+    /// <param name="profile">The profile with updated values.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="ProfileValidationException">Thrown when the profile fails validation.</exception>
+    /// <exception cref="ProfileNotFoundException">Thrown when the profile file does not exist.</exception>
+    public async Task UpdateProfileAsync(string filePath, DeploymentProfile profile, CancellationToken cancellationToken = default) {
+        logger.LogInformation("Updating profile '{ProfileName}' at path '{FilePath}'", profile.Name, filePath);
+
+        // Validate the profile
+        var validationResult = ValidateProfile(profile);
+        if(!validationResult.IsValid) {
+            throw new ProfileValidationException(profile.Name, validationResult.Errors);
+        }
+
+        // Ensure profile file exists
+        if(!File.Exists(filePath)) {
+            throw new ProfileNotFoundException($"Profile file not found: {filePath}");
+        }
+
+        // Save the updated profile to the repository
+        await profilesRepository.SaveAsync(filePath, profile, cancellationToken);
+
+        logger.LogDebug("Saved updated profile to '{FilePath}'", filePath);
+
+        // Update credentials if provided
+        if(!string.IsNullOrWhiteSpace(profile.Username) && !string.IsNullOrWhiteSpace(profile.Password)) {
+            await credentialStore.SaveCredentialsAsync(
+                filePath,
                 profile.Username,
                 profile.Password,
                 cancellationToken);
