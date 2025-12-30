@@ -24,6 +24,9 @@
     <Compile Remove="obj\**" />
     <EmbeddedResource Remove="obj\**" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Properties\launchSettings.json" />
+  </ItemGroup>
 
   <!-- VisualStudio.Extensibility SDK -->
   <ItemGroup>
@@ -37,6 +40,9 @@
     <ProjectReference Include="..\FTPSheep.BuildTools\FTPSheep.BuildTools.csproj" />
     <ProjectReference Include="..\FTPSheep.Protocols\FTPSheep.Protocols.csproj" />
     <ProjectReference Include="..\FTPSheep.Utilities\FTPSheep.Utilities.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 
 </Project>

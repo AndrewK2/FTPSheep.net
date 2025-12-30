@@ -11,18 +11,15 @@ namespace FTPSheep.VisualStudio.Modern.ToolWindows;
 /// </summary>
 internal class FTPSheepToolWindowControl : RemoteUserControl
 {
-    private readonly FTPSheepToolWindowData dataContext;
-
     public FTPSheepToolWindowControl()
-        : base(dataContext: new FTPSheepToolWindowData())
+        : base(new FTPSheepToolWindowData())
     {
-        this.dataContext = (FTPSheepToolWindowData)this.DataContext!;
     }
 
     /// <summary>
     /// Gets the data context for external access.
     /// </summary>
-    public new FTPSheepToolWindowData DataContext => dataContext;
+    public new FTPSheepToolWindowData DataContext => (FTPSheepToolWindowData)base.DataContext!;
 
     /// <summary>
     /// Sets the command handlers for the tool window.
@@ -34,6 +31,7 @@ internal class FTPSheepToolWindowControl : RemoteUserControl
         Func<object?, CancellationToken, Task> deleteProfileCommand,
         Func<object?, CancellationToken, Task> importProfileCommand)
     {
+        var dataContext = this.DataContext;
         dataContext.DeployCommand = new AsyncCommand(deployCommand);
         dataContext.NewProfileCommand = new AsyncCommand(newProfileCommand);
         dataContext.EditProfileCommand = new AsyncCommand(editProfileCommand);

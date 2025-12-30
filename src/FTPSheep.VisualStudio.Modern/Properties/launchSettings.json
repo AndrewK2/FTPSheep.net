@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "FTPSheep.VisualStudio.Modern": {
+      "commandName": "Project",
+      "commandLineArgs": "\"p:\\FTPSheep-Sample-Apps\\ASPNETCore9_WebApp_MVC\\ASPNETCore9_WebApp_MVC.sln\""
+    }
+  }
+}

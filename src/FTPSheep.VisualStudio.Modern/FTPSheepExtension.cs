@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.Extensibility;
 using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Services;
@@ -37,6 +38,11 @@ internal class FTPSheepExtension : Extension
     protected override void InitializeServices(IServiceCollection serviceCollection)
     {
         base.InitializeServices(serviceCollection);
+
+        // Configure logging (required by many FTPSheep services)
+        // Register a simple console logger factory for FTPSheep services
+        serviceCollection.AddSingleton<ILoggerFactory, NullLoggerFactory>();
+        serviceCollection.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
 
         // FTPSheep Core Services - reuse existing business logic
         ConfigureFTPSheepServices(serviceCollection);
