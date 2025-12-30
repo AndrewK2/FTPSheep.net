@@ -1,4 +1,5 @@
 using FTPSheep.Core.Logging;
+using FTPSheep.Utilities.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace FTPSheep.Tests.Logging;
@@ -82,7 +83,7 @@ public class ColoredConsoleLoggerTests {
         try {
             // Act
             var exception = new InvalidOperationException("Test exception");
-            logger.LogError(exception, "An error occurred");
+            logger.LogException(exception, "An error occurred");
 
             // Assert
             var output = writer.ToString();

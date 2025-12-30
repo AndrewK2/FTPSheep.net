@@ -1,4 +1,5 @@
 using FTPSheep.Core.Logging;
+using FTPSheep.Utilities.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace FTPSheep.Tests.Logging;
@@ -55,7 +56,7 @@ public class FileLoggerTests : IDisposable {
         var exception = new InvalidOperationException("Test exception");
 
         // Act
-        logger.LogError(exception, "An error occurred");
+        logger.LogException(exception, "An error occurred");
 
         // Assert
         var logFiles = Directory.GetFiles(testLogDirectory, "ftpsheep-*.log");

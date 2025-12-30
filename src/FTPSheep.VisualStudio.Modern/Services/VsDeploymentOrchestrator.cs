@@ -1,5 +1,6 @@
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
+using FTPSheep.Utilities.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace FTPSheep.VisualStudio.Modern.Services;
@@ -87,7 +88,7 @@ public class VsDeploymentOrchestrator
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Deployment orchestration failed");
+            logger.LogException(ex, "Deployment orchestration failed");
             await outputWindow.WriteErrorAsync($"Deployment error: {ex.Message}", cancellationToken);
             await statusBar.ShowErrorAsync("Deployment error", cancellationToken);
             throw;
@@ -110,7 +111,7 @@ public class VsDeploymentOrchestrator
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to update stage in VS UI");
+                logger.LogException(ex, "Failed to update stage in VS UI");
             }
         });
     }
@@ -136,7 +137,7 @@ public class VsDeploymentOrchestrator
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to update progress in VS UI");
+                logger.LogException(ex, "Failed to update progress in VS UI");
             }
         });
     }
