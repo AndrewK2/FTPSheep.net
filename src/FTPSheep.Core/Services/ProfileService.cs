@@ -206,6 +206,41 @@ public sealed class ProfileService : IProfileService {
         logger.LogInformation("Successfully updated profile '{ProfileName}'", profile.Name);
     }
 
+    /// <summary>
+    /// Updates the password for a deployment profile without modifying the profile file.
+    /// </summary>
+    /// <param name="profilePath">The path to the profile file.</param>
+    /// <param name="username">The username for the credentials.</param>
+    /// <param name="password">The new password to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="ProfileNotFoundException">Thrown when the profile file does not exist.</exception>
+    public async Task UpdatePasswordAsync(string profilePath, string username, string password, CancellationToken cancellationToken = default) {
+        logger.LogInformation("Updating password for profile at '{ProfilePath}'", profilePath);
+
+        // Ensure profile file exists
+        if(!File.Exists(profilePath)) {
+            throw new ProfileNotFoundException($"Profile file not found: {profilePath}");
+        }
+
+        // Validate username and password
+        if(string.IsNullOrWhiteSpace(username)) {
+            throw new ArgumentException("Username cannot be empty", nameof(username));
+        }
+
+        if(string.IsNullOrWhiteSpace(password)) {
+            throw new ArgumentException("Password cannot be empty", nameof(password));
+        }
+
+        // Save credentials to the credential store
+        await credentialStore.SaveCredentialsAsync(
+            profilePath,
+            username,
+            password,
+            cancellationToken);
+
+        logger.LogInformation("Successfully updated password for profile at '{ProfilePath}'", profilePath);
+    }
+
     /// <inheritdoc/>
     public async Task<bool> DeleteProfileAsync(string profileName, CancellationToken cancellationToken = default) {
         logger.LogInformation("Deleting profile '{ProfileName}'", profileName);

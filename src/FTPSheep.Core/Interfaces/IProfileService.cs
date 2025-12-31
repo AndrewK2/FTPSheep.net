@@ -48,6 +48,17 @@ public interface IProfileService {
     Task UpdateProfileAsync(string filePath, DeploymentProfile profile, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Updates the password for a deployment profile without modifying the profile file.
+    /// </summary>
+    /// <param name="profilePath">The path to the profile file.</param>
+    /// <param name="username">The username for the credentials.</param>
+    /// <param name="password">The new password to save.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="Exceptions.ProfileNotFoundException">Thrown when the profile file does not exist.</exception>
+    Task UpdatePasswordAsync(string profilePath, string username, string password, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes a deployment profile and its associated credentials.
     /// </summary>
     /// <param name="filePath">The name of the profile to delete.</param>
