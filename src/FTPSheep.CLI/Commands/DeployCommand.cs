@@ -68,6 +68,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             if(!string.IsNullOrWhiteSpace(ProfilePath) && !File.Exists(ProfilePath)) {
                 return ValidationResult.Error($"Profile file not found: {ProfilePath}");
             }
+
             return ValidationResult.Success();
         }
     }
@@ -78,12 +79,14 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         try {
             // Phase 1: Profile Resolution
             var profile = await ResolveAndLoadProfile(settings, cancellationToken);
+
             if(profile == null) {
                 return 1;
             }
-            
+
             // Validate profile
             var validationErrors = ValidateProfile(profile);
+
             if(validationErrors.Count > 0) {
                 logger
                     .BuildErrorMessage("Profile validation failed")
@@ -97,6 +100,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             // Phase 2: Validate FTP Connection (before building)
             if(!settings.SkipConnectionTest) {
                 var connectionValid = await ValidateFtpConnection(profile, settings.ProfilePath, cancellationToken);
+
                 if(!connectionValid) {
                     return 1;
                 }
@@ -106,13 +110,16 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
             // Phase 3: Build Project
             PublishOutput? publishOutput;
+
             if(!settings.SkipBuild) {
                 publishOutput = await BuildProject(profile, settings, cancellationToken);
+
                 if(publishOutput == null) {
                     return 1;
                 }
             } else {
                 publishOutput = ScanExistingPublishOutput(profile, settings);
+
                 if(publishOutput == null) {
                     return 1;
                 }
@@ -140,7 +147,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             logger.BuildDebugMessage("Deployment result")
                 .AddAsJson("Result", result)
                 .Write();
-            
+
             // Phase 6: Display Results
             DisplayDeploymentResult(result);
 
@@ -177,7 +184,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                     profile = await LoadProfileFromFile(settings.ProfilePath);
                     return;
                 }
-                
+
                 // Priority 3: Auto-discover .pubxml files
                 ctx.Status("Searching for publish profiles...");
             });
@@ -225,15 +232,16 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         }
 
         string selectedPath;
+
         if(profiles.Count == 1) {
             selectedPath = profiles[0];
             AnsiConsole.MarkupLine($"Found profile: [cyan]{Path.GetFileName(selectedPath)}[/]");
         } else {
             var profileNames = profiles.Select(p => Path.GetFileName(p)).ToList();
-            var selectedName = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title("Multiple profiles found. Select one:")
-                    .AddChoices(profileNames));
+
+            var selectedName = AnsiConsole.Prompt(new SelectionPrompt<string>()
+                .Title("Multiple profiles found. Select one:")
+                .AddChoices(profileNames));
             selectedPath = profiles[profileNames.IndexOf(selectedName)];
         }
 
@@ -293,6 +301,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         BuildResult? buildResult = null;
 
         var sw = Stopwatch.StartNew();
+
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync("Building project...", async ctx => {
@@ -309,14 +318,17 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
         if(buildResult is not { Success: true }) {
             AnsiConsole.MarkupLine("[red]✗[/] Build failed.");
+
             if(buildResult?.Errors.Count > 0) {
                 foreach(var error in buildResult.Errors.Take(10)) {
                     AnsiConsole.MarkupLine($"  [red]{error}[/]");
                 }
+
                 if(buildResult.Errors.Count > 10) {
                     AnsiConsole.MarkupLine($"  [dim]...and {buildResult.Errors.Count - 10} more errors[/]");
                 }
             }
+
             return null;
         }
 
@@ -359,9 +371,11 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
         if(!publishOutput.IsValid) {
             AnsiConsole.MarkupLine("[red]Error:[/] Publish output validation failed:");
+
             foreach(var error in publishOutput.Errors) {
                 AnsiConsole.MarkupLine($"  [red]✗[/] {error}");
             }
+
             return null;
         }
 
@@ -384,18 +398,19 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             var passwordEnteredInteractively = false;
             var shouldSavePassword = false;
 
-            if (string.IsNullOrEmpty(password)) {
+            if(string.IsNullOrEmpty(password)) {
                 AnsiConsole.MarkupLine("[yellow]Password not found in profile.[/]");
-                password = AnsiConsole.Prompt(
-                    new TextPrompt<string>($"Enter password for [cyan]{profile.Username ?? "user"}[/]@[cyan]{profile.Connection.Host}[/]:")
-                        .PromptStyle("red")
-                        .Secret());
+
+                password = AnsiConsole.Prompt(new TextPrompt<string>($"Enter password for [cyan]{profile.Username ?? "user"}[/]@[cyan]{profile.Connection.Host}[/]:")
+                    .PromptStyle("red")
+                    .Secret());
 
                 passwordEnteredInteractively = true;
 
                 // Ask if user wants to save the password to the profile
                 shouldSavePassword = AnsiConsole.Confirm("Save password to profile for future use?", false);
-                if (shouldSavePassword) {
+
+                if(shouldSavePassword) {
                     profile.Password = password;
                 }
             }
@@ -433,19 +448,17 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
             AnsiConsole.MarkupLine($"[green]✓[/] Write permissions verified for {profile.RemotePath}");
 
-            // Save the profile if password was entered interactively and user wants to save it
-            if (passwordEnteredInteractively && shouldSavePassword && !string.IsNullOrEmpty(profilePath)) {
+            // Save the password if it was entered interactively and user wants to save it
+            if(passwordEnteredInteractively && shouldSavePassword && !string.IsNullOrEmpty(profilePath)) {
                 try {
-                    // Update the profile with the new password
-                    await profiles.UpdateProfileAsync(profilePath, profile, ct);
-                    AnsiConsole.MarkupLine("[green]✓[/] Password saved to profile");
-                } catch (Exception ex) {
+                    await profiles.UpdatePasswordAsync(profilePath, profile.Username ?? string.Empty, password ?? string.Empty, ct);
+                    AnsiConsole.MarkupLine("[green]✓[/] Password saved to credential store");
+                } catch(Exception ex) {
                     AnsiConsole.MarkupLine($"[yellow]Warning:[/] Failed to save password: {ex.Message}");
                 }
             }
 
             return true;
-
         } catch(Exception ex) {
             var errorMsg = $"Failed to validate FTP connection to {profile.Connection.Host}:{profile.Connection.Port}";
 
@@ -477,23 +490,19 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
     #region Deployment Execution
 
-    private async Task<DeploymentResult> ExecuteDeployment(
-        DeploymentProfile profile,
+    private async Task<DeploymentResult> ExecuteDeployment(DeploymentProfile profile,
         PublishOutput publishOutput,
         Settings settings,
         CancellationToken ct) {
-
         AnsiConsole.WriteLine();
 
-        var coordinator = new DeploymentCoordinator(
-            ftpClientFactory: ftpClientFactory,
-            profileService: null,  // Not used in this flow - profile already loaded
-            buildService: null,    // Not used in this flow - project already built
-            historyService: null,  // History recording not implemented yet
+        var coordinator = new DeploymentCoordinator(ftpClientFactory: ftpClientFactory,
+            profileService: null, // Not used in this flow - profile already loaded
+            buildService: null, // Not used in this flow - project already built
+            historyService: null, // History recording not implemented yet
             appOfflineManager: new AppOfflineManager(profile.AppOfflineTemplate),
             exclusionMatcher: ExclusionPatternMatcher.CreateWithDefaults(profile.ExclusionPatterns),
-            logger: logger
-        );
+            logger: logger);
 
         DeploymentResult? result = null;
 
@@ -508,12 +517,10 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             .Progress()
             .AutoClear(false)
             .HideCompleted(false)
-            .Columns(
-                new TaskDescriptionColumn(),
+            .Columns(new TaskDescriptionColumn(),
                 new ProgressBarColumn(),
                 new PercentageColumn(),
-                new SpinnerColumn()
-            )
+                new SpinnerColumn())
             .StartAsync(async ctx => {
                 // Create progress tasks
                 var stageTask = ctx.AddTask("[cyan]Deployment[/]", maxValue: 10);
@@ -552,7 +559,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                     DryRun = settings.DryRun,
                     BuildConfiguration = settings.Configuration,
                     MaxConcurrentUploads = profile.Concurrency,
-                    Profile = profile,           // Pass pre-loaded profile
+                    Profile = profile, // Pass pre-loaded profile
                     PublishOutput = publishOutput // Pass pre-built output
                 };
 
@@ -561,6 +568,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
                 // Update final state
                 stageTask.Value = 9;
+
                 if(result.Success) {
                     stageTask.Description = "[green]Complete[/]";
                     uploadTask.Description = $"[green]Uploaded[/] ({result.FilesUploaded} files)";
@@ -577,23 +585,24 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         return result!;
     }
 
-    private static string GetStageDescription(DeploymentStage stage) => stage switch {
-        DeploymentStage.NotStarted => "[dim]Starting...[/]",
-        DeploymentStage.LoadingProfile => "Loading profile...",
-        DeploymentStage.ValidatingConnection => "Validating FTP connection...",
-        DeploymentStage.BuildingProject => "Building project...",
-        DeploymentStage.ConnectingToServer => "Connecting to server...",
-        DeploymentStage.PreDeploymentSummary => "Preparing deployment...",
-        DeploymentStage.UploadingAppOffline => "Uploading app_offline.htm...",
-        DeploymentStage.UploadingFiles => "Uploading files...",
-        DeploymentStage.CleaningUpObsoleteFiles => "Cleaning obsolete files...",
-        DeploymentStage.DeletingAppOffline => "Removing app_offline.htm...",
-        DeploymentStage.RecordingHistory => "Recording history...",
-        DeploymentStage.Completed => "[green]Completed[/]",
-        DeploymentStage.Failed => "[red]Failed[/]",
-        DeploymentStage.Cancelled => "[yellow]Cancelled[/]",
-        _ => stage.ToString()
-    };
+    private static string GetStageDescription(DeploymentStage stage) =>
+        stage switch {
+            DeploymentStage.NotStarted => "[dim]Starting...[/]",
+            DeploymentStage.LoadingProfile => "Loading profile...",
+            DeploymentStage.ValidatingConnection => "Validating FTP connection...",
+            DeploymentStage.BuildingProject => "Building project...",
+            DeploymentStage.ConnectingToServer => "Connecting to server...",
+            DeploymentStage.PreDeploymentSummary => "Preparing deployment...",
+            DeploymentStage.UploadingAppOffline => "Uploading app_offline.htm...",
+            DeploymentStage.UploadingFiles => "Uploading files...",
+            DeploymentStage.CleaningUpObsoleteFiles => "Cleaning obsolete files...",
+            DeploymentStage.DeletingAppOffline => "Removing app_offline.htm...",
+            DeploymentStage.RecordingHistory => "Recording history...",
+            DeploymentStage.Completed => "[green]Completed[/]",
+            DeploymentStage.Failed => "[red]Failed[/]",
+            DeploymentStage.Cancelled => "[yellow]Cancelled[/]",
+            _ => stage.ToString()
+        };
 
     #endregion
 
@@ -634,6 +643,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         if(output.HasWarnings) {
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine("[yellow]Warnings:[/]");
+
             foreach(var warning in output.Warnings) {
                 AnsiConsole.MarkupLine($"  [yellow]![/] {warning}");
             }
@@ -715,6 +725,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         if(result.WarningMessages.Count > 0) {
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine("[yellow]Warnings:[/]");
+
             foreach(var warning in result.WarningMessages) {
                 AnsiConsole.MarkupLine($"  [yellow]![/] {warning}");
             }
@@ -725,6 +736,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
     private void DisplayValidationErrors(List<string> errors) {
         AnsiConsole.MarkupLine("[red]Profile validation failed:[/]");
+
         foreach(var error in errors) {
             AnsiConsole.MarkupLine($"  [red]✗[/] {error}");
         }
@@ -760,6 +772,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
     private static string? FindProjectFile(string pubxmlPath) {
         var pubxmlDir = Path.GetDirectoryName(pubxmlPath);
+
         if(string.IsNullOrEmpty(pubxmlDir)) {
             return null;
         }
@@ -771,6 +784,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
             foreach(var extension in projectExtensions) {
                 var projectFiles = currentDir.GetFiles(extension, SearchOption.TopDirectoryOnly);
+
                 if(projectFiles.Length > 0) {
                     return projectFiles[0].FullName;
                 }
@@ -786,10 +800,12 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         string[] sizes = ["B", "KB", "MB", "GB"];
         double len = bytes;
         var order = 0;
+
         while(len >= 1024 && order < sizes.Length - 1) {
             order++;
             len /= 1024;
         }
+
         return $"{len:0.##} {sizes[order]}";
     }
 
