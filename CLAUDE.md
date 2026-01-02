@@ -73,6 +73,16 @@ VisualStudio → Shared → Core → {BuildTools, Protocols, Utilities}
   - **Nested models** (`Connection`, `Build`) for logical grouping
   - Backward compatibility via `[Obsolete]` delegating properties
 
+**Profile Discovery:**
+- `FtpSheepProfileScanner` (`FTPSheep.Core.Services`): Scans directories for .ftpsheep files
+- Auto-discovery when `ftpsheep deploy` is invoked without `--file` parameter
+- Searches current directory and subdirectories recursively
+- Safety checks before scanning system directories (C:\, \Windows, \Program Files, etc.)
+- Limits: max 10 directory levels deep, max 500 .ftpsheep files
+- Interactive selection with relative paths when multiple profiles found
+- Skips hidden and system directories automatically
+- Gracefully handles access denied errors
+
 ## Common Commands
 
 ### Build and Test

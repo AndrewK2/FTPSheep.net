@@ -218,49 +218,87 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
     }
 
     private DeploymentProfile? AutoDiscoverProfile(CancellationToken ct) {
-        var parser = new PublishProfileParser();
-        var converter = new PublishProfileConverter();
-
+        var scanner = new FtpSheepProfileScanner();
         var currentDir = Directory.GetCurrentDirectory();
-        var profiles = parser.DiscoverProfiles(currentDir);
 
-        if(profiles.Count == 0) {
-            AnsiConsole.MarkupLine("[yellow]No publish profiles found.[/]");
-            AnsiConsole.WriteLine();
-            DisplayProfileDiscoveryHelp();
+        // SAFETY CHECK FIRST
+        if(scanner.IsSystemDirectory(currentDir, out var warningMessage)) {
+            ShowSystemDirectoryWarning(currentDir, warningMessage);
+
+            if(!ConfirmScanSystemDirectory()) {
+                AnsiConsole.MarkupLine("[yellow]Scan cancelled. Use --file to specify a profile.[/]");
+                return null;
+            }
+        }
+
+        // Search for .ftpsheep files ONLY
+        var profile = ScanForFtpSheepProfiles(scanner, currentDir);
+
+        if(profile != null) {
+            return profile;
+        }
+
+        // Nothing found
+        AnsiConsole.MarkupLine("[yellow]No .ftpsheep profiles found.[/]");
+        DisplayProfileDiscoveryHelp();
+        return null;
+    }
+
+    private DeploymentProfile? ScanForFtpSheepProfiles(FtpSheepProfileScanner scanner, string currentDir) {
+        List<string>? profilePaths = null;
+        var filesFound = 0;
+
+        AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .Start("Searching for .ftpsheep profiles...", ctx => {
+                profilePaths = scanner.DiscoverProfiles(currentDir);
+                filesFound = profilePaths.Count;
+
+                if(filesFound > 0) {
+                    ctx.Status($"Found {filesFound} .ftpsheep file(s)");
+                }
+            });
+
+        if(profilePaths == null || profilePaths.Count == 0) {
             return null;
+        }
+
+        // Show warning if we hit the limit
+        if(filesFound >= 500) {
+            AnsiConsole.MarkupLine("[yellow]Warning:[/] Search limit reached (500 files). Some profiles may not be shown.");
+            AnsiConsole.MarkupLine("[dim]Use --file to specify a profile directly if yours is missing.[/]");
+            AnsiConsole.WriteLine();
         }
 
         string selectedPath;
 
-        if(profiles.Count == 1) {
-            selectedPath = profiles[0];
-            AnsiConsole.MarkupLine($"Found profile: [cyan]{Path.GetFileName(selectedPath)}[/]");
+        if(profilePaths.Count == 1) {
+            selectedPath = profilePaths[0];
+            var relativePath = Path.GetRelativePath(currentDir, selectedPath);
+            AnsiConsole.MarkupLine($"Found profile: [cyan]{relativePath}[/]");
         } else {
-            var profileNames = profiles.Select(p => Path.GetFileName(p)).ToList();
+            // Show relative paths for better UX
+            var profileChoices = profilePaths
+                .Select(p => new {
+                    FullPath = p,
+                    DisplayPath = Path.GetRelativePath(currentDir, p)
+                })
+                .OrderBy(p => p.DisplayPath)
+                .ToList();
 
-            var selectedName = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("Multiple profiles found. Select one:")
-                .AddChoices(profileNames));
-            selectedPath = profiles[profileNames.IndexOf(selectedName)];
+            var selectedDisplay = AnsiConsole.Prompt(new SelectionPrompt<string>()
+                .Title($"Multiple .ftpsheep profiles found ({profileChoices.Count}). Select one:")
+                .PageSize(15)
+                .AddChoices(profileChoices.Select(p => p.DisplayPath)));
+
+            selectedPath = profileChoices.First(p => p.DisplayPath == selectedDisplay).FullPath;
         }
 
+        // Load the profile using ProfileService
         try {
-            var pubProfile = parser.ParseProfile(selectedPath);
-            var deploymentProfile = converter.Convert(pubProfile);
-
-            if(string.IsNullOrWhiteSpace(deploymentProfile.Name)) {
-                deploymentProfile.Name = Path.GetFileNameWithoutExtension(selectedPath);
-            }
-
-            // Try to find project file if not set
-            if(string.IsNullOrWhiteSpace(deploymentProfile.ProjectPath)) {
-                deploymentProfile.ProjectPath = FindProjectFile(selectedPath) ?? string.Empty;
-            }
-
-            return deploymentProfile;
+            return profiles.LoadProfileAsync(selectedPath).GetAwaiter().GetResult();
         } catch(Exception ex) {
-            AnsiConsole.MarkupLine($"[red]Error:[/] Failed to parse profile: {ex.Message}");
+            AnsiConsole.MarkupLine($"[red]Error:[/] Failed to load profile: {ex.Message}");
             return null;
         }
     }
@@ -392,98 +430,122 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine("[cyan]Validating FTP connection...[/]");
 
-        try {
-            // Check if password is missing and prompt for it
-            var password = profile.Password;
-            var passwordEnteredInteractively = false;
-            var shouldSavePassword = false;
+        var password = profile.Password;
+        var passwordEnteredInteractively = false;
+        var shouldSavePassword = false;
+        const int maxRetries = 3;
+        var retryCount = 0;
 
-            if(string.IsNullOrEmpty(password)) {
-                AnsiConsole.MarkupLine("[yellow]Password not found in profile.[/]");
+        while(retryCount < maxRetries) {
+            try {
+                // Check if password is missing and prompt for it
+                if(string.IsNullOrEmpty(password) || retryCount > 0) {
+                    if(retryCount == 0) {
+                        AnsiConsole.MarkupLine("[yellow]Password not found in profile.[/]");
+                    } else {
+                        AnsiConsole.MarkupLine($"[yellow]Authentication failed. Please try again ({retryCount}/{maxRetries} attempts)[/]");
+                    }
 
-                password = AnsiConsole.Prompt(new TextPrompt<string>($"Enter password for [cyan]{profile.Username ?? "user"}[/]@[cyan]{profile.Connection.Host}[/]:")
-                    .PromptStyle("red")
-                    .Secret());
+                    password = AnsiConsole.Prompt(new TextPrompt<string>($"Enter password for [cyan]{profile.Username ?? "user"}[/]@[cyan]{profile.Connection.Host}[/]:")
+                        .PromptStyle("red")
+                        .Secret());
 
-                passwordEnteredInteractively = true;
+                    passwordEnteredInteractively = true;
 
-                // Ask if user wants to save the password to the profile
-                shouldSavePassword = AnsiConsole.Confirm("Save password to profile for future use?", false);
+                    // Ask if user wants to save the password (only on first attempt)
+                    if(retryCount == 0) {
+                        shouldSavePassword = AnsiConsole.Confirm("Save password to profile for future use?", false);
+                    }
 
-                if(shouldSavePassword) {
-                    profile.Password = password;
+                    if(shouldSavePassword) {
+                        profile.Password = password;
+                    }
                 }
-            }
 
-            // Create FTP connection configuration
-            var ftpConfig = new FtpConnectionConfig {
-                Host = profile.Connection.Host,
-                Port = profile.Connection.Port,
-                Username = profile.Username ?? string.Empty,
-                Password = password ?? string.Empty,
-                RemoteRootPath = profile.RemotePath,
-                EncryptionMode = profile.Connection.UseSsl
-                    ? FtpEncryptionMode.Explicit
-                    : FtpEncryptionMode.None
-            };
+                // Create FTP connection configuration
+                var ftpConfig = new FtpConnectionConfig {
+                    Host = profile.Connection.Host,
+                    Port = profile.Connection.Port,
+                    Username = profile.Username ?? string.Empty,
+                    Password = password ?? string.Empty,
+                    RemoteRootPath = profile.RemotePath,
+                    EncryptionMode = profile.Connection.UseSsl
+                        ? FtpEncryptionMode.Explicit
+                        : FtpEncryptionMode.None
+                };
 
-            logger.LogDebug("Validating connection to {Host}:{Port}", ftpConfig.Host, ftpConfig.Port);
+                logger.LogDebug("Validating connection to {Host}:{Port}", ftpConfig.Host, ftpConfig.Port);
 
-            // Create FTP client factory and client
-            var factory = new FtpClientFactory(NullLoggerFactory.Instance);
-            using var client = factory.CreateClient(ftpConfig);
+                // Create FTP client factory and client
+                var factory = new FtpClientFactory(NullLoggerFactory.Instance);
+                using var client = factory.CreateClient(ftpConfig);
 
-            // Connect to server
-            await client.ConnectAsync(ct);
-            AnsiConsole.MarkupLine($"[green]✓[/] Connected to {ftpConfig.Host}:{ftpConfig.Port}");
+                // Connect to server
+                await client.ConnectAsync(ct);
+                AnsiConsole.MarkupLine($"[green]✓[/] Connected to {ftpConfig.Host}:{ftpConfig.Port}");
 
-            // Test write permissions
-            var canWrite = await client.TestConnectionAsync(profile.RemotePath, ct);
+                // Test write permissions
+                var canWrite = await client.TestConnectionAsync(profile.RemotePath, ct);
 
-            if(!canWrite) {
-                AnsiConsole.MarkupLine($"[red]✗[/] Cannot write to remote path: {profile.RemotePath}");
-                AnsiConsole.MarkupLine("[yellow]Hint:[/] Check directory permissions on the FTP server.");
+                if(!canWrite) {
+                    AnsiConsole.MarkupLine($"[red]✗[/] Cannot write to remote path: {profile.RemotePath}");
+                    AnsiConsole.MarkupLine("[yellow]Hint:[/] Check directory permissions on the FTP server.");
+                    return false;
+                }
+
+                AnsiConsole.MarkupLine($"[green]✓[/] Write permissions verified for {profile.RemotePath}");
+
+                // Save the password if it was entered interactively and user wants to save it
+                if(passwordEnteredInteractively && shouldSavePassword && !string.IsNullOrEmpty(profilePath)) {
+                    try {
+                        await profiles.UpdatePasswordAsync(profilePath, profile.Username ?? string.Empty, password ?? string.Empty, ct);
+                        AnsiConsole.MarkupLine("[green]✓[/] Password saved to credential store");
+                    } catch(Exception ex) {
+                        AnsiConsole.MarkupLine($"[yellow]Warning:[/] Failed to save password: {ex.Message}");
+                    }
+                }
+
+                return true;
+            } catch(Exception ex) {
+                var errorMsg = $"Failed to validate FTP connection to {profile.Connection.Host}:{profile.Connection.Port}";
+                var isAuthenticationError = ex.Message.Contains("authentication", StringComparison.OrdinalIgnoreCase) ||
+                                           ex.Message.Contains("login", StringComparison.OrdinalIgnoreCase) ||
+                                           ex.Message.Contains("530", StringComparison.OrdinalIgnoreCase); // FTP 530 = Login incorrect
+
+                // Add helpful context based on error type
+                if(isAuthenticationError) {
+                    errorMsg = $"{errorMsg} - Authentication failed";
+                    AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
+
+                    retryCount++;
+
+                    if(retryCount < maxRetries) {
+                        // Reset password to prompt again
+                        password = null;
+                        continue; // Retry with new password
+                    } else {
+                        AnsiConsole.MarkupLine("[red]Maximum retry attempts reached.[/]");
+                        AnsiConsole.MarkupLine("[yellow]Hint:[/] Check username and password in your profile.");
+                    }
+                } else if(ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)) {
+                    errorMsg = $"{errorMsg} - Connection timeout";
+                    AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
+                    AnsiConsole.MarkupLine("[yellow]Hint:[/] Check server address, port, and firewall settings.");
+                } else if(ex.Message.Contains("refused", StringComparison.OrdinalIgnoreCase)) {
+                    errorMsg = $"{errorMsg} - Connection refused";
+                    AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
+                    AnsiConsole.MarkupLine("[yellow]Hint:[/] Check if FTP server is running and accessible.");
+                } else {
+                    AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
+                    AnsiConsole.MarkupLine($"[dim]Error: {ex.Message}[/]");
+                }
+
+                logger.LogException(ex, "FTP connection validation failed");
                 return false;
             }
-
-            AnsiConsole.MarkupLine($"[green]✓[/] Write permissions verified for {profile.RemotePath}");
-
-            // Save the password if it was entered interactively and user wants to save it
-            if(passwordEnteredInteractively && shouldSavePassword && !string.IsNullOrEmpty(profilePath)) {
-                try {
-                    await profiles.UpdatePasswordAsync(profilePath, profile.Username ?? string.Empty, password ?? string.Empty, ct);
-                    AnsiConsole.MarkupLine("[green]✓[/] Password saved to credential store");
-                } catch(Exception ex) {
-                    AnsiConsole.MarkupLine($"[yellow]Warning:[/] Failed to save password: {ex.Message}");
-                }
-            }
-
-            return true;
-        } catch(Exception ex) {
-            var errorMsg = $"Failed to validate FTP connection to {profile.Connection.Host}:{profile.Connection.Port}";
-
-            // Add helpful context based on error type
-            if(ex.Message.Contains("authentication", StringComparison.OrdinalIgnoreCase) ||
-               ex.Message.Contains("login", StringComparison.OrdinalIgnoreCase)) {
-                errorMsg = $"{errorMsg} - Authentication failed";
-                AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
-                AnsiConsole.MarkupLine("[yellow]Hint:[/] Check username and password in your profile.");
-            } else if(ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase)) {
-                errorMsg = $"{errorMsg} - Connection timeout";
-                AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
-                AnsiConsole.MarkupLine("[yellow]Hint:[/] Check server address, port, and firewall settings.");
-            } else if(ex.Message.Contains("refused", StringComparison.OrdinalIgnoreCase)) {
-                errorMsg = $"{errorMsg} - Connection refused";
-                AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
-                AnsiConsole.MarkupLine("[yellow]Hint:[/] Check if FTP server is running and accessible.");
-            } else {
-                AnsiConsole.MarkupLine($"[red]✗[/] {errorMsg}");
-                AnsiConsole.MarkupLine($"[dim]Error: {ex.Message}[/]");
-            }
-
-            logger.LogException(ex, "FTP connection validation failed");
-            return false;
         }
+
+        return false;
     }
 
     #endregion
@@ -756,10 +818,38 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
     private void DisplayProfileDiscoveryHelp() {
         AnsiConsole.MarkupLine("[dim]Available commands:[/]");
-        AnsiConsole.MarkupLine("  [cyan]ftpsheep deploy --profile <name>[/]  - Use a saved profile");
-        AnsiConsole.MarkupLine("  [cyan]ftpsheep deploy --file <path>[/]     - Use a profile JSON file");
-        AnsiConsole.MarkupLine("  [cyan]ftpsheep import[/]                   - Import a .pubxml file");
+        AnsiConsole.MarkupLine("  [cyan]ftpsheep deploy --file <path>[/]     - Use a .ftpsheep or .pubxml file");
+        AnsiConsole.MarkupLine("  [cyan]ftpsheep import[/]                   - Import a .pubxml file to .ftpsheep");
         AnsiConsole.MarkupLine("  [cyan]ftpsheep profile list[/]             - List saved profiles");
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine("[dim]Profile discovery searches for:[/]");
+        AnsiConsole.MarkupLine("  - .ftpsheep files in current directory and subdirectories");
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine("[dim]Use --file to specify a .pubxml or other profile file directly.[/]");
+    }
+
+    private void ShowSystemDirectoryWarning(string path, string? message) {
+        AnsiConsole.WriteLine();
+
+        var panel = new Panel(new Markup(
+            $"[yellow]⚠ Warning: Potentially unsafe directory[/]\n\n" +
+            $"Current directory: [cyan]{path}[/]\n" +
+            $"Reason: {message ?? "Unknown"}\n\n" +
+            $"Scanning this location may be [red]very slow[/] and could find hundreds of files.\n" +
+            $"Consider running this command from your project directory instead."))
+        {
+            Border = BoxBorder.Heavy,
+            BorderStyle = new Style(Color.Yellow)
+        };
+
+        AnsiConsole.Write(panel);
+        AnsiConsole.WriteLine();
+    }
+
+    private bool ConfirmScanSystemDirectory() {
+        return AnsiConsole.Confirm(
+            "Are you sure you want to scan this directory for profiles?",
+            defaultValue: false);
     }
 
     private static bool ConfirmDeployment() {
