@@ -57,6 +57,9 @@ try {
 #endif
     });
 
+
+    Console.Title = "FTPSheep";
+
     var result = app.Run(args);
 
     logger.Info("FTPSheep.NET shutting down with exit code {ExitCode}", result);
