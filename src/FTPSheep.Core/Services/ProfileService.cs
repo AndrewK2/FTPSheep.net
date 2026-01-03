@@ -231,6 +231,10 @@ public sealed class ProfileService : IProfileService {
             throw new ArgumentException("Password cannot be empty", nameof(password));
         }
 
+        if(string.IsNullOrWhiteSpace(profilePath)) {
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(profilePath));
+        }
+
         // Save credentials to the credential store
         await credentialStore.SaveCredentialsAsync(
             profilePath,
