@@ -78,11 +78,13 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
         try {
             // Phase 1: Profile Resolution
-            var profile = await ResolveAndLoadProfile(settings, cancellationToken);
+            var (profile, filePath) = await ResolveAndLoadProfile(settings, cancellationToken);
 
             if(profile == null) {
                 return 1;
             }
+
+            Console.Title = "FTPSheep - " + profile.Name;
 
             // Validate profile
             var validationErrors = ValidateProfile(profile);
@@ -99,7 +101,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
             // Phase 2: Validate FTP Connection (before building)
             if(!settings.SkipConnectionTest) {
-                var connectionValid = await ValidateFtpConnection(profile, settings.ProfilePath, cancellationToken);
+                var connectionValid = await ValidateFtpConnection(profile, filePath, cancellationToken);
 
                 if(!connectionValid) {
                     return 1;
@@ -163,8 +165,9 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
     #region Profile Resolution
 
-    private async Task<DeploymentProfile?> ResolveAndLoadProfile(Settings settings, CancellationToken ct) {
+    private async Task<(DeploymentProfile?, string? FilePath)> ResolveAndLoadProfile(Settings settings, CancellationToken ct) {
         DeploymentProfile? profile = null;
+        string? actualProfilePath = null;
 
         await AnsiConsole
             .Status()
@@ -182,6 +185,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
                     ctx.Status("Loading profile from file...");
                     profile = await LoadProfileFromFile(settings.ProfilePath);
+                    actualProfilePath = settings.ProfilePath;
                     return;
                 }
 
@@ -190,21 +194,21 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             });
 
         // Handle auto-discovery outside of Status (needs user interaction)
-        if(profile == null && string.IsNullOrWhiteSpace(settings.ProfilePath)) {
-            profile = AutoDiscoverProfile(ct);
+        if(profile == null && string.IsNullOrWhiteSpace(actualProfilePath)) {
+            (profile, actualProfilePath) = await AutoDiscoverProfile(ct);
         }
 
         if(profile != null) {
             logger
                 .BuildDebugMessage("Loaded profile: {0}", profile.Name)
-                .Add("Path", settings.ProfilePath)
+                .Add("Actual Path", actualProfilePath)
                 .Add("FTP Username", profile.Username)
                 .Add("FTP password present", !string.IsNullOrEmpty(profile.Password))
                 .Write();
             AnsiConsole.MarkupLine($"[green]✓[/] Profile loaded: [cyan]{profile.Name}[/]");
         }
 
-        return profile;
+        return (profile, actualProfilePath);
     }
 
     private async Task<DeploymentProfile?> LoadProfileFromFile(string path) {
@@ -217,7 +221,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         }
     }
 
-    private DeploymentProfile? AutoDiscoverProfile(CancellationToken ct) {
+    private async Task<(DeploymentProfile?, string? FilePath)> AutoDiscoverProfile(CancellationToken ct) {
         var scanner = new FtpSheepProfileScanner();
         var currentDir = Directory.GetCurrentDirectory();
 
@@ -227,31 +231,32 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
             if(!ConfirmScanSystemDirectory()) {
                 AnsiConsole.MarkupLine("[yellow]Scan cancelled. Use --file to specify a profile.[/]");
-                return null;
+                return (null, null);
             }
         }
 
         // Search for .ftpsheep files ONLY
-        var profile = ScanForFtpSheepProfiles(scanner, currentDir);
+        var (profile, path) = await ScanForFtpSheepProfiles(scanner, currentDir, ct);
 
         if(profile != null) {
-            return profile;
+            return (profile, path);
         }
 
         // Nothing found
         AnsiConsole.MarkupLine("[yellow]No .ftpsheep profiles found.[/]");
         DisplayProfileDiscoveryHelp();
-        return null;
+        return (null, null);
     }
 
-    private DeploymentProfile? ScanForFtpSheepProfiles(FtpSheepProfileScanner scanner, string currentDir) {
+    private async Task<(DeploymentProfile?, string? FilePath)> ScanForFtpSheepProfiles(FtpSheepProfileScanner scanner, string currentDir, CancellationToken ct) {
+        logger.LogDebug("Scanning for FTPSheep profiles");
         List<string>? profilePaths = null;
         var filesFound = 0;
 
         AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .Start("Searching for .ftpsheep profiles...", ctx => {
-                profilePaths = scanner.DiscoverProfiles(currentDir);
+                profilePaths = scanner.DiscoverProfiles(currentDir, cancellationToken: ct);
                 filesFound = profilePaths.Count;
 
                 if(filesFound > 0) {
@@ -260,12 +265,18 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             });
 
         if(profilePaths == null || profilePaths.Count == 0) {
-            return null;
+            logger.LogDebug("No profiles found");
+            return (null, null);
         }
 
+        logger
+            .BuildDebugMessage("Found {0} profiles", profilePaths.Count)
+            .Add("Paths", profilePaths.Order())
+            .Write();
+
         // Show warning if we hit the limit
-        if(filesFound >= 500) {
-            AnsiConsole.MarkupLine("[yellow]Warning:[/] Search limit reached (500 files). Some profiles may not be shown.");
+        if(filesFound >= 50) {
+            AnsiConsole.MarkupLine("[yellow]Warning:[/] Search limit reached (50 files). Some profiles may not be shown.");
             AnsiConsole.MarkupLine("[dim]Use --file to specify a profile directly if yours is missing.[/]");
             AnsiConsole.WriteLine();
         }
@@ -296,10 +307,11 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
         // Load the profile using ProfileService
         try {
-            return profiles.LoadProfileAsync(selectedPath).GetAwaiter().GetResult();
+            logger.LogDebug("Loading selected profile from the path: {0}", selectedPath);
+            return (await profiles.LoadProfileAsync(selectedPath, ct), selectedPath);
         } catch(Exception ex) {
             AnsiConsole.MarkupLine($"[red]Error:[/] Failed to load profile: {ex.Message}");
-            return null;
+            return (null, null);
         }
     }
 
@@ -454,7 +466,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
                     // Ask if user wants to save the password (only on first attempt)
                     if(retryCount == 0) {
-                        shouldSavePassword = AnsiConsole.Confirm("Save password to profile for future use?", false);
+                        shouldSavePassword = await AnsiConsole.ConfirmAsync("Save password to profile for future use?", false, ct);
                     }
 
                     if(shouldSavePassword) {
@@ -498,6 +510,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                 // Save the password if it was entered interactively and user wants to save it
                 if(passwordEnteredInteractively && shouldSavePassword && !string.IsNullOrEmpty(profilePath)) {
                     try {
+                        logger.LogInformation("Saving entered password for profile: " + profilePath);
                         await profiles.UpdatePasswordAsync(profilePath, profile.Username ?? string.Empty, password ?? string.Empty, ct);
                         AnsiConsole.MarkupLine("[green]✓[/] Password saved to credential store");
                     } catch(Exception ex) {
