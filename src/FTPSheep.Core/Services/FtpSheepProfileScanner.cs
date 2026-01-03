@@ -17,10 +17,11 @@ public class FtpSheepProfileScanner {
     /// Discovers .ftpsheep profile files in the specified directory and subdirectories.
     /// </summary>
     /// <param name="searchPath">The directory to start searching from</param>
+    /// <param name="ct"></param>
     /// <param name="maxDepth">Maximum directory depth to search (default: 10)</param>
     /// <param name="maxFiles">Maximum number of .ftpsheep files to find (default: 500)</param>
     /// <returns>List of absolute paths to .ftpsheep files</returns>
-    public List<string> DiscoverProfiles(string searchPath, int maxDepth = 10, int maxFiles = 500) {
+    public List<string> DiscoverProfiles(string searchPath, int maxDepth = 10, int maxFiles = 500, CancellationToken cancellationToken = default) {
         if(string.IsNullOrWhiteSpace(searchPath)) {
             throw new ArgumentException("Search path cannot be null or empty", nameof(searchPath));
         }
