@@ -15,7 +15,7 @@
     <!-- Header -->
     <TextBlock Grid.Row="0"
                Text="{Binding WelcomeMessage}"
-               FontSize="16"
+               FontSize="36"
                FontWeight="Bold"
                Margin="0,0,0,10"/>
 
@@ -47,7 +47,7 @@
 
     <!-- Deploy Button -->
     <Button Grid.Row="2"
-            Content="Deploy"
+            Content="Publish"
             Command="{Binding DeployCommand}"
             Padding="10,5"
             Margin="0,0,0,10"

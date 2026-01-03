@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
 using FTPSheep.VisualStudio.Modern.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Extensibility;
 using Microsoft.VisualStudio.Extensibility.ToolWindows;
 using Microsoft.VisualStudio.RpcContracts.RemoteUI;
@@ -17,12 +19,15 @@ public class FTPSheepToolWindow : ToolWindow {
     private readonly ProfileService profileService;
     private readonly JsonDeploymentHistoryService historyService;
     private readonly VsDeploymentOrchestrator deploymentOrchestrator;
+    private readonly ILogger<FTPSheepToolWindow> logger;
 
-    public FTPSheepToolWindow(VisualStudioExtensibility extensibility, ProfileService profileService, JsonDeploymentHistoryService historyService, VsDeploymentOrchestrator deploymentOrchestrator) : base(extensibility) {
-        this.Title = "FTPSheep";
+    public FTPSheepToolWindow(VisualStudioExtensibility extensibility, ProfileService profileService, JsonDeploymentHistoryService historyService, VsDeploymentOrchestrator deploymentOrchestrator,
+        ILogger<FTPSheepToolWindow> logger) : base(extensibility) {
+        Title = "FTPSheep";
         this.profileService = profileService;
         this.historyService = historyService;
         this.deploymentOrchestrator = deploymentOrchestrator;
+        this.logger = logger;
     }
 
     /// <summary>
@@ -30,16 +35,23 @@ public class FTPSheepToolWindow : ToolWindow {
     /// </summary>
     public override ToolWindowConfiguration ToolWindowConfiguration =>
         new() {
-            Placement = ToolWindowPlacement.DocumentWell,
-            DockDirection = Dock.Right,
-            AllowAutoCreation = true
+            Placement = ToolWindowPlacement.Floating,
+            DockDirection = Dock.None,
+            AllowAutoCreation = false
         };
 
     /// <summary>
     /// Initialize the tool window (called before creating the UI).
     /// </summary>
+    [Experimental("VSEXTPREVIEW_OUTPUTWINDOW")]
     public override async Task InitializeAsync(CancellationToken cancellationToken) {
         // Initialization logic will be performed when UI is created
+
+        logger.LogInformation("Initializing tool window");
+
+        //using var outputChannel = await Extensibility.Views().Output.CreateOutputChannelAsync("FTPSheep", CancellationToken.None);
+        //await outputChannel.WriteLineAsync("Initializing FTPSheep");
+
         await Task.CompletedTask;
     }
 

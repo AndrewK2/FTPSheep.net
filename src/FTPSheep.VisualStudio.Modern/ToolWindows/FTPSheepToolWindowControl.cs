@@ -1,7 +1,5 @@
 using Microsoft.VisualStudio.Extensibility.UI;
-using System.Collections.ObjectModel;
 using System.Runtime.Serialization;
-using System.Windows.Input;
 
 namespace FTPSheep.VisualStudio.Modern.ToolWindows;
 
