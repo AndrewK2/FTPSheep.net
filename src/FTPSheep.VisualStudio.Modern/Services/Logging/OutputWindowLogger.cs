@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Extensibility.Documents;
 
-namespace FTPSheep.VisualStudio.Modern.Services;
+namespace FTPSheep.VisualStudio.Modern.Services.Logging;
 
 /// <summary>
 /// Logger implementation that writes to Visual Studio Output Window.
@@ -35,11 +35,7 @@ internal sealed class OutputWindowLogger : ILogger {
     }
 
     /// <inheritdoc />
-    public void Log<TState>(LogLevel logLevel,
-        EventId eventId,
-        TState state,
-        Exception? exception,
-        Func<TState, Exception?, string> formatter) {
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
         if(!IsEnabled(logLevel)) {
             return;
         }

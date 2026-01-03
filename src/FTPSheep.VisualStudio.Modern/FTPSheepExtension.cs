@@ -4,6 +4,7 @@ using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Services;
 using FTPSheep.Protocols.Services;
 using FTPSheep.VisualStudio.Modern.Services;
+using FTPSheep.VisualStudio.Modern.Services.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

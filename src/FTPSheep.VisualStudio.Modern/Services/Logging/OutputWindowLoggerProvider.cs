@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Extensibility.Documents;
 
-namespace FTPSheep.VisualStudio.Modern.Services;
+namespace FTPSheep.VisualStudio.Modern.Services.Logging;
 
 /// <summary>
 /// Logger provider that creates loggers which write to Visual Studio Output Window.
@@ -24,18 +24,18 @@ internal sealed class OutputWindowLoggerProvider : ILoggerProvider {
 
     /// <inheritdoc />
     public ILogger CreateLogger(string categoryName) {
-        if(disposed) {
-            throw new ObjectDisposedException(nameof(OutputWindowLoggerProvider));
-        }
-
-        return loggers.GetOrAdd(categoryName, name => new OutputWindowLogger(name, outputChannel));
+        return disposed
+            ? throw new ObjectDisposedException(nameof(OutputWindowLoggerProvider))
+            : loggers.GetOrAdd(categoryName, name => new OutputWindowLogger(name, outputChannel));
     }
 
     /// <inheritdoc />
     public void Dispose() {
-        if(!disposed) {
-            loggers.Clear();
-            disposed = true;
+        if(disposed) {
+            return;
         }
+
+        loggers.Clear();
+        disposed = true;
     }
 }

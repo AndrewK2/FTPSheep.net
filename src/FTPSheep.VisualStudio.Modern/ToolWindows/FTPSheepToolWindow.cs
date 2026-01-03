@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Models;
 using FTPSheep.Core.Services;
 using FTPSheep.VisualStudio.Modern.Services;
@@ -16,12 +17,12 @@ namespace FTPSheep.VisualStudio.Modern.ToolWindows;
 [VisualStudioContribution]
 public class FTPSheepToolWindow : ToolWindow {
     private FTPSheepToolWindowControl? toolWindowControl;
-    private readonly ProfileService profileService;
+    private readonly IProfileService profileService;
     private readonly JsonDeploymentHistoryService historyService;
     private readonly VsDeploymentOrchestrator deploymentOrchestrator;
     private readonly ILogger<FTPSheepToolWindow> logger;
 
-    public FTPSheepToolWindow(VisualStudioExtensibility extensibility, ProfileService profileService, JsonDeploymentHistoryService historyService, VsDeploymentOrchestrator deploymentOrchestrator,
+    public FTPSheepToolWindow(VisualStudioExtensibility extensibility, IProfileService profileService, JsonDeploymentHistoryService historyService, VsDeploymentOrchestrator deploymentOrchestrator,
         ILogger<FTPSheepToolWindow> logger) : base(extensibility) {
         Title = "FTPSheep";
         this.profileService = profileService;
@@ -66,14 +67,14 @@ public class FTPSheepToolWindow : ToolWindow {
             // Set up basic data - don't try to load profiles/history yet
             var dataContext = toolWindowControl.DataContext;
             dataContext.WelcomeMessage = "FTPSheep Deployment Tool";
-            dataContext.Projects = new List<ProjectItem> {
+            dataContext.Projects = [
                 new() {
                     Name = "No projects loaded",
                     Path = string.Empty
                 }
-            };
-            dataContext.Profiles = new List<ProfileItem>();
-            dataContext.RecentDeployments = new List<DeploymentHistoryItem>();
+            ];
+            dataContext.Profiles = [];
+            dataContext.RecentDeployments = [];
 
             // Set up command handlers with placeholder implementations
             toolWindowControl.SetCommandHandlers(
