@@ -387,5 +387,86 @@ public class PublishProfileParserTests : IDisposable {
         Assert.DoesNotContain(otherProfile, profiles);
     }
 
+    [Fact]
+    public void ParseProfile_WithSiteUrlToLaunchAfterPublish_ParsesCorrectly() {
+        // Arrange
+        var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+  <PropertyGroup>
+    <WebPublishMethod>FTP</WebPublishMethod>
+    <PublishUrl>ftp://ftp.example.com/site/wwwroot</PublishUrl>
+    <SiteUrlToLaunchAfterPublish>http://www.example.com</SiteUrlToLaunchAfterPublish>
+    <LaunchSiteAfterPublish>True</LaunchSiteAfterPublish>
+    <UserName>testuser</UserName>
+  </PropertyGroup>
+</Project>";
+
+        // Act
+        var profile = parser.ParseFromString(xml);
+
+        // Assert
+        Assert.Equal("http://www.example.com", profile.SiteUrlToLaunchAfterPublish);
+        Assert.True(profile.LaunchSiteAfterPublish);
+    }
+
+    [Fact]
+    public void ParseProfile_WithoutUrlProperties_DefaultsCorrectly() {
+        // Arrange
+        var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project>
+  <PropertyGroup>
+    <WebPublishMethod>FTP</WebPublishMethod>
+    <PublishUrl>ftp://ftp.example.com</PublishUrl>
+  </PropertyGroup>
+</Project>";
+
+        // Act
+        var profile = parser.ParseFromString(xml);
+
+        // Assert
+        Assert.Null(profile.SiteUrlToLaunchAfterPublish);
+        Assert.False(profile.LaunchSiteAfterPublish);
+    }
+
+    [Fact]
+    public void ParseProfile_WithLaunchSiteAfterPublishFalse_ParsesCorrectly() {
+        // Arrange
+        var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project>
+  <PropertyGroup>
+    <WebPublishMethod>FTP</WebPublishMethod>
+    <SiteUrlToLaunchAfterPublish>http://www.example.com</SiteUrlToLaunchAfterPublish>
+    <LaunchSiteAfterPublish>False</LaunchSiteAfterPublish>
+  </PropertyGroup>
+</Project>";
+
+        // Act
+        var profile = parser.ParseFromString(xml);
+
+        // Assert
+        Assert.Equal("http://www.example.com", profile.SiteUrlToLaunchAfterPublish);
+        Assert.False(profile.LaunchSiteAfterPublish);
+    }
+
+    [Fact]
+    public void ParseProfile_WithUrlPropertiesNotInAdditionalProperties() {
+        // Arrange
+        var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project>
+  <PropertyGroup>
+    <WebPublishMethod>FTP</WebPublishMethod>
+    <SiteUrlToLaunchAfterPublish>http://www.example.com</SiteUrlToLaunchAfterPublish>
+    <LaunchSiteAfterPublish>True</LaunchSiteAfterPublish>
+  </PropertyGroup>
+</Project>";
+
+        // Act
+        var profile = parser.ParseFromString(xml);
+
+        // Assert - URL properties should NOT be in AdditionalProperties
+        Assert.DoesNotContain("SiteUrlToLaunchAfterPublish", profile.AdditionalProperties.Keys);
+        Assert.DoesNotContain("LaunchSiteAfterPublish", profile.AdditionalProperties.Keys);
+    }
+
     #endregion
 }

@@ -75,7 +75,9 @@ public class PublishProfileConverter {
             CleanupMode = publishProfile.DeleteExistingFiles ? CleanupMode.DeleteObsolete : CleanupMode.None,
             AppOfflineEnabled = !publishProfile.ExcludeAppData, // If excluding app_data, likely don't want app_offline
             Concurrency = 4, // Default
-            RetryCount = 3 // Default
+            RetryCount = 3, // Default
+            SiteUrlToLaunchAfterPublish = publishProfile.SiteUrlToLaunchAfterPublish,
+            LaunchSiteAfterPublish = publishProfile.LaunchSiteAfterPublish
         };
 
         return deploymentProfile;

@@ -120,6 +120,10 @@ public class PublishProfileParser {
             profile.SelfContained = selfContainedValue.Equals("true", StringComparison.OrdinalIgnoreCase);
         }
 
+        // Post-deployment actions
+        profile.SiteUrlToLaunchAfterPublish = GetElementValue(propertyGroup, "SiteUrlToLaunchAfterPublish");
+        profile.LaunchSiteAfterPublish = GetElementValue(propertyGroup, "LaunchSiteAfterPublish")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
+
         // Capture any additional properties that might be useful
         foreach(var element in propertyGroup.Elements()) {
             var name = element.Name.LocalName;
@@ -128,7 +132,8 @@ public class PublishProfileParser {
             // Skip properties we've already captured
             if(name is "WebPublishMethod" or "PublishMethod" or "PublishUrl" or "UserName" or
                 "SavePWD" or "DeleteExistingFiles" or "TargetFramework" or "RuntimeIdentifier" or
-                "PublishProtocol" or "ExcludeApp_Data" or "SelfContained") {
+                "PublishProtocol" or "ExcludeApp_Data" or "SelfContained" or
+                "SiteUrlToLaunchAfterPublish" or "LaunchSiteAfterPublish") {
                 continue;
             }
 
