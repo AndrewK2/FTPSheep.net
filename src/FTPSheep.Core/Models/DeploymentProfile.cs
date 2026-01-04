@@ -78,6 +78,18 @@ public sealed class DeploymentProfile {
     /// </summary>
     public string? AppOfflineTemplate { get; set; }
 
+    /// <summary>
+    /// Gets or sets the URL to open in browser after successful deployment.
+    /// Maps to SiteUrlToLaunchAfterPublish in .pubxml files.
+    /// </summary>
+    public string? SiteUrlToLaunchAfterPublish { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to automatically open the URL after successful deployment.
+    /// Maps to LaunchSiteAfterPublish in .pubxml files. Defaults to false.
+    /// </summary>
+    public bool LaunchSiteAfterPublish { get; set; } = false;
+
     // Obsolete properties for backward compatibility
     // These will be removed in V2.0
 

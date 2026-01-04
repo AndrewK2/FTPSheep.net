@@ -151,7 +151,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
                 .Write();
 
             // Phase 6: Display Results
-            DisplayDeploymentResult(result);
+            DisplayDeploymentResult(result, profile);
 
             return result.Success ? 0 : 1;
         } catch(OperationCanceledException) {
@@ -756,7 +756,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         AnsiConsole.MarkupLine("[green]✓[/] Dry run completed successfully.");
     }
 
-    private void DisplayDeploymentResult(DeploymentResult result) {
+    private void DisplayDeploymentResult(DeploymentResult result, DeploymentProfile? profile = null) {
         AnsiConsole.WriteLine();
 
         if(result.Success) {
@@ -777,6 +777,13 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
             if(result.ObsoleteFilesDeleted > 0) {
                 AnsiConsole.MarkupLine($"  [green]✓[/] {result.ObsoleteFilesDeleted} obsolete files removed");
+            }
+
+            AnsiConsole.WriteLine();
+
+            // Open URL if configured
+            if(profile != null) {
+                OpenUrlIfConfigured(profile);
             }
         } else {
             var rule = new Rule("[red]Deployment Failed[/]") { Style = Style.Parse("red") };
@@ -807,6 +814,32 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
         }
 
         AnsiConsole.WriteLine();
+    }
+
+    private void OpenUrlIfConfigured(DeploymentProfile profile) {
+        if(string.IsNullOrWhiteSpace(profile.SiteUrlToLaunchAfterPublish)) {
+            return;
+        }
+
+        if(!profile.LaunchSiteAfterPublish) {
+            return;
+        }
+
+        try {
+            AnsiConsole.MarkupLine($"[grey]Opening URL:[/] [link]{profile.SiteUrlToLaunchAfterPublish}[/]");
+
+            // Open URL in default browser
+            var psi = new System.Diagnostics.ProcessStartInfo {
+                FileName = profile.SiteUrlToLaunchAfterPublish,
+                UseShellExecute = true
+            };
+            System.Diagnostics.Process.Start(psi);
+        } catch(Exception ex) {
+            // Log warning but don't fail deployment
+            AnsiConsole.MarkupLine($"[yellow]Warning:[/] Failed to open URL: {ex.Message}");
+            logger.LogWarning(ex, "Failed to open post-deployment URL: {Url}",
+                profile.SiteUrlToLaunchAfterPublish);
+        }
     }
 
     private void DisplayValidationErrors(List<string> errors) {

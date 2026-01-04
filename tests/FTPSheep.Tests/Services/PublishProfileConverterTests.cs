@@ -417,5 +417,41 @@ public class PublishProfileConverterTests {
         Assert.Equal(4, errors.Count);
     }
 
+    [Fact]
+    public void Convert_WithSiteUrlToLaunchAfterPublish_MapsCorrectly() {
+        // Arrange
+        var publishProfile = new PublishProfile {
+            PublishMethod = "FTP",
+            PublishUrl = "ftp://ftp.example.com/site/wwwroot",
+            UserName = "testuser",
+            SiteUrlToLaunchAfterPublish = "http://www.example.com",
+            LaunchSiteAfterPublish = true
+        };
+
+        // Act
+        var deploymentProfile = converter.Convert(publishProfile);
+
+        // Assert
+        Assert.Equal("http://www.example.com", deploymentProfile.SiteUrlToLaunchAfterPublish);
+        Assert.True(deploymentProfile.LaunchSiteAfterPublish);
+    }
+
+    [Fact]
+    public void Convert_WithoutUrlProperties_DefaultsCorrectly() {
+        // Arrange
+        var publishProfile = new PublishProfile {
+            PublishMethod = "FTP",
+            PublishUrl = "ftp://ftp.example.com/site/wwwroot",
+            UserName = "testuser"
+        };
+
+        // Act
+        var deploymentProfile = converter.Convert(publishProfile);
+
+        // Assert
+        Assert.Null(deploymentProfile.SiteUrlToLaunchAfterPublish);
+        Assert.False(deploymentProfile.LaunchSiteAfterPublish);
+    }
+
     #endregion
 }

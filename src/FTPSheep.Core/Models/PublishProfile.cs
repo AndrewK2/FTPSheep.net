@@ -49,10 +49,17 @@ public class PublishProfile {
     /// </summary>
     public string? PublishProtocol { get; set; }
 
-    /// <summary>
-    /// Gets or sets whether to exclude app_offline.htm.
-    /// </summary>
     public bool ExcludeAppData { get; set; }
+
+    /// <summary>
+    /// Gets or sets the URL to launch after publish (from .pubxml).
+    /// </summary>
+    public string? SiteUrlToLaunchAfterPublish { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to launch the site after publish (from .pubxml).
+    /// </summary>
+    public bool LaunchSiteAfterPublish { get; set; }
 
     /// <summary>
     /// Gets or sets additional MSBuild properties from the profile.
