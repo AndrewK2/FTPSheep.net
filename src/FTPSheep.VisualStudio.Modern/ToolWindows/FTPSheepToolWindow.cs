@@ -6,6 +6,7 @@ using FTPSheep.VisualStudio.Modern.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Extensibility;
 using Microsoft.VisualStudio.Extensibility.ToolWindows;
+using Microsoft.VisualStudio.ProjectSystem.Query;
 using Microsoft.VisualStudio.RpcContracts.RemoteUI;
 
 namespace FTPSheep.VisualStudio.Modern.ToolWindows;
@@ -46,48 +47,109 @@ public class FTPSheepToolWindow : ToolWindow {
     /// </summary>
     [Experimental("VSEXTPREVIEW_OUTPUTWINDOW")]
     public override async Task InitializeAsync(CancellationToken cancellationToken) {
-        // Initialization logic will be performed when UI is created
-
         logger.LogInformation("Initializing tool window");
-
-        //using var outputChannel = await Extensibility.Views().Output.CreateOutputChannelAsync("FTPSheep", CancellationToken.None);
-        //await outputChannel.WriteLineAsync("Initializing FTPSheep");
-
         await Task.CompletedTask;
     }
 
     /// <summary>
     /// Create and return the tool window UI content.
     /// </summary>
-    public override Task<IRemoteUserControl> GetContentAsync(CancellationToken cancellationToken) {
+    public override async Task<IRemoteUserControl> GetContentAsync(CancellationToken cancellationToken) {
         try {
             // Create the control with minimal initialization
             toolWindowControl = new FTPSheepToolWindowControl();
 
-            // Set up basic data - don't try to load profiles/history yet
+            // Set up basic data
             var dataContext = toolWindowControl.DataContext;
             dataContext.WelcomeMessage = "FTPSheep Deployment Tool";
-            dataContext.Projects = [
-                new() {
-                    Name = "No projects loaded",
-                    Path = string.Empty
-                }
-            ];
+            dataContext.Projects = [];
             dataContext.Profiles = [];
             dataContext.RecentDeployments = [];
 
-            // Set up command handlers with placeholder implementations
+            // Set up command handlers
             toolWindowControl.SetCommandHandlers(
-                deployCommand: async (param, ct) => await Task.CompletedTask,
-                newProfileCommand: async (param, ct) => await Task.CompletedTask,
-                editProfileCommand: async (param, ct) => await Task.CompletedTask,
-                deleteProfileCommand: async (param, ct) => await Task.CompletedTask,
-                importProfileCommand: async (param, ct) => await Task.CompletedTask);
+                deployCommand: OnDeployAsync,
+                newProfileCommand: OnNewProfileAsync,
+                editProfileCommand: OnEditProfileAsync,
+                deleteProfileCommand: OnDeleteProfileAsync,
+                importProfileCommand: OnImportProfileAsync);
 
-            return Task.FromResult<IRemoteUserControl>(toolWindowControl);
+            // Load projects, profiles, and history asynchronously
+            _ = Task.Run(async () => {
+                try {
+                    await LoadProjectsAsync(cancellationToken);
+                    await RefreshProfilesListAsync(cancellationToken);
+                    await RefreshDeploymentHistoryAsync(cancellationToken);
+                } catch (Exception ex) {
+                    logger.LogError(ex, "Failed to load initial data for tool window");
+                }
+            }, cancellationToken);
+
+            return toolWindowControl;
         } catch (Exception ex) {
             // Log the exception details for debugging
             throw new InvalidOperationException($"Failed to create tool window content: {ex.GetType().Name} - {ex.Message}\nStack: {ex.StackTrace}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Loads projects from the Visual Studio workspace.
+    /// </summary>
+    private async Task LoadProjectsAsync(CancellationToken cancellationToken) {
+        if(toolWindowControl?.DataContext == null)
+            return;
+
+        var dataContext = toolWindowControl.DataContext;
+
+        try {
+            // Access the workspace through the extensibility API
+            var workspace = Extensibility.Workspaces();
+            var projectSnapshots = await workspace.QueryProjectsAsync(
+                project => project.With(p => p.Name)
+                                 .With(p => p.Path),
+                cancellationToken);
+
+            var projectList = new List<ProjectItem>();
+            foreach(var projectSnapshot in projectSnapshots) {
+                var projectPath = projectSnapshot.Path ?? string.Empty;
+                var projectName = !string.IsNullOrEmpty(projectSnapshot.Name)
+                    ? projectSnapshot.Name
+                    : Path.GetFileNameWithoutExtension(projectPath) ?? "Unknown";
+
+                projectList.Add(new ProjectItem {
+                    Name = projectName,
+                    Path = projectPath
+                });
+
+                logger.LogDebug("Processing project \"{0}\"", projectPath);
+            }
+
+            if(projectList.Count > 0) {
+                dataContext.Projects = projectList;
+
+                // Select the first project by default
+                dataContext.SelectedProject = projectList[0].Name;
+
+                logger.LogInformation($"Loaded {projectList.Count} projects from workspace");
+            } else {
+                // No projects in workspace
+                dataContext.Projects = [
+                    new() {
+                        Name = "No projects in solution",
+                        Path = string.Empty
+                    }
+                ];
+                logger.LogWarning("No projects found in workspace");
+            }
+        } catch(Exception ex) {
+            logger.LogError(ex, "Failed to load projects from workspace");
+            // Show error in UI
+            dataContext.Projects = [
+                new() {
+                    Name = "Error loading projects",
+                    Path = string.Empty
+                }
+            ];
         }
     }
 
