@@ -21,14 +21,24 @@ public class FTPSheepToolWindow : ToolWindow {
     private readonly IProfileService profileService;
     private readonly JsonDeploymentHistoryService historyService;
     private readonly VsDeploymentOrchestrator deploymentOrchestrator;
+    private readonly PublishProfileParser publishProfileParser;
+    private readonly PublishProfileConverter publishProfileConverter;
     private readonly ILogger<FTPSheepToolWindow> logger;
 
-    public FTPSheepToolWindow(VisualStudioExtensibility extensibility, IProfileService profileService, JsonDeploymentHistoryService historyService, VsDeploymentOrchestrator deploymentOrchestrator,
+    public FTPSheepToolWindow(
+        VisualStudioExtensibility extensibility,
+        IProfileService profileService,
+        JsonDeploymentHistoryService historyService,
+        VsDeploymentOrchestrator deploymentOrchestrator,
+        PublishProfileParser publishProfileParser,
+        PublishProfileConverter publishProfileConverter,
         ILogger<FTPSheepToolWindow> logger) : base(extensibility) {
         Title = "FTPSheep";
         this.profileService = profileService;
         this.historyService = historyService;
         this.deploymentOrchestrator = deploymentOrchestrator;
+        this.publishProfileParser = publishProfileParser;
+        this.publishProfileConverter = publishProfileConverter;
         this.logger = logger;
     }
 
@@ -56,23 +66,22 @@ public class FTPSheepToolWindow : ToolWindow {
     /// </summary>
     public override async Task<IRemoteUserControl> GetContentAsync(CancellationToken cancellationToken) {
         try {
-            // Create the control with minimal initialization
-            toolWindowControl = new FTPSheepToolWindowControl();
-
-            // Set up basic data
-            var dataContext = toolWindowControl.DataContext;
-            dataContext.WelcomeMessage = "FTPSheep Deployment Tool";
-            dataContext.Projects = [];
-            dataContext.Profiles = [];
-            dataContext.RecentDeployments = [];
-
-            // Set up command handlers
-            toolWindowControl.SetCommandHandlers(
+            // Create the data context with command handlers
+            var dataContext = new FTPSheepToolWindowData(
                 deployCommand: OnDeployAsync,
                 newProfileCommand: OnNewProfileAsync,
                 editProfileCommand: OnEditProfileAsync,
                 deleteProfileCommand: OnDeleteProfileAsync,
                 importProfileCommand: OnImportProfileAsync);
+
+            // Set up initial data
+            dataContext.WelcomeMessage = "FTPSheep Deployment Tool";
+            dataContext.Projects = [];
+            dataContext.Profiles = [];
+            dataContext.RecentDeployments = [];
+
+            // Create the control with the data context
+            toolWindowControl = new FTPSheepToolWindowControl(dataContext);
 
             // Load projects, profiles, and history asynchronously
             _ = Task.Run(async () => {
@@ -346,31 +355,66 @@ public class FTPSheepToolWindow : ToolWindow {
     /// Handles the Import .pubxml command.
     /// </summary>
     private async Task OnImportProfileAsync(object? parameter, CancellationToken cancellationToken) {
-        try {
-            // TODO: Show file picker dialog for .pubxml files
-            // For now, we'll provide instructions on how to use this feature
-            await ShowErrorAsync("Import .pubxml feature requires a file picker dialog.\n\n" +
-                                 "To import a Visual Studio publish profile:\n" +
-                                 "1. Locate your .pubxml file (usually in Properties/PublishProfiles/)\n" +
-                                 "2. Use the CLI command: ftpsheep import <path-to-pubxml>\n" +
-                                 "3. The imported profile will appear in this list automatically",
-                cancellationToken);
+        logger.LogInformation("OnImportProfileAsync called - starting import process");
 
-            // After file picker implementation:
-            // 1. Show file picker dialog
-            // 2. User selects .pubxml file
-            // 3. Parse the file:
-            //    var parser = new PublishProfileParser();
-            //    var publishProfile = await parser.ParseAsync(selectedFilePath, cancellationToken);
-            // 4. Convert to DeploymentProfile:
-            //    var converter = new PublishProfileConverter();
-            //    var profile = converter.Convert(publishProfile);
-            // 5. Prompt for profile name and password
-            // 6. Save:
-            //    await profileService.SaveProfileAsync(profile, cancellationToken);
-            // 7. Refresh profiles list:
-            //    await RefreshProfilesListAsync(cancellationToken);
+        try {
+            logger.LogInformation("Creating file picker dialog options");
+
+            // Show file picker dialog for .pubxml files
+            var filters = new List<Microsoft.VisualStudio.Extensibility.Shell.FileDialog.DialogFilter> {
+                new("Visual Studio Publish Profiles", new[] { "*.pubxml" }),
+                new("All Files", new[] { "*.*" })
+            };
+
+            var options = new Microsoft.VisualStudio.Extensibility.Shell.FileDialog.FileDialogOptions {
+                Title = "Import Visual Studio Publish Profile",
+                Filters = new Microsoft.VisualStudio.Extensibility.Shell.FileDialog.DialogFilters(filters) {
+                    DefaultFilterIndex = 0
+                }
+            };
+
+            logger.LogInformation("Showing file picker dialog");
+            var selectedFilePath = await Extensibility.Shell().ShowOpenFileDialogAsync(options, cancellationToken);
+            logger.LogInformation($"File picker returned: {selectedFilePath ?? "(null)"}");
+
+            // Check if user cancelled
+            if(string.IsNullOrEmpty(selectedFilePath)) {
+                logger.LogInformation("User cancelled import profile dialog");
+                return;
+            }
+
+            logger.LogInformation($"Importing publish profile from: {selectedFilePath}");
+
+            // Parse the .pubxml file (synchronous method)
+            var publishProfile = publishProfileParser.ParseProfile(selectedFilePath);
+
+            // Convert to DeploymentProfile
+            var profile = publishProfileConverter.Convert(publishProfile);
+
+            // Generate profile name based on the original file
+            var originalName = Path.GetFileNameWithoutExtension(selectedFilePath);
+            profile.Name = originalName;
+
+            // Save the profile next to the .pubxml file
+            var sourceDirectory = Path.GetDirectoryName(selectedFilePath) ?? Environment.CurrentDirectory;
+            var profilePath = Path.Combine(sourceDirectory, $"{originalName}.ftpsheep");
+
+            // Save the profile
+            await profileService.CreateProfileAsync(profilePath, profile, cancellationToken);
+
+            logger.LogInformation($"Successfully imported profile: {originalName} to {profilePath}");
+
+            // Refresh the profiles list
+            await RefreshProfilesListAsync(cancellationToken);
+
+            // Select the newly imported profile
+            if(toolWindowControl?.DataContext != null) {
+                toolWindowControl.DataContext.SelectedProfile = originalName;
+            }
+
+            logger.LogInformation($"Profile '{originalName}' imported successfully from {selectedFilePath}");
         } catch(Exception ex) {
+            logger.LogError(ex, "Failed to import publish profile");
             await ShowErrorAsync($"Failed to import profile: {ex.Message}", cancellationToken);
         }
     }

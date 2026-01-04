@@ -131,7 +131,6 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
 ### 2.2 Configuration and Settings Management
 - [x] Implement configuration file structure
   - Global configuration file location (%APPDATA%\.ftpsheep\config.json)
-  - Profile storage location (%APPDATA%\.ftpsheep\profiles\)
   - Default settings and overrides via GlobalConfiguration model
   - PathResolver utility for consistent path management
 - [x] Create configuration loader
@@ -141,7 +140,7 @@ FTPSheep.NET is a command-line deployment tool designed specifically for .NET de
   - Override numeric/string settings with smart defaults
 - [x] Implement profile persistence
   - JsonProfileRepository with atomic writes (temp file → move)
-  - Save/load profiles by name or absolute path
+  - Save/load profiles by absolute path
   - Profile validation on load with detailed error messages
   - Integration with ICredentialStore for password management
 - [x] Create settings validation

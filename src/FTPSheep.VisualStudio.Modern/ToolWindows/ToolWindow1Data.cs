@@ -1,4 +1,4 @@
-﻿
+
 using System.Runtime.Serialization;
 using Microsoft.VisualStudio.Extensibility.UI;
 
