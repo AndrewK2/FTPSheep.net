@@ -3,6 +3,7 @@ using System.Text.Json;
 using FTPSheep.Core.Exceptions;
 using FTPSheep.Core.Interfaces;
 using FTPSheep.Core.Utils;
+using FTPSheep.Utilities.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace FTPSheep.Core.Services;
@@ -61,7 +62,7 @@ public sealed class CredentialStore : ICredentialStore {
         try {
             var credentialFilePath = GetCredentialFilePath(profileFullPath);
 
-            logger?.LogDebug("Saving credentials to: {p}", credentialFilePath);
+            logger?.LogDebug("Saving credentials of \"{p1}\" to: \"{p}\"", profileFullPath, credentialFilePath);
 
             var directory = Path.GetDirectoryName(credentialFilePath);
 
@@ -95,9 +96,7 @@ public sealed class CredentialStore : ICredentialStore {
     }
 
     /// <inheritdoc />
-    public async Task<Credentials?> LoadCredentialsAsync(
-        string profilePath,
-        CancellationToken cancellationToken = default) {
+    public async Task<Credentials?> LoadCredentialsAsync(string profilePath, CancellationToken cancellationToken = default) {
         if(string.IsNullOrWhiteSpace(profilePath)) {
             throw new ArgumentException("Profile name cannot be null or empty.", nameof(profilePath));
         }
@@ -110,6 +109,12 @@ public sealed class CredentialStore : ICredentialStore {
 
         // Then check stored credentials
         var credentialFilePath = GetCredentialFilePath(profilePath);
+
+        logger?
+            .BuildDebugMessage("Reading credentials for profile path: {0}", profilePath)
+            .Add("Credentials file path", credentialFilePath)
+            .Write();
+
         if(!File.Exists(credentialFilePath)) {
             return null;
         }
@@ -198,19 +203,20 @@ public sealed class CredentialStore : ICredentialStore {
         if(string.IsNullOrEmpty(encryptedText)) {
             throw new ArgumentException("Encrypted text cannot be null or empty.", nameof(encryptedText));
         }
-
         return encryptionService.Decrypt(encryptedText);
     }
 
-    private static string GetCredentialFilePath(string profileFullPath) {
+    private string GetCredentialFilePath(string profileFullPath) {
         var credentialsDirectory = PathResolver.GetCredentialsDirectoryPath();
 
-        var guid = new Guid(GetPathHash(profileFullPath)[..16]);
+        var guid = new Guid(GetPathHash()[..16]);
         var pathHash = guid.ToString("D");
-        
+
+        logger?.LogDebug("Hash of \"{0}\" is \"{1}\"", profileFullPath, pathHash);
+
         return Path.Combine(credentialsDirectory, $"profile_{pathHash}.cred.json");
 
-        static byte[] GetPathHash(string profileFullPath) {
+        byte[] GetPathHash() {
             return SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(profileFullPath));
         }
     }

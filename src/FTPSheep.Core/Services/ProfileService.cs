@@ -209,17 +209,17 @@ public sealed class ProfileService : IProfileService {
     /// <summary>
     /// Updates the password for a deployment profile without modifying the profile file.
     /// </summary>
-    /// <param name="profilePath">The path to the profile file.</param>
+    /// <param name="profileFullPath">The path to the profile file.</param>
     /// <param name="username">The username for the credentials.</param>
     /// <param name="password">The new password to save.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="ProfileNotFoundException">Thrown when the profile file does not exist.</exception>
-    public async Task UpdatePasswordAsync(string profilePath, string username, string password, CancellationToken cancellationToken = default) {
-        logger.LogInformation("Updating password for profile at '{ProfilePath}'", profilePath);
+    public async Task UpdatePasswordAsync(string profileFullPath, string username, string password, CancellationToken cancellationToken = default) {
+        logger.LogInformation("Updating password for profile at '{ProfilePath}'", profileFullPath);
 
         // Ensure profile file exists
-        if(!File.Exists(profilePath)) {
-            throw new ProfileNotFoundException($"Profile file not found: {profilePath}");
+        if(!File.Exists(profileFullPath)) {
+            throw new ProfileNotFoundException($"Profile file not found: {profileFullPath}");
         }
 
         // Validate username and password
@@ -231,18 +231,18 @@ public sealed class ProfileService : IProfileService {
             throw new ArgumentException("Password cannot be empty", nameof(password));
         }
 
-        if(string.IsNullOrWhiteSpace(profilePath)) {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(profilePath));
+        if(string.IsNullOrWhiteSpace(profileFullPath)) {
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(profileFullPath));
         }
 
         // Save credentials to the credential store
         await credentialStore.SaveCredentialsAsync(
-            profilePath,
+            profileFullPath,
             username,
             password,
             cancellationToken);
 
-        logger.LogInformation("Successfully updated password for profile at '{ProfilePath}'", profilePath);
+        logger.LogInformation("Successfully updated password for profile at '{ProfilePath}'", profileFullPath);
     }
 
     /// <inheritdoc/>

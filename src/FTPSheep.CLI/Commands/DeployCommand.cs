@@ -78,7 +78,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
         try {
             // Phase 1: Profile Resolution
-            var (profile, filePath) = await ResolveAndLoadProfile(settings, cancellationToken);
+            var (profile, profileFullPath) = await ResolveAndLoadProfile(settings, cancellationToken);
 
             if(profile == null) {
                 return 1;
@@ -101,7 +101,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
             // Phase 2: Validate FTP Connection (before building)
             if(!settings.SkipConnectionTest) {
-                var connectionValid = await ValidateFtpConnection(profile, filePath, cancellationToken);
+                var connectionValid = await ValidateFtpConnection(profile, profileFullPath, cancellationToken);
 
                 if(!connectionValid) {
                     return 1;
@@ -165,7 +165,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
     #region Profile Resolution
 
-    private async Task<(DeploymentProfile?, string? FilePath)> ResolveAndLoadProfile(Settings settings, CancellationToken ct) {
+    private async Task<(DeploymentProfile?, string? FileFullPath)> ResolveAndLoadProfile(Settings settings, CancellationToken ct) {
         DeploymentProfile? profile = null;
         string? actualProfilePath = null;
 
@@ -185,7 +185,7 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
 
                     ctx.Status("Loading profile from file...");
                     profile = await LoadProfileFromFile(settings.ProfilePath);
-                    actualProfilePath = settings.ProfilePath;
+                    actualProfilePath = Path.GetFullPath(settings.ProfilePath);
                     return;
                 }
 
