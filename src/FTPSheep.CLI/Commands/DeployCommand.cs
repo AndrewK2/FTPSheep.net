@@ -153,6 +153,8 @@ internal sealed class DeployCommand(IProfileService profiles, FtpClientFactory f
             // Phase 6: Display Results
             DisplayDeploymentResult(result, profile);
 
+            Console.Title = "✅" + profile.Name + " - FTPSheep";
+
             return result.Success ? 0 : 1;
         } catch(OperationCanceledException) {
             AnsiConsole.MarkupLine("\n[yellow]Deployment cancelled by user.[/]");
