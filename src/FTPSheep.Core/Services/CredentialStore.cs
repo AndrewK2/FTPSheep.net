@@ -209,16 +209,16 @@ public sealed class CredentialStore : ICredentialStore {
     private string GetCredentialFilePath(string profileFullPath) {
         var credentialsDirectory = PathResolver.GetCredentialsDirectoryPath();
 
+        var invariantPath = profileFullPath.ToUpperInvariant();
+
         var guid = new Guid(GetPathHash()[..16]);
         var pathHash = guid.ToString("D");
-
-        logger?.LogDebug("Hash of \"{0}\" is \"{1}\"", profileFullPath, pathHash);
+        
+        logger?.LogDebug("Hash of \"{0}\" is \"{1}\"", invariantPath, pathHash);
 
         return Path.Combine(credentialsDirectory, $"profile_{pathHash}.cred.json");
 
-        byte[] GetPathHash() {
-            return SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(profileFullPath));
-        }
+        byte[] GetPathHash() => SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(invariantPath));
     }
 
     private static Credentials? LoadCredentialsFromEnvironment() {
